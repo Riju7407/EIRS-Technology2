@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: eirs-backend
+    env: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGO_URL
+        scope: build,runtime
+        value: mongodb+srv://rijusarkar9640:hgtWfu3E5SqFxZXh@cluster0.6bdcvde.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: Secret
+      - key: NODE_ENV
+        value: production

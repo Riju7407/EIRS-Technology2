@@ -55,7 +55,6 @@ const Header = () => {
           <div className="top-bar-right">
             {isLoggedIn ? (
               <>
-                <Link to="/profile" className="top-link">Profile</Link>
                 <button className="top-link logout-btn" onClick={handleLogout}>Logout</button>
               </>
             ) : (

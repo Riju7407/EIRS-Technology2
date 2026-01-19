@@ -1,11 +1,13 @@
 import axios from 'axios';
 
-// For production on Vercel, use /api prefix (serverless functions)
-// For local development, use localhost backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000' 
-    : '/api');
+// Determine API base URL
+// For production: use relative /api path (Vercel will route to serverless functions)
+// For development: use localhost backend
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'
+  : (process.env.REACT_APP_API_URL || 'http://localhost:3000');
+
+console.log('API_BASE_URL configured as:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -15,27 +17,36 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add token to headers
+// Request interceptor to add token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Token added to request:', config.method.toUpperCase(), config.url);
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response successful:', response.status, response.config.url);
+    return response;
+  },
   (error) => {
+    console.error('API Response error:', error.response?.status, error.message, error.config?.url);
+    
     if (error.response?.status === 401) {
-      // Clear token and user data on unauthorized
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       delete api.defaults.headers.common['Authorization'];
+      window.location.href = '/signin';
     }
     return Promise.reject(error);
   }

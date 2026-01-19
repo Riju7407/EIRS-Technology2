@@ -1,0 +1,21 @@
+@import './styles/global.css';
+@import './styles/Header.css';
+@import './styles/Footer.css';
+@import './styles/HomePage.css';
+@import './styles/ProductsPage.css';
+@import './styles/ProductDetailPage.css';
+@import './styles/ContactPage.css';
+@import './styles/AuthPages.css';
+@import './styles/AdminDashboard.css';
+@import './styles/AdminPages.css';
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+

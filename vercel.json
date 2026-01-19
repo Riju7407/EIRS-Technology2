@@ -1,38 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "client/build"
-      }
-    },
-    {
-      "src": "server/api/index.js",
-      "use": "@vercel/node"
-    }
-  ],
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/build",
   "env": {
-    "REACT_APP_API_URL": "@react_app_api_url",
-    "MONGO_URL": "@mongo_url",
-    "JWT_SECRET": "@jwt_secret"
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "server/api/index.js"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "client/build/static/$1",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/(?!api).*",
-      "dest": "client/build/index.html"
-    }
-  ]
+    "REACT_APP_API_URL": "@react_app_api_url"
+  }
 }

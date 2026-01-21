@@ -13,6 +13,7 @@ import SignInPage from './pages/SignInPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminEnquiries from './pages/AdminEnquiries';
 import AdminProducts from './pages/AdminProducts';
+import AdminServices from './pages/AdminServices';
 import './App.css';
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/enquiries" element={<AdminEnquiries />} />
           <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/services" element={<AdminServices />} />
         </Routes>
         <Footer />
       </div>

@@ -7,6 +7,7 @@ import '../styles/AdminDashboard.css';
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [adminUser, setAdminUser] = useState(null);
   const [stats, setStats] = useState({
     totalEnquiries: 0,
     todayEnquiries: 0,
@@ -17,10 +18,20 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Get admin user from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setAdminUser(userData);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
     // Check if admin is logged in by trying to fetch user data
     fetchDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -109,7 +120,7 @@ const AdminDashboard = () => {
           <div className="topbar-right">
             <div className="admin-profile">
               <img src="https://via.placeholder.com/40x40?text=Admin" alt="Admin" />
-              <span>Admin User</span>
+              <span>{adminUser?.name || 'Admin User'}</span>
             </div>
           </div>
         </div>
@@ -117,8 +128,8 @@ const AdminDashboard = () => {
         {/* Dashboard Content */}
         <div className="dashboard-content">
           <div className="content-header">
-            <h1>Dashboard</h1>
-            <p>Welcome back! Here's your performance overview.</p>
+            <h1>Welcome, {adminUser?.name || 'Admin'}! 👋</h1>
+            <p>Here's your admin dashboard overview. Manage products, services, and user enquiries.</p>
           </div>
 
           {/* KPI Cards */}

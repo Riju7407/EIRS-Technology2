@@ -1,22 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaBars, FaTimes, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaBars, FaTimes, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
 import { authService } from '../services/api';
 import '../styles/Header.css';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is logged in by trying to fetch user data
-    checkAuthStatus();
+    // Check if user is logged in only on component mount
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        setIsAdmin(userData.isAdmin || false);
+        setIsLoggedIn(true);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        setIsLoggedIn(false);
+      }
+    } else if (token) {
+      checkAuthStatus();
+    } else {
+      setIsLoggedIn(false);
+    }
   }, []);
 
   const checkAuthStatus = async () => {
     try {
-      await authService.getUser();
+      const userData = await authService.getUser();
+      setUser(userData);
+      setIsAdmin(userData.isAdmin || false);
       setIsLoggedIn(true);
     } catch (error) {
       setIsLoggedIn(false);
@@ -26,7 +46,11 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await authService.logout();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setIsLoggedIn(false);
+      setUser(null);
+      setIsAdmin(false);
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -53,9 +77,13 @@ const Header = () => {
             </span>
           </div>
           <div className="top-bar-right">
-            {isLoggedIn ? (
+            {isLoggedIn && user ? (
               <>
-                <Link to="/profile" className="top-link">Profile</Link>
+                {isAdmin && <span className="admin-badge">Admin</span>}
+                <div className="user-profile">
+                  <FaUser className="profile-icon" />
+                  <span className="username">{user.name || user.email}</span>
+                </div>
                 <button className="top-link logout-btn" onClick={handleLogout}>Logout</button>
               </>
             ) : (
@@ -86,6 +114,14 @@ const Header = () => {
             <Link to="/services" className="nav-link">Services</Link>
             <Link to="/products" className="nav-link">Products</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
+            {isAdmin && (
+              <>
+                <Link to="/admin/dashboard" className="nav-link admin-link">Dashboard</Link>
+                <Link to="/admin/products" className="nav-link admin-link">Manage Products</Link>
+                <Link to="/admin/services" className="nav-link admin-link">Manage Services</Link>
+                <Link to="/admin/enquiries" className="nav-link admin-link">Manage Enquiries</Link>
+              </>
+            )}
           </nav>
 
           {/* CTA Button */}
@@ -117,6 +153,22 @@ const Header = () => {
             <Link to="/contact" className="nav-link-mobile" onClick={() => setIsMobileMenuOpen(false)}>
               Contact
             </Link>
+            {isAdmin && (
+              <>
+                <Link to="/admin/dashboard" className="nav-link-mobile admin-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                <Link to="/admin/products" className="nav-link-mobile admin-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Manage Products
+                </Link>
+                <Link to="/admin/services" className="nav-link-mobile admin-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Manage Services
+                </Link>
+                <Link to="/admin/enquiries" className="nav-link-mobile admin-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Manage Enquiries
+                </Link>
+              </>
+            )}
             {!isLoggedIn && (
               <>
                 <Link to="/signin" className="nav-link-mobile" onClick={() => setIsMobileMenuOpen(false)}>

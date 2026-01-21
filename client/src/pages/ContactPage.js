@@ -186,10 +186,6 @@ const ContactPage = () => {
               ></textarea>
             </div>
 
-            <div className="form-notice">
-              <p>* Please sign in to submit the form</p>
-            </div>
-
             <button
               type="submit"
               className="btn btn-primary btn-large"

@@ -14,7 +14,7 @@ const AdminEnquiries = () => {
   useEffect(() => {
     fetchEnquiries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     filterEnquiries();

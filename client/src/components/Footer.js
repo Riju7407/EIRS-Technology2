@@ -33,6 +33,12 @@ const Footer = () => {
                 <img src="https://via.placeholder.com/100x50?text=Dahua" alt="Dahua" />
               </div>
             </div>
+            <div className="certifications">
+              <h4>Certifications</h4>
+              <div className="certification-badge">
+                <img src="https://via.placeholder.com/100x100?text=ISO+9001:2015" alt="ISO 9001:2015 Certified" title="ISO 9001:2015 Certified" />
+              </div>
+            </div>
           </div>
 
           {/* Quick Links */}

@@ -50,7 +50,7 @@ const AdminServices = () => {
     setError('');
     setSuccess('');
 
-    if (!formData.serviceName || !formData.description) {
+    if (!formData.name || !formData.description || !formData.price) {
       setError('Please fill in all required fields');
       return;
     }
@@ -75,7 +75,7 @@ const AdminServices = () => {
   const handleEdit = (service) => {
     setEditingId(service._id);
     setFormData({
-      serviceName: service.serviceName,
+      name: service.name,
       description: service.description,
       price: service.price || '',
     });
@@ -98,7 +98,7 @@ const AdminServices = () => {
 
   const resetForm = () => {
     setFormData({
-      serviceName: '',
+      name: '',
       description: '',
       price: '',
     });
@@ -123,12 +123,12 @@ const AdminServices = () => {
           <h2>{editingId ? 'Edit Service' : 'Add New Service'}</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="serviceName">Service Name *</label>
+              <label htmlFor="name">Service Name *</label>
               <input
                 type="text"
-                id="serviceName"
-                name="serviceName"
-                value={formData.serviceName}
+                id="name"
+                name="name"
+                value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Enter service name"
                 required
@@ -149,7 +149,7 @@ const AdminServices = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="price">Price (Optional)</label>
+              <label htmlFor="price">Price *</label>
               <input
                 type="number"
                 id="price"
@@ -158,6 +158,7 @@ const AdminServices = () => {
                 onChange={handleInputChange}
                 placeholder="Enter service price"
                 step="0.01"
+                required
               />
             </div>
 
@@ -189,7 +190,7 @@ const AdminServices = () => {
             <tbody>
               {services.map((service) => (
                 <tr key={service._id}>
-                  <td>{service.serviceName}</td>
+                  <td>{service.name}</td>
                   <td>{service.description?.substring(0, 50)}...</td>
                   <td>${service.price || 'N/A'}</td>
                   <td className="actions">

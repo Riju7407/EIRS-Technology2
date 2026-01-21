@@ -11,6 +11,7 @@ import ContactPage from './pages/ContactPage';
 import SignUpPage from './pages/SignUpPage';
 import SignInPage from './pages/SignInPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
 import AdminEnquiries from './pages/AdminEnquiries';
 import AdminProducts from './pages/AdminProducts';
 import AdminServices from './pages/AdminServices';
@@ -34,6 +35,7 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/enquiries" element={<AdminEnquiries />} />
           <Route path="/admin/products" element={<AdminProducts />} />
           <Route path="/admin/services" element={<AdminServices />} />

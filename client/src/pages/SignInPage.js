@@ -48,9 +48,13 @@ const SignInPage = () => {
           localStorage.setItem('user', JSON.stringify(response.data));
         }
         
-        // Redirect to home or dashboard
+        // Redirect to admin dashboard if user is admin, otherwise to home
         setTimeout(() => {
-          navigate('/', { state: { message: 'Logged in successfully!' } });
+          if (response.data?.isAdmin) {
+            navigate('/admin/dashboard', { state: { message: 'Logged in successfully as admin!' } });
+          } else {
+            navigate('/', { state: { message: 'Logged in successfully!' } });
+          }
         }, 500);
       } else {
         setError(response?.message || 'Sign in failed');

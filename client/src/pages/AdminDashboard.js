@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUsers, FaBox, FaPhone, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaTags } from 'react-icons/fa';
+import { FaUsers, FaBox, FaPhone, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaTags, FaTools } from 'react-icons/fa';
 import { adminService, authService } from '../services/api';
 import '../styles/AdminDashboard.css';
 
@@ -91,14 +91,17 @@ const AdminDashboard = () => {
           <Link to="/admin/dashboard" className="nav-item active">
             <FaChartBar /> Dashboard
           </Link>
+          <Link to="/admin/users" className="nav-item">
+            <FaUsers /> Users
+          </Link>
           <Link to="/admin/enquiries" className="nav-item">
             <FaPhone /> Enquiries
           </Link>
           <Link to="/admin/products" className="nav-item">
             <FaBox /> Products
           </Link>
-          <Link to="/admin/content" className="nav-item">
-            <FaUsers /> Content Management
+          <Link to="/admin/services" className="nav-item">
+            <FaTools /> Services
           </Link>
         </nav>
 

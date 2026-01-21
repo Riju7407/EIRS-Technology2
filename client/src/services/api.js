@@ -261,6 +261,15 @@ export const adminService = {
     }
   },
 
+  promoteToAdmin: async (userId) => {
+    try {
+      const response = await api.post(`/auth/users/promote/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   getContacts: async () => {
     try {
       const response = await api.get('/auth/contacts');

@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
 const {authRouter} = require('./router/authRouter.js');
+const paymentRouter = require('./router/paymentRouter.js');
 const databaseconnect = require('./config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -30,6 +31,9 @@ app.use((req, res, next) => {
 });
 
 app.use('/auth/', authRouter);
+
+app.use('/payment', paymentRouter);
+app.use('/api/payment', paymentRouter);
 
 app.get('/', (req, res) => {
     res.json({ message: 'EIRS Technology API Server', status: 'running' });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaPlus, FaImage } from 'react-icons/fa';
 import { productService } from '../services/api';
 import '../styles/AdminPages.css';
 
@@ -16,6 +16,8 @@ const AdminProducts = () => {
     brand: '',
     description: '',
     image: '',
+    price: '',
+    stock: '',
   });
 
   useEffect(() => {
@@ -46,18 +48,65 @@ const AdminProducts = () => {
     }));
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        // Convert image to Base64 URL
+        const base64String = event.target.result;
+        setFormData(prev => ({
+          ...prev,
+          image: base64String,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!formData.productName || !formData.category || !formData.description) {
+      alert('Please fill in all required fields (Product Name, Category, Description)');
+      return;
+    }
+
+    // Prepare data with proper types
+    const submitData = {
+      ...formData,
+      price: formData.price !== '' ? parseFloat(formData.price) : 0,
+      stock: formData.stock !== '' ? parseInt(formData.stock, 10) : 0,
+    };
+
+    console.log('Submitting product data:', submitData);
+
     try {
       if (editingId) {
-        await productService.updateProduct(editingId, formData);
+        await productService.updateProduct(editingId, submitData);
+        alert('Product updated successfully!');
       } else {
-        await productService.createProduct(formData);
+        await productService.createProduct(submitData);
+        alert('Product added successfully!');
       }
       fetchProducts();
       resetForm();
     } catch (error) {
       console.error('Error saving product:', error);
+      alert('Error saving product: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -69,6 +118,8 @@ const AdminProducts = () => {
       brand: product.brand,
       description: product.description,
       image: product.image,
+      price: product.price !== null && product.price !== undefined ? product.price : '',
+      stock: product.stock !== null && product.stock !== undefined ? product.stock : '',
     });
     setShowForm(true);
   };
@@ -91,6 +142,8 @@ const AdminProducts = () => {
       brand: '',
       description: '',
       image: '',
+      price: '',
+      stock: '',
     });
     setEditingId(null);
     setShowForm(false);
@@ -161,13 +214,32 @@ const AdminProducts = () => {
             </div>
 
             <div className="form-group">
-              <label>Image URL</label>
-              <input
-                type="url"
-                name="image"
-                value={formData.image}
-                onChange={handleInputChange}
-              />
+              <label>Product Image</label>
+              <div className="image-upload-container">
+                <input
+                  type="file"
+                  id="imageInput"
+                  name="image"
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="imageInput" className="image-upload-label">
+                  <FaImage /> Choose Image
+                </label>
+                {formData.image && (
+                  <div className="image-preview">
+                    <img src={formData.image} alt="Preview" />
+                    <button
+                      type="button"
+                      className="remove-image-btn"
+                      onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -179,6 +251,33 @@ const AdminProducts = () => {
               onChange={handleInputChange}
               rows="4"
             ></textarea>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Price (₹)</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                placeholder="Enter product price"
+                step="0.01"
+                min="0"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Stock Quantity</label>
+              <input
+                type="number"
+                name="stock"
+                value={formData.stock}
+                onChange={handleInputChange}
+                placeholder="Enter stock quantity"
+                min="0"
+              />
+            </div>
           </div>
 
           <div className="form-actions">
@@ -203,6 +302,10 @@ const AdminProducts = () => {
               <p className="category">{product.category}</p>
               {product.brand && <p className="brand">{product.brand}</p>}
               <p className="description">{product.description?.substring(0, 100)}...</p>
+              <div className="price-stock-display">
+                <span className="price">₹{product.price || 0}</span>
+                <span className="stock">Stock: {product.stock || 0}</span>
+              </div>
               <div className="admin-actions">
                 <button
                   className="action-btn edit"

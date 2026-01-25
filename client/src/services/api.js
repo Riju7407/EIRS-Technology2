@@ -278,6 +278,72 @@ export const adminService = {
       throw error.response?.data || error.message;
     }
   },
+
+  deleteContact: async (id) => {
+    try {
+      const response = await api.delete(`/auth/contacts/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+};
+
+// Order Services
+export const orderService = {
+  createOrder: async (orderData) => {
+    try {
+      const response = await api.post('/auth/orders/create', orderData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getUserOrders: async () => {
+    try {
+      const response = await api.get('/auth/orders');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getOrderById: async (orderId) => {
+    try {
+      const response = await api.get(`/auth/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateOrderStatus: async (orderId, status) => {
+    try {
+      const response = await api.put(`/auth/orders/${orderId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getAllOrders: async () => {
+    try {
+      const response = await api.get('/auth/orders/admin/all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  deleteOrder: async (orderId) => {
+    try {
+      const response = await api.delete(`/auth/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 export default api;

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
 import { productService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import CheckoutModal from '../components/CheckoutModal';
 import '../styles/ProductDetailPage.css';
 
 const ProductDetailPage = () => {
@@ -9,6 +12,10 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const { user } = useAuth();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     // Fetch product from backend API
@@ -28,6 +35,25 @@ const ProductDetailPage = () => {
       fetchProduct();
     }
   }, [id]);
+
+  const handleAddToCart = () => {
+    if (product && product.stock > 0) {
+      addToCart(product, quantity);
+      alert(`${quantity} item(s) added to cart!`);
+      setQuantity(1);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      alert('Please login first to proceed with purchase');
+      return;
+    }
+    if (product && product.stock > 0) {
+      addToCart(product, quantity);
+      setShowCheckout(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -72,7 +98,6 @@ const ProductDetailPage = () => {
               <img src={product.image} alt={product.productName} />
             </div>
             <div className="product-badges">
-              <span className="badge">Premium Quality</span>
               <span className="badge">In Stock</span>
             </div>
           </section>
@@ -86,7 +111,51 @@ const ProductDetailPage = () => {
               {product.brand && <span className="brand-info">Brand: {product.brand}</span>}
             </div>
 
+            {/* Price and Stock Section */}
+            <div className="price-stock-section">
+              <div className="price-info">
+                <span className="price-label">Price:</span>
+                <span className="price-value">₹{parseFloat(product.price || 0).toLocaleString()}</span>
+              </div>
+              <div className="stock-info">
+                <span className="stock-label">Stock:</span>
+                <span className={`stock-value ${product.stock > 0 ? 'in-stock' : 'out-stock'}`}>
+                  {product.stock > 0 ? `${product.stock} Available` : 'Out of Stock'}
+                </span>
+              </div>
+            </div>
+
             <p className="product-description">{product.description}</p>
+
+            {/* Quantity Selector */}
+            <div className="quantity-selector">
+              <label htmlFor="quantity">Quantity:</label>
+              <div className="quantity-control">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  className="qty-btn"
+                >
+                  −
+                </button>
+                <input 
+                  type="number" 
+                  id="quantity"
+                  min="1" 
+                  max={product.stock}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, Math.min(parseInt(e.target.value) || 1, product.stock)))}
+                />
+                <button 
+                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  disabled={quantity >= product.stock}
+                  className="qty-btn"
+                >
+                  +
+                </button>
+              </div>
+              <span className="stock-info">({product.stock} available)</span>
+            </div>
 
             {/* Specifications */}
             <div className="specifications">
@@ -103,12 +172,33 @@ const ProductDetailPage = () => {
 
             {/* Actions */}
             <div className="product-actions">
-              <Link to="/contact" className="btn btn-primary btn-large">
-                Request a Quote
-              </Link>
-              <Link to="/contact" className="btn btn-secondary btn-large">
-                Enquire Now
-              </Link>
+              {user ? (
+                <>
+                  <button 
+                    className="btn btn-primary btn-large"
+                    onClick={handleBuyNow}
+                    disabled={product.stock <= 0}
+                  >
+                    Buy Now
+                  </button>
+                  <button 
+                    className="btn btn-secondary btn-large"
+                    onClick={handleAddToCart}
+                    disabled={product.stock <= 0}
+                  >
+                    <FaShoppingCart /> Add to Cart
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/signin" className="btn btn-primary btn-large">
+                    Login to Buy
+                  </Link>
+                  <Link to="/contact" className="btn btn-secondary btn-large">
+                    Enquire Now
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Download Datasheet */}
@@ -145,6 +235,19 @@ const ProductDetailPage = () => {
           </Link>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      {user && (
+        <CheckoutModal 
+          isOpen={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          cartItems={[{ ...product, quantity }]}
+          totalAmount={parseFloat(product.price || 0) * quantity}
+          userId={user._id}
+          userName={user.name}
+          userEmail={user.email}
+        />
+      )}
     </main>
   );
 };

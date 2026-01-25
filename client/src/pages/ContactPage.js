@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaPaperPlane, FaClock } from 'react-icons/fa';
 import { contactService } from '../services/api';
 import '../styles/ContactPage.css';
 
 const ContactPage = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,6 +16,13 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Check if user is logged in by checking localStorage
+    const user = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!user && !!token);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -60,14 +69,33 @@ const ContactPage = () => {
 
   return (
     <main className="contact-page">
-      <div className="contact-header">
-        <h1>Get in Touch</h1>
-        <p>We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
-      </div>
-
       <div className="container contact-container">
-        {/* Contact Information */}
-        <section className="contact-info-section">
+        {/* Login Required Message */}
+        {!isLoggedIn ? (
+          <section className="login-required-section" style={{
+            textAlign: 'center',
+            padding: '60px 20px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '0.75rem',
+            border: '2px solid #e5e7eb'
+          }}>
+            <h2 style={{ marginBottom: '16px', color: '#1f2937' }}>Sign in to Contact Us</h2>
+            <p style={{ marginBottom: '24px', color: '#6b7280', fontSize: '1.05rem' }}>
+              Please log in to your account to submit a contact form. This helps us provide better support and track your inquiries.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/signin" className="btn btn-primary" style={{ padding: '12px 24px' }}>
+                Sign In
+              </Link>
+              <Link to="/signup" className="btn btn-secondary" style={{ padding: '12px 24px', backgroundColor: '#6b7280', color: 'white', textDecoration: 'none', borderRadius: '0.5rem' }}>
+                Create Account
+              </Link>
+            </div>
+          </section>
+        ) : (
+          <>
+            {/* Contact Information */}
+            <section className="contact-info-section">
           <h2>Contact Information</h2>
           
           <div className="info-cards">
@@ -76,8 +104,8 @@ const ContactPage = () => {
                 <FaPhone />
               </div>
               <h3>Phone</h3>
-              <p>+1 234-567-8900</p>
-              <p className="hours">Mon - Fri, 9am to 6pm</p>
+              <p>+91 8707-095-798</p>
+              <p className="hours"><FaClock style={{marginRight: '8px'}} />Mon - Fri, 9am to 6pm</p>
             </div>
 
             <div className="info-card">
@@ -85,8 +113,8 @@ const ContactPage = () => {
                 <FaEnvelope />
               </div>
               <h3>Email</h3>
-              <p>info@eirtech.com</p>
-              <p className="hours">We'll respond within 24 hours</p>
+              <p>contact@eirstechnology.com</p>
+              <p className="hours"><FaClock style={{marginRight: '8px'}} />We'll respond within 24 hours</p>
             </div>
 
             <div className="info-card">
@@ -117,9 +145,15 @@ const ContactPage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="contact-form">
+            <div className="form-intro">
+              <p>Fill out the form below and we'll get back to you as soon as possible. All fields are required.</p>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="name">Full Name *</label>
+                <label htmlFor="name">
+                  Full Name <span className="required">*</span>
+                </label>
                 <input
                   type="text"
                   id="name"
@@ -127,12 +161,16 @@ const ContactPage = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  placeholder="Your name"
+                  placeholder="John Doe"
+                  minLength="2"
+                  maxLength="100"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="email">Email Address *</label>
+                <label htmlFor="email">
+                  Email Address <span className="required">*</span>
+                </label>
                 <input
                   type="email"
                   id="email"
@@ -140,14 +178,16 @@ const ContactPage = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  placeholder="your@email.com"
+                  placeholder="john@example.com"
                 />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="phoneNumber">Phone Number *</label>
+                <label htmlFor="phoneNumber">
+                  Phone Number <span className="required">*</span>
+                </label>
                 <input
                   type="tel"
                   id="phoneNumber"
@@ -155,12 +195,15 @@ const ContactPage = () => {
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
                   required
-                  placeholder="+1 234-567-8900"
+                  placeholder="+1 (234) 567-8900"
+                  pattern="[0-9+\-\s()]*"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="subject">Subject *</label>
+                <label htmlFor="subject">
+                  Subject <span className="required">*</span>
+                </label>
                 <input
                   type="text"
                   id="subject"
@@ -168,22 +211,28 @@ const ContactPage = () => {
                   value={formData.subject}
                   onChange={handleInputChange}
                   required
-                  placeholder="How can we help?"
+                  placeholder="e.g., Installation Inquiry"
+                  maxLength="100"
                 />
               </div>
             </div>
 
             <div className="form-group full-width">
-              <label htmlFor="message">Message *</label>
+              <label htmlFor="message">
+                Message <span className="required">*</span>
+              </label>
               <textarea
                 id="message"
                 name="message"
                 value={formData.message}
                 onChange={handleInputChange}
                 required
-                rows="6"
-                placeholder="Tell us about your requirements..."
+                rows="2"
+                placeholder="Tell us about your requirements, project details, or any questions you have..."
+                minLength="10"
+                maxLength="1000"
               ></textarea>
+              <span className="char-count">{formData.message.length}/1000 characters</span>
             </div>
 
             <button
@@ -192,7 +241,10 @@ const ContactPage = () => {
               disabled={loading}
             >
               {loading ? (
-                'Sending...'
+                <>
+                  <span className="spinner"></span>
+                  Sending...
+                </>
               ) : (
                 <>
                   <FaPaperPlane /> Send Message
@@ -201,24 +253,9 @@ const ContactPage = () => {
             </button>
           </form>
         </section>
+          </>
+        )}
       </div>
-
-      {/* Map Section */}
-      <section className="map-section">
-        <h2>Find Us</h2>
-        <div className="map-container">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3024.1234567890123!2d-74.0!3d40.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjQzIEZha2UgU3QsIEZha2UgQ2l0eSwgRksgMTIzNDU!5e0!3m2!1sen!2sus!4v1234567890"
-            width="100%"
-            height="500"
-            style={{ border: 0 }}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="EIRS Technology Location"
-          ></iframe>
-        </div>
-      </section>
     </main>
   );
 };

@@ -60,7 +60,7 @@ const AdminUsers = () => {
   const handlePromoteAdmin = async (userId) => {
     if (window.confirm('Promote this user to admin?')) {
       try {
-        const response = await adminService.promoteToAdmin(userId);
+        await adminService.promoteToAdmin(userId);
         // Refresh users list
         fetchUsers();
         alert('User promoted to admin successfully!');

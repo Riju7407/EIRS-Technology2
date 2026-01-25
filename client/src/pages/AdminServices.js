@@ -11,7 +11,7 @@ const AdminServices = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    serviceName: '',
+    name: '',
     description: '',
     price: '',
   });
@@ -108,62 +108,57 @@ const AdminServices = () => {
 
   return (
     <div className="admin-page">
-      <div className="admin-header">
+      <div className="page-header">
         <h1>Manage Services</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          <FaPlus /> Add Service
-        </button>
+        <p>Create, edit, and manage your business services</p>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
 
       {showForm && (
         <div className="form-container">
           <h2>{editingId ? 'Edit Service' : 'Add New Service'}</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="name">Service Name *</label>
+              <label>Service Name *</label>
               <input
                 type="text"
-                id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Enter service name"
+                placeholder="e.g., Web Development, Consulting"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Description *</label>
+              <label>Description *</label>
               <textarea
-                id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="Enter service description"
+                placeholder="Describe your service in detail..."
                 rows="4"
                 required
-              />
+              ></textarea>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="price">Price *</label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                placeholder="Enter service price"
-                step="0.01"
-                required
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Price (₹) *</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="Enter service price"
+                  step="0.01"
+                  min="0"
+                  required
+                />
+              </div>
             </div>
 
             <div className="form-actions">
-              <button type="submit" className="btn btn-success">
+              <button type="submit" className="btn btn-primary">
                 {editingId ? 'Update Service' : 'Add Service'}
               </button>
               <button type="button" className="btn btn-secondary" onClick={resetForm}>
@@ -174,51 +169,67 @@ const AdminServices = () => {
         </div>
       )}
 
-      <div className="table-container">
-        {loading ? (
-          <p className="loading">Loading services...</p>
-        ) : services.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Service Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {services.map((service) => (
-                <tr key={service._id}>
-                  <td>{service.name}</td>
-                  <td>{service.description?.substring(0, 50)}...</td>
-                  <td>${service.price || 'N/A'}</td>
-                  <td className="actions">
-                    <button
-                      className="btn-icon edit"
-                      onClick={() => handleEdit(service)}
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      className="btn-icon delete"
-                      onClick={() => handleDelete(service._id)}
-                      title="Delete"
-                    >
-                      <FaTrash />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="no-data">
-            <p>No services found. Add one to get started!</p>
-          </div>
-        )}
-      </div>
+      {!showForm && (
+        <div className="admin-toolbar">
+          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+            <FaPlus /> Add New Service
+          </button>
+        </div>
+      )}
+
+      {error && <div style={{ color: 'red', padding: '10px', marginBottom: '10px' }}>{error}</div>}
+      {success && <div style={{ color: 'green', padding: '10px', marginBottom: '10px' }}>{success}</div>}
+
+      {loading ? (
+        <div className="loading">Loading services...</div>
+      ) : services.length > 0 ? (
+        <div className="products-admin-grid">
+          {services.map(service => (
+            <div key={service._id} className="product-admin-card">
+              <div style={{ 
+                padding: '16px',
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white'
+              }}>
+                <h3 style={{ margin: '0 0 8px 0' }}>{service.name}</h3>
+                <p style={{ margin: '0', fontSize: '0.9rem', opacity: 0.9 }}>Service</p>
+              </div>
+              
+              <p className="description" style={{ padding: '12px 16px' }}>
+                {service.description?.substring(0, 100)}
+                {service.description?.length > 100 ? '...' : ''}
+              </p>
+              
+              <div className="price-stock-display">
+                <span className="price">₹{service.price || 0}</span>
+                <span className="stock">
+                  {new Date(service.createdAt || Date.now()).toLocaleDateString()}
+                </span>
+              </div>
+
+              <div className="admin-actions">
+                <button
+                  className="action-btn edit"
+                  onClick={() => handleEdit(service)}
+                >
+                  <FaEdit /> Edit
+                </button>
+                <button
+                  className="action-btn delete"
+                  onClick={() => handleDelete(service._id)}
+                >
+                  <FaTrash /> Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="no-data">
+          <p>No services found. Create your first service!</p>
+        </div>
+      )}
     </div>
   );
 };

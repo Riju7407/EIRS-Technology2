@@ -48,10 +48,17 @@ const AdminEnquiries = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this enquiry?')) {
       try {
-        await adminService.deleteUserById(id);
-        setEnquiries(enquiries.filter(e => e._id !== id));
+        const response = await adminService.deleteContact(id);
+        console.log('Delete response:', response);
+        if (response && response.success) {
+          setEnquiries(enquiries.filter(e => e._id !== id));
+          alert('Enquiry deleted successfully');
+        } else {
+          alert('Failed to delete enquiry: ' + (response?.message || 'Unknown error'));
+        }
       } catch (error) {
         console.error('Error deleting enquiry:', error);
+        alert('Failed to delete enquiry: ' + (error.message || JSON.stringify(error)));
       }
     }
   };

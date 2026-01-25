@@ -12,12 +12,14 @@
 
 .page-header h1 {
   margin-bottom: var(--spacing-sm);
-  color: var(--text-dark);
+  color: #003d7a;
+  font-weight: 700;
 }
 
 .page-header p {
   margin: 0;
-  color: var(--text-light);
+  color: #1f2937;
+  font-weight: 500;
 }
 
 /* Admin Toolbar */
@@ -41,6 +43,13 @@
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   font-size: 0.95rem;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.search-box input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .search-box input:focus {
@@ -67,15 +76,16 @@
 .admin-table th {
   padding: var(--spacing-md);
   text-align: left;
-  font-weight: 600;
-  color: var(--text-dark);
+  font-weight: 700;
+  color: #003d7a;
   border-bottom: 2px solid var(--border-color);
 }
 
 .admin-table td {
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
-  color: var(--text-light);
+  color: #1f2937;
+  font-weight: 500;
 }
 
 .admin-table tbody tr:hover {
@@ -176,6 +186,71 @@
   grid-column: 1 / -1;
 }
 
+/* Image Upload */
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.image-upload-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border: 2px dashed var(--primary-color);
+  border-radius: 0.5rem;
+  background-color: rgba(37, 99, 235, 0.05);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.image-upload-label:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  border-color: #1e40af;
+}
+
+.image-upload-label svg {
+  font-size: 1.2rem;
+}
+
+.image-preview {
+  position: relative;
+  display: inline-block;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  display: block;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background-color 0.3s ease;
+}
+
+.remove-image-btn:hover {
+  background-color: #dc2626;
+}
+
 .form-actions {
   display: flex;
   gap: var(--spacing-md);
@@ -240,6 +315,32 @@
   margin-bottom: var(--spacing-md);
   flex: 1;
   line-height: 1.4;
+}
+
+.product-admin-card .price-stock-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, #f5f7fa 0%, #f9fafb 100%);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.product-admin-card .price-stock-display .price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.product-admin-card .price-stock-display .stock {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .admin-actions {

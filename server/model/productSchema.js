@@ -24,8 +24,29 @@ const productSchema = new Schema({
     image: {
         type: String,
         trim: true
+    },
+    price: {
+        type: Number,
+        default: 0,
+        min: [0, 'Price cannot be negative'],
+        get: (value) => value === null || value === undefined ? 0 : value,
+        set: (value) => {
+            if (value === '' || value === null || value === undefined) return 0;
+            return parseFloat(value);
+        }
+    },
+    stock: {
+        type: Number,
+        default: 0,
+        min: [0, 'Stock cannot be negative'],
+        get: (value) => value === null || value === undefined ? 0 : value,
+        set: (value) => {
+            if (value === '' || value === null || value === undefined) return 0;
+            return parseInt(value, 10);
+        }
     }
 }, {
     timestamps: true
 });
+
 module.exports = mongoose.model('Product', productSchema);

@@ -78,19 +78,26 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
-  background-color: var(--error-color);
+  background-color: #ef4444;
   color: white;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.3s ease;
   margin-top: auto;
+  pointer-events: auto;
+  font-size: 0.95rem;
 }
 
 .logout-btn:hover {
   background-color: #dc2626;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
 }
 
 /* Main Content */
@@ -262,7 +269,8 @@
 .admin-table td {
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
-  color: var(--text-light);
+  color: #1f2937;
+  font-weight: 500;
 }
 
 .enquiries-table table tbody tr:hover,

@@ -117,11 +117,146 @@
   font-size: 0.95rem;
 }
 
+/* Price and Stock Section */
+.price-stock-section {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #f5f7fa 0%, #f9fafb 100%);
+  border-radius: 0.5rem;
+  border-left: 4px solid var(--primary-color);
+}
+
+.price-info,
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.price-label,
+.stock-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.price-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.price-na {
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  font-weight: 700;
+  font-style: italic;
+}
+
+.stock-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.stock-value.in-stock {
+  color: #10b981;
+}
+
+.stock-value.out-stock {
+  color: #ef4444;
+}
+
 .product-description {
   color: var(--text-light);
   font-size: 1.05rem;
   line-height: 1.8;
   margin-bottom: var(--spacing-lg);
+}
+
+/* Quantity Selector */
+.quantity-selector {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-lg);
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.quantity-selector label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.95rem;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.quantity-control input {
+  width: 60px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-dark);
+}
+
+.quantity-control input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.quantity-control .qty-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: var(--text-dark);
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-control .qty-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.quantity-control .qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f0f0f0;
+  color: #999;
+}
+
+.quantity-selector .stock-info {
+  display: inline-block;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 /* Specifications */

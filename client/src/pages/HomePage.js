@@ -1,16 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FaVideo, FaLightbulb, FaShieldAlt, FaFingerprint, FaPhone, FaRobot, FaFire } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaVideo, FaLightbulb, FaShieldAlt, FaFingerprint, FaPhone, FaRobot, FaFire, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { serviceService } from '../services/api';
 import '../styles/HomePage.css';
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentPartnerIndex, setCurrentPartnerIndex] = useState(0);
+
+  const heroImages = [
+    'https://images.unsplash.com/photo-1557821552-17105176677c?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1597933197618-b0f58a6d9046?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1526374965328-7f5ae4e8be11?w=1200&h=600&fit=crop',
+  ];
+
+  // All partners combined for carousel
+  const allPartners = [
+    { name: 'CP Plus', img: '/cp plus.png', category: 'CCTV & Surveillance' },
+    { name: 'Dahua', img: '/dahua.png', category: 'CCTV & Surveillance' },
+    { name: 'Hikvision', img: '/hikvision.png', category: 'CCTV & Surveillance' },
+    { name: 'Beetel', img: '/beelet.png', category: 'CCTV & Surveillance' },
+    { name: 'Matrix', img: '/matrix.png', category: 'Intercom & Access Control' },
+    { name: 'Crystal', img: '/crystal.png', category: 'Intercom & Access Control' },
+    { name: 'Secureye', img: '/secureye.png', category: 'Intercom & Access Control' },
+    { name: 'ESSL', img: '/essl.png', category: 'Intercom & Access Control' },
+    { name: 'Tenda', img: '/tenda.png', category: 'Networking & Connectivity' },
+    { name: 'D-Link', img: '/dlink.png', category: 'Networking & Connectivity' },
+    { name: 'TP-Link', img: '/tplink.png', category: 'Networking & Connectivity' },
+  ];
 
   useEffect(() => {
     fetchServices();
   }, []);
+
+  // Auto-rotate images every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  // Auto-rotate partners every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPartnerIndex((prevIndex) => (prevIndex + 1) % allPartners.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [allPartners.length]);
 
   const fetchServices = async () => {
     try {
@@ -33,17 +76,60 @@ const HomePage = () => {
     { id: 7, name: 'Fire Alarm Systems', icon: FaFire, color: '#EC7063' },
   ];
 
+  const handleServiceCardClick = (serviceId) => {
+    // Both logged-in and non-logged-in users redirect to contact page
+    // Users need to contact for service inquiries
+    navigate('/contact');
+  };
+
+  const handlePrevPartner = () => {
+    setCurrentPartnerIndex((prevIndex) => (prevIndex - 1 + allPartners.length) % allPartners.length);
+  };
+
+  const handleNextPartner = () => {
+    setCurrentPartnerIndex((prevIndex) => (prevIndex + 1) % allPartners.length);
+  };
+
   return (
     <main className="homepage">
       {/* Hero Section */}
-      <section className="hero-section">
+      <section className="hero-section" style={{backgroundImage: `url(${heroImages[currentImageIndex]})`}}>
         <div className="hero-overlay"></div>
+        
+        {/* Left Arrow */}
+        <button 
+          className="carousel-arrow left-arrow"
+          onClick={() => setCurrentImageIndex((prevIndex) => (prevIndex - 1 + heroImages.length) % heroImages.length)}
+          aria-label="Previous slide"
+        >
+          <FaChevronLeft size={30} />
+        </button>
+
+        {/* Right Arrow */}
+        <button 
+          className="carousel-arrow right-arrow"
+          onClick={() => setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length)}
+          aria-label="Next slide"
+        >
+          <FaChevronRight size={30} />
+        </button>
+        
+        <div className="hero-carousel-indicators">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              className={`carousel-dot ${index === currentImageIndex ? 'active' : ''}`}
+              onClick={() => setCurrentImageIndex(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
         <div className="hero-content">
           <h1 className="hero-title">Integrated Security & Automation Solutions</h1>
           <p className="hero-subtitle">Protecting Homes & Businesses with Smart Technology</p>
           <div className="hero-buttons">
-            <Link to="/products" className="btn btn-primary">Explore Products</Link>
-            <Link to="/contact" className="btn btn-secondary">Contact Us</Link>
+            <Link to="/products" className="hero-btn hero-btn-secondary">Explore Products</Link>
+            <Link to="/contact" className="hero-btn hero-btn-secondary">Contact Us</Link>
           </div>
         </div>
       </section>
@@ -76,51 +162,52 @@ const HomePage = () => {
       <section className="services-overview-section">
         <div className="container">
           <h2 className="section-title">Our Services</h2>
-          <p className="section-subtitle">Expert Solutions for All Your Needs</p>
+          <p className="section-subtitle">What We Offer - Comprehensive Solutions for Your Needs</p>
           
-          {loading ? (
-            <p className="loading">Loading services...</p>
-          ) : services.length > 0 ? (
-            <div className="services-grid">
-              {services.map((service) => (
-                <div key={service._id} className="service-card">
-                  <div className="service-icon">
-                    <FaShieldAlt size={40} />
+          <div className="services-grid">
+            {loading ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
+                <p>Loading services...</p>
+              </div>
+            ) : services && services.length > 0 ? (
+              services.map((service, index) => {
+                // Service icons mapping
+                const iconMap = {
+                  'Installation & Setup': '📦',
+                  'AMC & Maintenance': '🔧',
+                  'Expert Consultation': '💡',
+                  'Technical Support': '⚡',
+                  'Training Programs': '📚'
+                };
+                
+                const serviceIcon = iconMap[service.name] || '🎯';
+                
+                return (
+                  <div 
+                    key={service._id || index}
+                    className="service-card"
+                    onClick={() => navigate('/contact')}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="service-icon">{serviceIcon}</div>
+                    <h3>{service.name}</h3>
+                    <p>{service.description}</p>
+                    <div className="service-pricing">
+                      <span className="price-label">Starting from</span>
+                      <span className="price">
+                        {service.price === 0 ? 'Free' : `₹${service.price.toLocaleString()}`}
+                      </span>
+                    </div>
+                    <div className="learn-more-link">Contact Us →</div>
                   </div>
-                  <h3>{service.serviceName}</h3>
-                  <p>{service.description}</p>
-                  <Link to="/contact" className="learn-more-link">Learn More →</Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="default-services">
-              <div className="service-card">
-                <div className="service-icon">
-                  <FaRobot size={40} />
-                </div>
-                <h3>Installation</h3>
-                <p>Professional installation of all security and automation systems with minimal downtime.</p>
-                <Link to="/contact" className="learn-more-link">Learn More →</Link>
+                );
+              })
+            ) : (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
+                <p>No services available at the moment.</p>
               </div>
-              <div className="service-card">
-                <div className="service-icon">
-                  <FaShieldAlt size={40} />
-                </div>
-                <h3>AMC & Maintenance</h3>
-                <p>Annual Maintenance Contracts to keep your systems running smoothly and securely.</p>
-                <Link to="/contact" className="learn-more-link">Learn More →</Link>
-              </div>
-              <div className="service-card">
-                <div className="service-icon">
-                  <FaLightbulb size={40} />
-                </div>
-                <h3>Consultation</h3>
-                <p>Expert consultation to design customized solutions for your specific requirements.</p>
-                <Link to="/contact" className="learn-more-link">Learn More →</Link>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </section>
 
@@ -148,28 +235,63 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className="partners-section">
-            <h3>Our Partners</h3>
-            <div className="partners-logos">
-              <div className="partner-logo">
-                <img src="https://via.placeholder.com/150x80?text=Hikvision" alt="Hikvision" />
+          <div className="partners-section-wrapper">
+            <h2 className="partners-section-heading">🔗 Our Technology Partners</h2>
+            
+            <div className="partners-section">
+            {/* Left Arrow */}
+            <button 
+              className="carousel-arrow left-arrow"
+              onClick={handlePrevPartner}
+              aria-label="Previous Partner"
+            >
+              <FaChevronLeft size={30} />
+            </button>
+
+            {/* Center Content */}
+            <div className="partner-hero-content">
+              <div className="partner-logo-large">
+                <img 
+                  src={allPartners[currentPartnerIndex].img} 
+                  alt={allPartners[currentPartnerIndex].name}
+                  key={currentPartnerIndex}
+                  className="partner-hero-logo"
+                />
               </div>
-              <div className="partner-logo">
-                <img src="https://via.placeholder.com/150x80?text=Dahua" alt="Dahua" />
+              
+              <div className="partner-hero-info">
+                <h2 className="partner-hero-title">{allPartners[currentPartnerIndex].name}</h2>
+                <p className="partner-hero-category">{allPartners[currentPartnerIndex].category}</p>
+                <div className="partner-counter">{currentPartnerIndex + 1} of {allPartners.length}</div>
               </div>
+            </div>
+
+            {/* Right Arrow */}
+            <button 
+              className="carousel-arrow right-arrow"
+              onClick={handleNextPartner}
+              aria-label="Next Partner"
+            >
+              <FaChevronRight size={30} />
+            </button>
+
+            {/* Bottom Navigation Dots */}
+            <div className="hero-carousel-indicators partner-indicators">
+              {allPartners.map((_, index) => (
+                <button
+                  key={index}
+                  className={`carousel-dot ${index === currentPartnerIndex ? 'active' : ''}`}
+                  onClick={() => setCurrentPartnerIndex(index)}
+                  aria-label={`Partner ${index + 1}`}
+                  title={allPartners[index].name}
+                />
+              ))}
+            </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="cta-section">
-        <div className="container">
-          <h2>Ready to Secure Your Space?</h2>
-          <p>Get a free consultation from our experts today</p>
-          <Link to="/contact" className="btn btn-large">Get a Quote Today</Link>
-        </div>
-      </section>
     </main>
   );
 };

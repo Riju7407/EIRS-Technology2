@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { authService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import '../styles/AuthPages.css';
 
 const SignInPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,10 +44,9 @@ const SignInPage = () => {
       const response = await authService.signin(formData);
       
       if (response && response.success) {
-        // Store token if present
+        // Use context login method to update global auth state
         if (response.token) {
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.data));
+          login(response.data, response.token);
         }
         
         // Redirect to admin dashboard if user is admin, otherwise to home
@@ -55,7 +56,7 @@ const SignInPage = () => {
           } else {
             navigate('/', { state: { message: 'Logged in successfully!' } });
           }
-        }, 500);
+        }, 100);
       } else {
         setError(response?.message || 'Sign in failed');
       }

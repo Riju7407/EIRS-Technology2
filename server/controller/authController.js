@@ -118,6 +118,7 @@ const signin = async (req, res, next) => {
             message: "Signed in successfully",
             token: token,
             data: {
+                _id: user._id,
                 id: user._id,
                 name: user.name,
                 email: user.email,

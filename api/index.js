@@ -80,10 +80,23 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
-// Request logging
+// Request logging middleware
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    console.log(`Original URL: ${req.originalUrl}`);
+    console.log(`Full URL: ${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    console.log(`Query: ${JSON.stringify(req.query)}`);
     ensureAdminExists();
+    next();
+});
+
+// Vercel rewrite handler - reconstruct the original path
+app.use((req, res, next) => {
+    // Vercel passes the original path in __path query parameter when rewriting
+    if (req.query.__path) {
+        req.url = req.query.__path;
+        console.log(`Path reconstructed from query: ${req.url}`);
+    }
     next();
 });
 

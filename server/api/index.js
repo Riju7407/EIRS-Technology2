@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const app = express();
 const { authRouter } = require('../router/authRouter.js');
 const databaseconnect = require('../config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
@@ -8,10 +7,16 @@ const cors = require('cors');
 const User = require('../model/userSchema');
 const bcrypt = require('bcrypt');
 
+// Create Express app for serverless function
+const app = express();
+
+// Connect to database
 databaseconnect();
 
-// Auto-create admin user on server startup if it doesn't exist
-const createAdminOnStartup = async () => {
+// Auto-create admin user on first request
+let adminCreated = false;
+const ensureAdminExists = async () => {
+    if (adminCreated) return;
     try {
         const adminEmail = 'admin@eirtech.com';
         const existingAdmin = await User.findOne({ email: adminEmail });
@@ -27,20 +32,17 @@ const createAdminOnStartup = async () => {
             });
             
             await adminUser.save();
-            console.log('✅ Admin user created successfully on startup');
-        } else {
-            console.log('✅ Admin user already exists');
+            console.log('✅ Admin user created successfully');
         }
+        adminCreated = true;
     } catch (error) {
-        console.error('Error creating admin on startup:', error.message);
+        console.error('Error creating admin:', error.message);
     }
 };
 
-createAdminOnStartup();
-
-// CORS configuration - Updated for production
+// CORS configuration
 const corsOptions = {
-    origin: ['http://localhost:3001', 'http://localhost:3000', 'http://192.168.0.147:3001', 'https://*.vercel.app'],
+    origin: ['http://localhost:3001', 'http://localhost:3000', 'http://192.168.0.147:3001', 'https://eirs-technology2-git-main-riju-sarkars-projects.vercel.app', 'https://*.vercel.app'],
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -54,31 +56,32 @@ app.use(cookieParser());
 
 // Request logging middleware
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    console.log(`API Request - ${new Date().toISOString()} - ${req.method} ${req.path}`);
+    ensureAdminExists();
     next();
 });
 
-app.use('/auth/', authRouter);
+// Mount authRouter - handle both /auth and /api/auth paths
+app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
 
+// Health check endpoints
 app.get('/', (req, res) => {
-    res.json({ message: 'EIRS Technology API Server', status: 'running' });
+    res.json({ message: 'EIRS Technology API', status: 'running' });
 });
 
 app.get('/api', (req, res) => {
     res.json({ message: 'EIRS Technology API', version: '1.0.0' });
 });
 
-app.get('/about', (req, res) => {
-    res.json({ message: 'About EIRS Technology' });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    console.error('API Error:', err.message);
     res.status(500).json({
         success: false,
         message: err.message || 'Server Error'
     });
 });
 
+// Export as serverless function handler
 module.exports = app;

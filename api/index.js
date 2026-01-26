@@ -9,9 +9,38 @@ const app = express();
 // Import routes and middleware
 const databaseconnect = require('../server/config/databaseConfig');
 const { authRouter } = require('../server/router/authRouter');
+const User = require('../server/model/userSchema');
+const bcrypt = require('bcrypt');
 
 // Connect to database
 databaseconnect();
+
+// Auto-create admin user on first request
+let adminCreated = false;
+const ensureAdminExists = async () => {
+    if (adminCreated) return;
+    try {
+        const adminEmail = 'admin@eirtech.com';
+        const existingAdmin = await User.findOne({ email: adminEmail });
+        
+        if (!existingAdmin) {
+            const adminUser = new User({
+                name: 'EIRS Admin',
+                email: adminEmail,
+                phoneNumber: '9999999999',
+                address: 'EIRS Technology, Tech City',
+                password: 'Admin@123',
+                isAdmin: true
+            });
+            
+            await adminUser.save();
+            console.log('✅ Admin user created');
+        }
+        adminCreated = true;
+    } catch (error) {
+        console.error('Admin creation error:', error.message);
+    }
+};
 
 // CORS configuration - CRITICAL for fixing 405 errors
 const corsOptions = {
@@ -54,6 +83,7 @@ app.use(cookieParser());
 // Request logging
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    ensureAdminExists();
     next();
 });
 
@@ -67,11 +97,13 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: 'EIRS Technology API', version: '1.0.0' });
 });
 
-// Auth routes - all endpoints from authRouter
+// Mount authRouter at root - it handles all /auth/* routes
+// Router will handle: /signup, /signin, /products, /services, /orders, /contacts, etc.
 app.use('/', authRouter);
 
-// 404 handler
+// 404 handler - only reached if no route matched
 app.use((req, res) => {
+    console.error(`Route not found: ${req.method} ${req.path}`);
     res.status(404).json({ 
         success: false, 
         message: 'Route not found', 

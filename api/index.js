@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 // Initialize Express app
 const app = express();
@@ -97,6 +98,9 @@ app.use((req, res, next) => {
     next();
 });
 
+// Serve static files from React build folder
+app.use(express.static(path.join(__dirname, '../client/build')));
+
 // Health check route (NO auth required)
 app.get('/health', (req, res) => {
     res.status(200).json({ message: 'EIRS API', status: 'running' });
@@ -110,6 +114,12 @@ app.get('/', (req, res) => {
 // Mount authRouter at /auth - it handles all /auth/* routes
 // Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
 app.use('/auth', authRouter);
+
+// Serve React index.html for all non-API routes (React Router)
+app.get('*', (req, res) => {
+    // If it's not an API call, serve the React app
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
 
 // 404 handler - only reached if no route matched
 app.use((req, res) => {

@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 // Determine API base URL
-// For production: use relative /api path (Vercel will route to serverless functions)
+// For production (Render/any server): use relative /auth path (same server, same port)
 // For development: use localhost backend
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api'
+  ? '/auth'
   : (process.env.REACT_APP_API_URL || 'http://localhost:5000');
 
 console.log('API_BASE_URL configured as:', API_BASE_URL);

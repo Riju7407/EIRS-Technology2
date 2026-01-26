@@ -109,7 +109,7 @@ const Footer = () => {
             <FaMapMarkerAlt />
             <div>
               <span className="info-label">Location</span>
-              <span className="info-text">123 Tech Street, Tech City, TC 12345</span>
+              <span className="info-text">553/135 Upper No 9. Bhairaw Complex, Alambagh Bus Stop Lucknow</span>
             </div>
           </div>
           <div className="info-item">

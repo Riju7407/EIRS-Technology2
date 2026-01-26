@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaVideo, FaLightbulb, FaShieldAlt, FaFingerprint, FaPhone, FaRobot, FaFire, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { serviceService } from '../services/api';
+import ServicesPopup from '../components/ServicesPopup';
 import '../styles/HomePage.css';
 
 const HomePage = () => {
@@ -28,9 +29,9 @@ const HomePage = () => {
     { name: 'Crystal', img: '/crystal.png', category: 'Intercom & Access Control' },
     { name: 'Secureye', img: '/secureye.png', category: 'Intercom & Access Control' },
     { name: 'ESSL', img: '/essl.png', category: 'Intercom & Access Control' },
-    { name: 'Tenda', img: '/tenda.png', category: 'Networking & Connectivity' },
-    { name: 'D-Link', img: '/dlink.png', category: 'Networking & Connectivity' },
-    { name: 'TP-Link', img: '/tplink.png', category: 'Networking & Connectivity' },
+    { name: 'Tenda', img: '/Tenda.png', category: 'Networking & Connectivity' },
+    { name: 'D-Link', img: '/Dlink.png', category: 'Networking & Connectivity' },
+    { name: 'TP-Link', img: '/Tplink.png', category: 'Networking & Connectivity' },
   ];
 
   useEffect(() => {
@@ -291,6 +292,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Services Popup - Shows only once */}
+      <ServicesPopup />
 
     </main>
   );

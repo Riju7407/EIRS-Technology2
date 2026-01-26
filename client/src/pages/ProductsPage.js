@@ -60,6 +60,14 @@ const ProductsPage = () => {
   ];
 
   useEffect(() => {
+    // Initialize search term from URL parameters
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      setSearchTerm(decodeURIComponent(searchQuery));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     fetchProducts();
   }, []);
 

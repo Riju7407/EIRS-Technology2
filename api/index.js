@@ -97,9 +97,9 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: 'EIRS Technology API', version: '1.0.0' });
 });
 
-// Mount authRouter at root - it handles all /auth/* routes
-// Router will handle: /signup, /signin, /products, /services, /orders, /contacts, etc.
-app.use('/', authRouter);
+// Mount authRouter at /auth - it handles all /auth/* routes
+// Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
+app.use('/auth', authRouter);
 
 // 404 handler - only reached if no route matched
 app.use((req, res) => {

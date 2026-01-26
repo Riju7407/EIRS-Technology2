@@ -9,6 +9,10 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const User = require('./model/userSchema');
 const bcrypt = require('bcrypt');
+const productController = require('./controller/productController.js');
+const serviceController = require('./controller/serviceController.js');
+const orderController = require('./controller/orderController.js');
+const contactController = require('./controller/contactController.js');
 
 databaseconnect();
 
@@ -66,6 +70,31 @@ app.use('/auth/', authRouter);
 
 app.use('/payment', paymentRouter);
 app.use('/api/payment', paymentRouter);
+
+// Product routes
+app.get('/auth/products', productController.getAllProducts);
+app.get('/auth/products/:id', productController.getProductById);
+app.post('/auth/products/add', productController.createProduct);
+app.put('/auth/products/:id', productController.updateProduct);
+app.delete('/auth/products/:id', productController.deleteProduct);
+
+// Service routes
+app.get('/auth/services', serviceController.getAllServices);
+app.get('/auth/services/admin', serviceController.getAdminServices);
+app.post('/auth/services/add', serviceController.createService);
+app.put('/auth/services/:id', serviceController.updateService);
+app.delete('/auth/services/:id', serviceController.deleteService);
+
+// Order routes
+app.get('/auth/orders', orderController.getUserOrders);
+app.get('/auth/orders/all', orderController.getAllOrders);
+app.get('/auth/orders/:id', orderController.getOrderById);
+app.post('/auth/orders/add', orderController.createOrder);
+app.put('/auth/orders/:id', orderController.updateOrder);
+
+// Contact routes
+app.post('/auth/contact/submit', contactController.submitContact);
+app.get('/auth/contact/all', contactController.getAllContacts);
 
 app.get('/', (req, res) => {
     res.json({ message: 'EIRS Technology API Server', status: 'running' });

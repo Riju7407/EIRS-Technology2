@@ -3,18 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "client/build",
   "installCommand": "npm install && cd client && npm install && cd ../server && npm install",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs@24",
-      "memory": 1024,
-      "maxDuration": 60,
-      "includeFiles": "server/**",
-      "excludeFiles": "client/**"
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  },
   "routes": [
     {
       "src": "/api/(.*)",

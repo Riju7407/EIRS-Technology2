@@ -4,9 +4,9 @@ services:
     env: node
     region: oregon
     plan: free
-    rootDir: server
-    buildCommand: npm install
-    startCommand: node server.js
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: node api/index.js
     envVars:
       - key: MONGO_URL
         scope: build,runtime
@@ -15,3 +15,9 @@ services:
         value: Secret
       - key: NODE_ENV
         value: production
+      - key: RAZORPAY_KEY_ID
+        scope: build,runtime
+        value: rzp_test_1DP5mmOlF5G5ag
+      - key: RAZORPAY_KEY_SECRET
+        scope: build,runtime
+        value: eGe8jSqnAFZPBFb1Goz3BQGM

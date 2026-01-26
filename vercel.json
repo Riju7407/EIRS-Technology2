@@ -5,7 +5,7 @@
   "installCommand": "npm install && cd client && npm install && cd ../server && npm install",
   "functions": {
     "api/**/*.js": {
-      "runtime": "nodejs24.x",
+      "runtime": "nodejs@24",
       "memory": 1024,
       "maxDuration": 60,
       "includeFiles": "server/**",

@@ -98,8 +98,12 @@ app.use((req, res, next) => {
     next();
 });
 
+// Resolve the correct path to React build
+const clientBuildPath = path.resolve(__dirname, '..', 'client', 'build');
+console.log(`📁 Serving static files from: ${clientBuildPath}`);
+
 // Serve static files from React build folder
-app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static(clientBuildPath));
 
 // Health check route (NO auth required)
 app.get('/health', (req, res) => {
@@ -119,7 +123,7 @@ app.use('/auth', authRouter);
 app.use((req, res, next) => {
     // Only serve index.html for non-API requests
     if (!req.path.startsWith('/auth') && !req.path.startsWith('/health')) {
-        res.sendFile(path.join(__dirname, '../client/build/index.html'), (err) => {
+        res.sendFile(path.join(clientBuildPath, 'index.html'), (err) => {
             if (err) {
                 console.error('Error serving index.html:', err);
                 res.status(404).json({ success: false, message: 'Not found' });

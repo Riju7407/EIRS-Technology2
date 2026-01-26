@@ -56,22 +56,41 @@ app.use(cookieParser());
 
 // Request logging middleware
 app.use((req, res, next) => {
-    console.log(`API Request - ${new Date().toISOString()} - ${req.method} ${req.path}`);
+    console.log(`API Request - ${new Date().toISOString()} - ${req.method} ${req.path} - Query: ${JSON.stringify(req.query)}`);
     ensureAdminExists();
     next();
 });
-
-// Mount authRouter - handle both /auth and /api/auth paths
-app.use('/auth', authRouter);
-app.use('/api/auth', authRouter);
 
 // Health check endpoints
 app.get('/', (req, res) => {
     res.json({ message: 'EIRS Technology API', status: 'running' });
 });
 
+// Handle the rewritten /api?path=auth/signin requests
+// The vercel.json rewrite sends /api/auth/signin as /api?path=auth/signin
+app.use((req, res, next) => {
+    // If there's a path query parameter (from Vercel rewrite), reconstruct the original path
+    if (req.query.path) {
+        req.url = '/' + req.query.path;
+    }
+    next();
+});
+
+// Mount authRouter at root since we've reconstructed the path
+app.use('/', authRouter);
+
+// Fallback health check for /api endpoint
 app.get('/api', (req, res) => {
     res.json({ message: 'EIRS Technology API', version: '1.0.0' });
+});
+
+// 404 handler
+app.use((req, res) => {
+    console.error(`Route not found: ${req.method} ${req.path}`);
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
+    });
 });
 
 // Error handling middleware

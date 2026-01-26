@@ -26,7 +26,8 @@
     "bcrypt": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "cookie-parser": "^1.4.7",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "email-validation": "^0.1.2"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

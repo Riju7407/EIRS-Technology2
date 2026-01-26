@@ -132,4 +132,12 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Start server - listen on port for Render/production
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`✅ EIRS API Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Also export for serverless/Vercel compatibility
 module.exports = app;

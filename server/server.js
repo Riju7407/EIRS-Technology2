@@ -7,8 +7,40 @@ const paymentRouter = require('./router/paymentRouter.js');
 const databaseconnect = require('./config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const User = require('./model/userSchema');
+const bcrypt = require('bcrypt');
 
 databaseconnect();
+
+// Auto-create admin user on server startup if it doesn't exist
+const createAdminOnStartup = async () => {
+    try {
+        const adminEmail = 'admin@eirtech.com';
+        const existingAdmin = await User.findOne({ email: adminEmail });
+        
+        if (!existingAdmin) {
+            const adminUser = new User({
+                name: 'EIRS Admin',
+                email: adminEmail,
+                phoneNumber: '9999999999',
+                address: 'EIRS Technology, Tech City',
+                password: 'Admin@123',
+                isAdmin: true
+            });
+            
+            await adminUser.save();
+            console.log('✅ Admin user created successfully on startup');
+            console.log('Admin Email: admin@eirtech.com');
+            console.log('Admin Password: Admin@123');
+        } else {
+            console.log('✅ Admin user already exists');
+        }
+    } catch (error) {
+        console.error('Error creating admin on startup:', error.message);
+    }
+};
+
+createAdminOnStartup();
 
 // CORS configuration - Updated for production
 const corsOptions = {

@@ -17,5 +17,9 @@ yarn-error.log
 .next
 out
 dist
-server
-!api
+docs
+test
+server/node_modules
+client/node_modules
+client/public/index.html.bak
+

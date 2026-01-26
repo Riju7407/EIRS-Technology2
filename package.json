@@ -1,0 +1,30 @@
+{
+  "name": "eirs-technology",
+  "version": "1.0.0",
+  "description": "EIRS Technology - Integrated Security & Automation Solutions",
+  "main": "api/index.js",
+  "scripts": {
+    "build": "cd client && npm install && npm run build",
+    "start": "node api/index.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm start",
+    "client": "cd client && npm start",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "mongoose": "^9.1.2",
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "cookie-parser": "^1.4.7",
+    "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

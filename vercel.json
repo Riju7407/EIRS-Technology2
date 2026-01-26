@@ -12,6 +12,9 @@
       "excludeFiles": "client/**"
     }
   },
+  "env": {
+    "NODE_ENV": "production"
+  },
   "routes": [
     {
       "src": "/api/(.*)",

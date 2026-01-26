@@ -5,7 +5,7 @@
   "main": "api/index.js",
   "scripts": {
     "build": "cd client && npm install && npm run build",
-    "start": "node api/index.js",
+    "start": "node server/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm start",
     "client": "cd client && npm start",
@@ -14,6 +14,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "express": "^5.2.1",
     "cors": "^2.8.5",
@@ -28,3 +31,4 @@
     "concurrently": "^8.2.0"
   }
 }
+

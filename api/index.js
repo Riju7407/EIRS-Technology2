@@ -115,10 +115,19 @@ app.get('/', (req, res) => {
 // Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
 app.use('/auth', authRouter);
 
-// Serve React index.html for all non-API routes (React Router)
-app.get('*', (req, res) => {
-    // If it's not an API call, serve the React app
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+// Serve React index.html for all non-API routes (React Router) - BEFORE 404 handler
+app.use((req, res, next) => {
+    // Only serve index.html for non-API requests
+    if (!req.path.startsWith('/auth') && !req.path.startsWith('/health')) {
+        res.sendFile(path.join(__dirname, '../client/build/index.html'), (err) => {
+            if (err) {
+                console.error('Error serving index.html:', err);
+                res.status(404).json({ success: false, message: 'Not found' });
+            }
+        });
+    } else {
+        next();
+    }
 });
 
 // 404 handler - only reached if no route matched

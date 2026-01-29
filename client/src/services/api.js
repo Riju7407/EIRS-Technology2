@@ -180,6 +180,15 @@ export const productService = {
       throw error.response?.data || error.message;
     }
   },
+
+  getSubcategoriesByCategory: async (category) => {
+    try {
+      const response = await api.get(`/auth/subcategories/category/${category}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 // Services (Company Services like Installation, AMC, etc.)

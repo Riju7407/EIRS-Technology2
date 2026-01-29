@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaTools, FaHeadset, FaClipboardList, FaAmbulance } from 'react-icons/fa';
+import { FaTools, FaHeadset, FaClipboardList, FaAmbulance, FaTimes } from 'react-icons/fa';
 import { serviceService } from '../services/api';
+import { useCategoryFilter } from '../context/CategoryFilterContext';
 import ServiceModal from '../components/ServiceModal';
+import CategorySidebar from '../components/CategorySidebar';
 import '../styles/ServicesPage.css';
 
 const ServicesPage = () => {
@@ -10,6 +12,7 @@ const ServicesPage = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [dbServices, setDbServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
   const mainServices = [
     {
@@ -57,15 +60,23 @@ const ServicesPage = () => {
 
   return (
     <>
-      <main className="services-page">
-        {/* Header */}
-        <section className="services-header">
-          <div className="container">
-            <h1>Our Services</h1>
-            <p>Comprehensive Solutions for Your Security Needs</p>
-          </div>
-        </section>
+      {/* Left Sidebar - Categories & Filters */}
+      <div className={`left-sidebar-filters ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Categories & Filters</h3>
+          <button className="close-sidebar-btn" onClick={closeSidebar}>
+            <FaTimes />
+          </button>
+        </div>
+        <CategorySidebar />
+      </div>
 
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
+      <main className="services-page">
         {/* Main Services - What We Offer */}
         <section className="main-services-section">
           <div className="container">
@@ -73,37 +84,30 @@ const ServicesPage = () => {
             {loading ? (
               <p className="loading">Loading services...</p>
             ) : dbServices.length > 0 ? (
-              <div className="services-grid">
+              <div className="services-text-container">
                 {dbServices.map((service, index) => (
                   <div
                     key={index}
-                    className="service-card"
+                    className="service-text-item"
                     onClick={() => handleServiceClick(service)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="service-icon-wrapper">
-                      <FaTools size={50} />
-                    </div>
                     <h3>{service.name}</h3>
                     <p>{service.description}</p>
-                    <div className="service-card-price">₹{service.price?.toLocaleString() || 'Contact'}</div>
+                    <div className="service-price">₹{service.price?.toLocaleString() || 'Contact'}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="services-grid">
+              <div className="services-text-container">
                 {mainServices.map((service, index) => {
-                  const IconComponent = service.icon;
                   return (
                     <div
                       key={index}
-                      className="service-card"
+                      className="service-text-item"
                       onClick={() => handleServiceClick(service)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className="service-icon-wrapper">
-                        <IconComponent size={50} />
-                      </div>
                       <h3>{service.title}</h3>
                       <p>{service.description}</p>
                     </div>

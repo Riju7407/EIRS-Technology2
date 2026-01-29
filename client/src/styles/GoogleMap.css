@@ -3,6 +3,9 @@
   width: 100%;
   padding: var(--spacing-lg) 0;
   background-color: #f9fafb;
+  position: relative;
+  z-index: 2;
+  margin: 20px 0;
 }
 
 .map-container {

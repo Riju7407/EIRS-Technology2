@@ -1,7 +1,7 @@
 /* Services Page Styles */
 .services-page {
   min-height: 100vh;
-  background-color: #f9fafb;
+  background: #ffffff;
 }
 
 .services-header {
@@ -28,14 +28,14 @@
 /* Main Services Section */
 .main-services-section {
   padding: var(--spacing-2xl) var(--spacing-lg);
-  background-color: white;
+  background: #ffffff;
 }
 
 .main-services-section h2 {
   text-align: center;
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #1f2937;
   margin-bottom: var(--spacing-2xl);
 }
 
@@ -47,18 +47,18 @@
 
 .service-card {
   padding: var(--spacing-xl);
-  background-color: #f9fafb;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 0.75rem;
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #667eea;
 }
 
 .service-card:hover {
-  background-color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-color);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+  border-color: #667eea;
 }
 
 .service-icon-wrapper {
@@ -77,12 +77,12 @@
 .service-card h3 {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #ffffff;
   margin-bottom: var(--spacing-md);
 }
 
 .service-card p {
-  color: #4b5563;
+  color: #e0e7ff;
   line-height: 1.6;
   margin-bottom: var(--spacing-md);
 }
@@ -97,14 +97,14 @@
 /* Additional Services Section */
 .additional-services-section {
   padding: var(--spacing-2xl) var(--spacing-lg);
-  background-color: #f9fafb;
+  background: linear-gradient(180deg, #0f172a 0%, #1a1a2e 100%);
 }
 
 .additional-services-section h2 {
   text-align: center;
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #ffffff;
   margin-bottom: var(--spacing-2xl);
 }
 
@@ -116,33 +116,33 @@
 
 .additional-service-card {
   padding: var(--spacing-xl);
-  background-color: white;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.12);
   transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #667eea;
 }
 
 .additional-service-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
 }
 
 .additional-service-card h3 {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #ffffff;
   margin-bottom: var(--spacing-md);
 }
 
 .additional-service-card p {
-  color: var(--text-light);
+  color: #e0e7ff;
   line-height: 1.6;
   margin-bottom: var(--spacing-md);
 }
 
 .service-price {
-  color: var(--primary-color);
+  color: #667eea;
   font-weight: 700;
   font-size: 1.1rem;
 }
@@ -150,14 +150,14 @@
 /* Service Features Section */
 .service-features-section {
   padding: var(--spacing-2xl) var(--spacing-lg);
-  background-color: white;
+  background: #ffffff;
 }
 
 .service-features-section h2 {
   text-align: center;
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #1f2937;
   margin-bottom: var(--spacing-2xl);
 }
 
@@ -169,15 +169,15 @@
 
 .feature-item {
   padding: var(--spacing-xl);
-  background-color: #f9fafb;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 0.75rem;
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #667eea;
 }
 
 .feature-item:hover {
-  background-color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   transform: translateY(-5px);
 }
@@ -185,12 +185,12 @@
 .feature-item h3 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #ffffff;
   margin-bottom: var(--spacing-md);
 }
 
 .feature-item p {
-  color: #000000;
+  color: #e0e7ff;
   line-height: 1.6;
   font-size: 0.95rem;
   font-weight: 500;
@@ -199,14 +199,14 @@
 /* Pricing Section */
 .pricing-section {
   padding: var(--spacing-2xl) var(--spacing-lg);
-  background: linear-gradient(135deg, #f0f9ff 0%, #ede9fe 100%);
+  background: linear-gradient(180deg, #0f172a 0%, #1a1a2e 100%);
 }
 
 .pricing-section h2 {
   text-align: center;
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #ffffff;
   margin-bottom: var(--spacing-2xl);
 }
 
@@ -217,25 +217,27 @@
 }
 
 .pricing-card {
-  background-color: white;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   padding: var(--spacing-xl);
   border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.12);
   transition: all 0.3s ease;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #667eea;
   position: relative;
   text-align: center;
 }
 
 .pricing-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  border-color: var(--primary-color);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .pricing-card.featured {
-  border-color: var(--primary-color);
+  border-color: #667eea;
   transform: scale(1.05);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .pricing-card.featured:hover {
@@ -258,14 +260,14 @@
 .pricing-card h3 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #ffffff;
   margin-bottom: var(--spacing-md);
 }
 
 .price {
   font-size: 2.5rem;
   font-weight: 800;
-  color: var(--primary-color);
+  color: #667eea;
   margin-bottom: var(--spacing-lg);
 }
 
@@ -278,8 +280,8 @@
 
 .package-features li {
   padding: var(--spacing-md) 0;
-  color: var(--text-light);
-  border-bottom: 1px solid #e5e7eb;
+  color: #e0e7ff;
+  border-bottom: 1px solid #667eea;
 }
 
 .package-features li:last-child {

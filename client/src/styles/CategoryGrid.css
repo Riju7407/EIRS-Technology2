@@ -1,0 +1,124 @@
+/* Category Grid Styles */
+.category-grid-section {
+  padding: 60px 0;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.category-grid-section h2 {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 50px;
+  color: #333;
+  font-weight: 700;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 30px 20px;
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-color: #007bff;
+}
+
+.category-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 40px;
+  color: #007bff;
+  transition: all 0.3s ease;
+}
+
+.category-card:hover .category-icon {
+  color: #0056b3;
+  transform: scale(1.1);
+}
+
+.category-card h3 {
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .category-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 20px;
+  }
+
+  .category-card {
+    padding: 20px 15px;
+  }
+
+  .category-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 32px;
+    margin-bottom: 15px;
+  }
+
+  .category-card h3 {
+    font-size: 14px;
+  }
+
+  .category-grid-section h2 {
+    font-size: 26px;
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+  }
+
+  .category-card {
+    padding: 15px 10px;
+  }
+
+  .category-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .category-card h3 {
+    font-size: 12px;
+  }
+
+  .category-grid-section h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+}

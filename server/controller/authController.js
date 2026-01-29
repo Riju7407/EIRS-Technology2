@@ -191,19 +191,224 @@ const editUserProfile = async (req, res, next) => {
 //Post Edit User Profile logic to be implemented
 const postEditUserProfile = async (req, res, next) => {
     try{
-        const userData = await userSchema.findByIdAndUpdate({_id:req.user.id}, {$set:{name:req.body.name, phoneNumber:req.body.phoneNumber, address:req.body.address, email:req.body.email}});
+        const { name, phoneNumber, address, email, city, state, pincode } = req.body;
+        const userId = req.user.id;
+
+        // Validate input
+        if (!name || !phoneNumber || !address) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, phone number, and address are required"
+            });
+        }
+
+        // Update user with all fields
+        const updatedUser = await userSchema.findByIdAndUpdate(
+            userId, 
+            {
+                $set: {
+                    name: name.trim(),
+                    phoneNumber: phoneNumber.toString().trim(),
+                    address: address.trim(),
+                    email: email || undefined,
+                    city: city?.trim() || undefined,
+                    state: state?.trim() || undefined,
+                    pincode: pincode?.toString().trim() || undefined
+                }
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
         res.status(200).json({
             success: true,
-            data: userData
+            message: "Profile updated successfully",
+            data: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phoneNumber: updatedUser.phoneNumber,
+                address: updatedUser.address,
+                city: updatedUser.city,
+                state: updatedUser.state,
+                pincode: updatedUser.pincode
+            }
         });
     } catch (error) {
+        console.error('Update profile error:', error);
         res.status(500).json({
             success: false,
-            message: "User not found"
-        });next(error);
+            message: error.message || "Server error while updating profile"
+        });
     }
 }
 
+// Change Password logic
+const changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password and new password are required"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters long"
+            });
+        }
+
+        // Get user from database
+        const user = await userSchema.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Verify current password
+        const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Current password is incorrect"
+            });
+        }
+
+        // Check if new password is same as current
+        const isNewPasswordSame = await bcrypt.compare(newPassword, user.password);
+        if (isNewPasswordSame) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be different from current password"
+            });
+        }
+
+        // Update password
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password changed successfully"
+        });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while changing password"
+        });
+    }
+}
+
+// Forgot Password logic - Send reset email
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
+        }
+
+        // Check if user exists
+        const user = await userSchema.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "No account found with this email"
+            });
+        }
+
+        // Generate reset token
+        const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
+
+        // Store reset token in user document
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpiry = resetTokenExpiry;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset link has been sent to your email",
+            resetToken: resetToken
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while processing forgot password"
+        });
+    }
+}
+
+// Reset Password logic
+const resetPassword = async (req, res, next) => {
+    try {
+        const { email, resetToken, newPassword } = req.body;
+
+        if (!email || !resetToken || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Email, reset token, and new password are required"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters long"
+            });
+        }
+
+        // Find user and verify reset token
+        const user = await userSchema.findOne({ 
+            email: email.toLowerCase().trim(),
+            resetPasswordToken: resetToken,
+            resetPasswordExpiry: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired reset token"
+            });
+        }
+
+        // Update password and clear reset token
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpiry = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password has been reset successfully"
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while resetting password"
+        });
+    }
+}
 
 module.exports = {
     signup,
@@ -211,5 +416,8 @@ module.exports = {
     getuser,
     logout,
     editUserProfile,
-    postEditUserProfile
+    postEditUserProfile,
+    changePassword,
+    forgotPassword,
+    resetPassword
 };

@@ -1,10 +1,11 @@
 const express = require('express');
-const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile,} = require('../controller/authController');
+const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, changePassword, forgotPassword, resetPassword } = require('../controller/authController');
 const { services, getAllServices, deleteService, addService, updateService } = require('../controller/serviceController');
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } = require('../controller/productController');
 const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder } = require('../controller/orderController');
+const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
 const jwtAuth = require('../middleware/jwtAuth');
 const authRouter = express.Router();
@@ -15,6 +16,9 @@ authRouter.get('/user', jwtAuth, getuser);
 authRouter.get('/admin/status', jwtAuth, checkAdminStatus);
 authRouter.post('/logout', jwtAuth, logout);
 authRouter.post('/contact', jwtAuth, submitContact);
+authRouter.put('/change-password/:id', jwtAuth, changePassword);
+authRouter.post('/forgot-password', forgotPassword);
+authRouter.post('/reset-password', resetPassword);
 authRouter.get('/services', services);
 authRouter.get('/users', adminMiddleware, getAllUsers);
 authRouter.get('/contacts', adminMiddleware, getContacts);
@@ -32,6 +36,14 @@ authRouter.get('/products/:id', getProductById);
 authRouter.post('/products/add',jwtAuth, adminMiddleware, createProduct);
 authRouter.put('/products/:id', jwtAuth, adminMiddleware, updateProduct);
 authRouter.delete('/products/:id', jwtAuth, adminMiddleware, deleteProduct);
+
+// Subcategory Routes
+authRouter.post('/subcategories', jwtAuth, adminMiddleware, createSubcategory);
+authRouter.get('/subcategories', getAllSubcategories);
+authRouter.get('/subcategories/category/:category', getSubcategoriesByCategory);
+authRouter.get('/subcategories/:id', getSubcategoryById);
+authRouter.put('/subcategories/:id', jwtAuth, adminMiddleware, updateSubcategory);
+authRouter.delete('/subcategories/:id', jwtAuth, adminMiddleware, deleteSubcategory);
 
 // Order Routes
 authRouter.post('/orders/create', jwtAuth, createOrder);

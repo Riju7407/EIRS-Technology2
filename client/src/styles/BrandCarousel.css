@@ -1,0 +1,225 @@
+/* Brand Carousel Styles - IPVoice Inspired Design */
+.brand-carousel-section {
+  padding: 60px 0;
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 50%, #e8eef7 100%);
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0;
+}
+
+.brand-carousel-section h2 {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #1a1a2e;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.brand-carousel-section::before {
+  content: 'Trusted by Industry Leaders';
+  display: block;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 40px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.brand-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+}
+
+.brands-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 20px;
+  width: 100%;
+  padding: 40px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
+  animation: scrollLeftToRight 20s linear infinite;
+}
+
+@keyframes scrollLeftToRight {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.brand-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  transition: all 0.4s ease;
+  border: 1px solid #e8e8e8;
+  cursor: pointer;
+}
+
+.brand-item:hover {
+  background: #f0f7ff;
+  transform: translateY(-4px);
+  border-color: #2874f0;
+  box-shadow: 0 8px 16px rgba(40, 116, 240, 0.15);
+}
+
+.brand-item img {
+  max-width: 160px;
+  max-height: 110px;
+  object-fit: contain;
+  filter: grayscale(0%) brightness(1);
+  opacity: 1;
+  transition: all 0.4s ease;
+}
+
+.brand-item:hover img {
+  filter: grayscale(0%) brightness(1.1);
+  opacity: 1;
+}
+
+.carousel-nav {
+  background: linear-gradient(135deg, #2874f0 0%, #1c5ac2 100%);
+  border: none;
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(40, 116, 240, 0.3);
+}
+
+.carousel-nav:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(40, 116, 240, 0.4);
+}
+
+.carousel-nav:active {
+  transform: scale(0.95);
+}
+
+/* Animation for auto-scroll */
+.brands-wrapper.animated-scroll {
+  animation: slideInRight 1s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .brand-carousel-section {
+    padding: 50px 0;
+  }
+
+  .brand-carousel-section h2 {
+    font-size: 28px;
+  }
+
+  .brands-wrapper {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    padding: 32px 16px;
+  }
+
+  .brand-item {
+    min-height: 110px;
+  }
+
+  .brand-item img {
+    max-width: 130px;
+    max-height: 90px;
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-carousel-section {
+    padding: 40px 0;
+  }
+
+  .brand-carousel-section h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .brand-carousel {
+    gap: 12px;
+  }
+
+  .brands-wrapper {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    padding: 24px 12px;
+  }
+
+  .brand-item {
+    min-height: 80px;
+  }
+
+  .carousel-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-carousel-section {
+    padding: 30px 0;
+  }
+
+  .brand-carousel-section h2 {
+    font-size: 20px;
+  }
+
+  .brand-carousel {
+    gap: 8px;
+  }
+
+  .brands-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 20px 10px;
+  }
+
+  .brand-item {
+    min-height: 70px;
+    padding: 12px;
+  }
+
+  .brand-item img {
+    max-width: 80px;
+    max-height: 60px;
+  }
+
+  .carousel-nav {
+    display: none;
+  }
+}

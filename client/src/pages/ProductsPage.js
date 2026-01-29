@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { FaSearch, FaFilter, FaChevronDown, FaShoppingCart } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaChevronDown, FaShoppingCart, FaTimes } from 'react-icons/fa';
 import { productService } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useCategoryFilter } from '../context/CategoryFilterContext';
 import CheckoutModal from '../components/CheckoutModal';
+import ProductCard from '../components/ProductCard';
+import CategorySidebar from '../components/CategorySidebar';
+import Footer from '../components/Footer';
 import '../styles/ProductsPage.css';
 
 const ProductsPage = () => {
@@ -12,6 +16,7 @@ const ProductsPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { isSidebarOpen, closeSidebar } = useCategoryFilter();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,32 +36,79 @@ const ProductsPage = () => {
   const categoriesData = [
     {
       name: 'CCTV Cameras',
-      subcategories: ['Dome Cameras', 'Bullet Cameras', 'PTZ Cameras', 'Thermal Cameras', 'IP Cameras']
+      subcategories: [
+        'IP Camera Solutions',
+        'HD Camera (Analog CCTV)',
+        'CCTV Bundle Packs',
+        'Wi-Fi / 4G Camera'
+      ]
     },
     {
-      name: 'IoT Solutions',
-      subcategories: ['Smart Sensors', 'IoT Devices', 'Connected Systems', 'Wireless Modules']
-    },
-    {
-      name: 'Home & Office Security',
-      subcategories: ['Door Locks', 'Motion Detectors', 'Glass Break Sensors', 'Alarm Panels']
+      name: 'CCTV Components',
+      subcategories: [
+        'NVR (Network Video Recorder)',
+        'DVR (Digital Video Recorder)',
+        'POE Switch',
+        'SMPS (Power Supply)',
+        'Hard Disk',
+        'Cables & Accessories'
+      ]
     },
     {
       name: 'Biometric Devices',
-      subcategories: ['Fingerprint Systems', 'Facial Recognition', 'Iris Scanners', 'Hand Scanners']
+      subcategories: [
+        'Fingerprint Biometric',
+        'Face Recognition Biometric',
+        'Card + Fingerprint Devices',
+        'Time Attendance with Payroll Integration'
+      ]
     },
     {
-      name: 'Intercom Systems',
-      subcategories: ['Video Intercoms', 'Audio Intercoms', 'Door Phones', 'Master Stations']
+      name: 'Intercom System',
+      subcategories: [
+        'Landline Phones',
+        'Intercom Devices',
+        'EPABX System',
+        'PBX System'
+      ]
+    },
+    {
+      name: 'Home & Office Security',
+      subcategories: [
+        'Video Door Phone (VDP/VPP)',
+        'Smart Door Locks',
+        'Access Control System',
+        'Alarm Systems',
+        'Motion Sensors'
+      ]
+    },
+    {
+      name: 'IoT Solutions',
+      subcategories: [
+        'Smart Sensors',
+        'IoT Devices',
+        'Connected Systems',
+        'Wireless Modules'
+      ]
     },
     {
       name: 'Automation Systems',
-      subcategories: ['Smart Lighting', 'Climate Control', 'Access Control', 'Integration Modules']
+      subcategories: [
+        'Smart Lighting',
+        'Climate Control',
+        'Access Control',
+        'Integration Modules'
+      ]
     },
     {
       name: 'Fire Alarm Systems',
-      subcategories: ['Smoke Detectors', 'Heat Detectors', 'Manual Call Points', 'Control Panels']
-    },
+      subcategories: [
+        'Smoke Detectors',
+        'Heat Detectors',
+        'Manual Call Points',
+        'Control Panels'
+      ]
+    }
   ];
 
   useEffect(() => {
@@ -188,6 +240,22 @@ const ProductsPage = () => {
 
   return (
     <main className="products-page">
+      {/* Left Sidebar - Categories & Filters */}
+      <div className={`left-sidebar-filters ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Categories & Filters</h3>
+          <button className="close-sidebar-btn" onClick={closeSidebar}>
+            <FaTimes />
+          </button>
+        </div>
+        <CategorySidebar />
+      </div>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
       <div className="container products-container">
         {/* Filters Section at Top */}
         <section className="filters-top-section">
@@ -348,105 +416,12 @@ const ProductsPage = () => {
               <p>Loading products...</p>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="products-grid">
+            <div className="admin-products-grid">
               {filteredProducts.map(product => (
-                <div key={product._id} className="product-card">
-                  <div className="product-card-wrapper">
-                    {/* Product Image */}
-                    <div className="product-image-wrapper">
-                      {product.image ? (
-                        <img src={product.image} alt={product.productName} className="product-image" />
-                      ) : (
-                        <div className="placeholder-image">
-                          <span>No Image</span>
-                        </div>
-                      )}
-                      <div className="product-overlay">
-                        <Link to={`/products/${product._id}`} className="overlay-btn">
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Product Details */}
-                    <div className="product-details">
-                      <div className="product-header">
-                        <div className="header-left">
-                          <h3 className="product-name">{product.productName}</h3>
-                          {product.brand && (
-                            <span className="product-brand-badge">{product.brand}</span>
-                          )}
-                        </div>
-                        <div className="header-right">
-                          <span className="product-price-header">₹{parseFloat(product.price || 0).toLocaleString()}</span>
-                        </div>
-                      </div>
-
-                      <p className="product-category">{product.category}</p>
-                      
-                      {product.subcategory && (
-                        <p className="product-subcategory">{product.subcategory}</p>
-                      )}
-
-                      <p className="product-description">
-                        {product.description?.substring(0, 70)}...
-                      </p>
-
-                      {/* Stock Status */}
-                      <div className="product-stock-info">
-                        <span className={`stock-badge ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-                          {product.stock > 0 ? `Stock: ${product.stock}` : 'Out of Stock'}
-                        </span>
-                      </div>
-
-                      {/* Price */}
-                      <div className="product-price-section" style={{ display: 'none' }}>
-                        <span className="product-price">₹{parseFloat(product.price || 0).toLocaleString()}</span>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="product-actions">
-                        {user ? (
-                          <>
-                            <button
-                              className="btn-buy-now"
-                              onClick={(e) => handleBuyNow(e, product)}
-                              disabled={product.stock <= 0}
-                              title="Buy Now"
-                            >
-                              Buy Now
-                            </button>
-                            <button
-                              className="btn-add-cart"
-                              onClick={(e) => handleAddToCart(e, product)}
-                              title="Add to Cart"
-                            >
-                              <FaShoppingCart /> Add to Cart
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              className="btn-buy-now"
-                              onClick={() => navigate('/signin')}
-                              title="Login to Buy"
-                            >
-                              Login to Buy
-                            </button>
-                            <Link to={`/products/${product._id}`} className="btn-details">
-                              Details
-                            </Link>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Cart Feedback */}
-                      {cartMessage && cartMessageId === product._id && (
-                        <div className="cart-feedback">{cartMessage}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ProductCard 
+                  key={product._id} 
+                  product={product}
+                />
               ))}
             </div>
           ) : (

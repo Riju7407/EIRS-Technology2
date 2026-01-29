@@ -100,6 +100,9 @@ const AdminDashboard = () => {
           <Link to="/admin/products" className="nav-item">
             <FaBox /> Products
           </Link>
+          <Link to="/admin/subcategories" className="nav-item">
+            <FaTags /> Subcategories
+          </Link>
           <Link to="/admin/services" className="nav-item">
             <FaTools /> Services
           </Link>

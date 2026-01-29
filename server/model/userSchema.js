@@ -38,6 +38,30 @@ const userSchema = new Schema({
         minlength: [6, 'Password must be at least 6 characters long'],
         select: true
     },
+    city: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    state: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    pincode: {
+        type: String,
+        trim: true,
+        default: '',
+        match: [/^\d{0,6}$/, 'Pincode must contain only digits and be up to 6 characters']
+    },
+    resetPasswordToken: {
+        type: String,
+        default: undefined
+    },
+    resetPasswordExpiry: {
+        type: Date,
+        default: undefined
+    },
     isAdmin: {
         type: Boolean,
         default: false

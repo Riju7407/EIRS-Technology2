@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaBox, FaTruck, FaCheckCircle, FaClock, FaTimesCircle, FaTrash, FaEdit, FaEye, FaChevronDown, FaChevronUp, FaDownload } from 'react-icons/fa';
+import { FaBox, FaTruck, FaCheckCircle, FaClock, FaTimesCircle, FaTrash, FaEdit, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { orderService } from '../services/api';
 import '../styles/AdminOrders.css';
 

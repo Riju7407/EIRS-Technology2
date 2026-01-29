@@ -172,6 +172,8 @@
   font-size: 0.95rem;
   font-family: inherit;
   transition: border-color 0.3s ease;
+  color: #1f2937;
+  background-color: white;
 }
 
 .admin-form input:focus,

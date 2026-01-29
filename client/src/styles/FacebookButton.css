@@ -1,0 +1,50 @@
+/* Facebook Floating Button */
+.facebook-button {
+  position: fixed;
+  bottom: 180px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1877f2 0%, #0a66c2 100%);
+  color: white;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.facebook-button:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
+}
+
+.facebook-button:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .facebook-button {
+    bottom: 160px;
+    right: 30px;
+    width: 55px;
+    height: 55px;
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .facebook-button {
+    bottom: 150px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+}

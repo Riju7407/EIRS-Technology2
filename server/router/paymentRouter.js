@@ -6,17 +6,23 @@ const jwtAuth = require('../middleware/jwtAuth');
 
 const router = express.Router();
 
-// Initialize Razorpay
-console.log('Initializing Razorpay with key:', process.env.RAZORPAY_KEY_ID);
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Initialize Razorpay - lazy loading to ensure env vars are loaded
+let razorpay = null;
 
-if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-  console.error('⚠️ WARNING: Razorpay credentials not configured in environment variables!');
-  console.error('Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your .env file');
-}
+const getRazorpay = () => {
+  if (!razorpay) {
+    console.log('Initializing Razorpay with key:', process.env.RAZORPAY_KEY_ID);
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('⚠️ WARNING: Razorpay credentials not configured in environment variables!');
+      console.error('Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your .env file');
+    }
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID || 'test_key',
+      key_secret: process.env.RAZORPAY_KEY_SECRET || 'test_secret'
+    });
+  }
+  return razorpay;
+};
 
 // Create Razorpay Order
 router.post('/orders', jwtAuth, async (req, res) => {
@@ -65,7 +71,7 @@ router.post('/orders', jwtAuth, async (req, res) => {
     let razorpayOrderId = null;
     
     try {
-      razorpayOrder = await razorpay.orders.create({
+      razorpayOrder = await getRazorpay().orders.create({
         amount: amount, // in paise
         currency: currency,
         receipt: `order_${Date.now()}`,
@@ -344,7 +350,7 @@ router.post('/buy-now', jwtAuth, async (req, res) => {
     const amountInPaise = Math.round(totalAmount * 100);
 
     // Create order
-    const razorpayOrder = await razorpay.orders.create({
+    const razorpayOrder = await getRazorpay().orders.create({
       amount: amountInPaise,
       currency: 'INR',
       receipt: `buy_now_${Date.now()}`,

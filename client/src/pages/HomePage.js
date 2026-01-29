@@ -1,60 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaVideo, FaLightbulb, FaShieldAlt, FaFingerprint, FaPhone, FaRobot, FaFire, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { serviceService } from '../services/api';
+import { serviceService, productService } from '../services/api';
+import HeroSection from '../components/HeroSection';
+import BrandCarousel from '../components/BrandCarousel';
+import ProductCard from '../components/ProductCard';
+import FeaturedSection from '../components/FeaturedSection';
+import CategorySidebar from '../components/CategorySidebar';
 import ServicesPopup from '../components/ServicesPopup';
-import '../styles/HomePage.css';
+import WhatsAppButton from '../components/WhatsAppButton';
+import InstagramButton from '../components/InstagramButton';
+import FacebookButton from '../components/FacebookButton';
+import Footer from '../components/Footer';
+import { useCategoryFilter } from '../context/CategoryFilterContext';
+import '../styles/HomePage_New.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [currentPartnerIndex, setCurrentPartnerIndex] = useState(0);
-
-  const heroImages = [
-    'https://images.unsplash.com/photo-1557821552-17105176677c?w=1200&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1597933197618-b0f58a6d9046?w=1200&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1526374965328-7f5ae4e8be11?w=1200&h=600&fit=crop',
-  ];
-
-  // All partners combined for carousel
-  const allPartners = [
-    { name: 'CP Plus', img: '/cp plus.png', category: 'CCTV & Surveillance' },
-    { name: 'Dahua', img: '/dahua.png', category: 'CCTV & Surveillance' },
-    { name: 'Hikvision', img: '/hikvision.png', category: 'CCTV & Surveillance' },
-    { name: 'Beetel', img: '/beelet.png', category: 'CCTV & Surveillance' },
-    { name: 'Matrix', img: '/matrix.png', category: 'Intercom & Access Control' },
-    { name: 'Crystal', img: '/crystal.png', category: 'Intercom & Access Control' },
-    { name: 'Secureye', img: '/secureye.png', category: 'Intercom & Access Control' },
-    { name: 'ESSL', img: '/essl.png', category: 'Intercom & Access Control' },
-    { name: 'Tenda', img: '/Tenda.png', category: 'Networking & Connectivity' },
-    { name: 'D-Link', img: '/Dlink.png', category: 'Networking & Connectivity' },
-    { name: 'TP-Link', img: '/Tplink.png', category: 'Networking & Connectivity' },
-  ];
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [sortBy, setSortBy] = useState('newest');
+  const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
   useEffect(() => {
     fetchServices();
+    fetchAdminProducts();
   }, []);
 
-  // Auto-rotate images every 5 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
-
-  // Auto-rotate partners every 4 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPartnerIndex((prevIndex) => (prevIndex + 1) % allPartners.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [allPartners.length]);
+    filterAndSortProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, selectedCategory, sortBy]);
 
   const fetchServices = async () => {
     try {
@@ -67,236 +45,195 @@ const HomePage = () => {
     }
   };
 
-  const productCategories = [
-    { id: 1, name: 'CCTV Cameras', icon: FaVideo, color: '#FF6B6B' },
-    { id: 2, name: 'IoT Solutions', icon: FaLightbulb, color: '#4ECDC4' },
-    { id: 3, name: 'Home & Office Security', icon: FaShieldAlt, color: '#45B7D1' },
-    { id: 4, name: 'Biometric Devices', icon: FaFingerprint, color: '#FFA07A' },
-    { id: 5, name: 'Intercom Systems', icon: FaPhone, color: '#98D8C8' },
-    { id: 6, name: 'Automation Systems', icon: FaRobot, color: '#F7DC6F' },
-    { id: 7, name: 'Fire Alarm Systems', icon: FaFire, color: '#EC7063' },
-  ];
-
-  const handleServiceCardClick = (serviceId) => {
-    // Both logged-in and non-logged-in users redirect to contact page
-    // Users need to contact for service inquiries
-    navigate('/contact');
+  const fetchAdminProducts = async () => {
+    try {
+      const data = await productService.getAllProducts();
+      // Ensure data is an array
+      const productArray = Array.isArray(data) ? data : data.data || [];
+      setProducts(productArray);
+    } catch (error) {
+      console.error('Error fetching admin products:', error);
+      setProducts([]);
+    }
   };
 
-  const handlePrevPartner = () => {
-    setCurrentPartnerIndex((prevIndex) => (prevIndex - 1 + allPartners.length) % allPartners.length);
+  const filterAndSortProducts = () => {
+    let filtered = [...products];
+
+    // Filter by category if selected
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        product => 
+          product.category?.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+          product.name?.toLowerCase().includes(selectedCategory.toLowerCase())
+      );
+    }
+
+    // Sort products
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'newest':
+      default:
+        // Keep default order
+        break;
+    }
+
+    setFilteredProducts(filtered);
   };
 
-  const handleNextPartner = () => {
-    setCurrentPartnerIndex((prevIndex) => (prevIndex + 1) % allPartners.length);
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category === selectedCategory ? null : category);
+  };
+
+  const handlePriceRangeChange = (range) => {
+    // Price filter logic can be implemented here
+    console.log('Price range selected:', range);
   };
 
   return (
-    <main className="homepage">
+    <div className="home-page">
       {/* Hero Section */}
-      <section className="hero-section" style={{backgroundImage: `url(${heroImages[currentImageIndex]})`}}>
-        <div className="hero-overlay"></div>
-        
-        {/* Left Arrow */}
-        <button 
-          className="carousel-arrow left-arrow"
-          onClick={() => setCurrentImageIndex((prevIndex) => (prevIndex - 1 + heroImages.length) % heroImages.length)}
-          aria-label="Previous slide"
-        >
-          <FaChevronLeft size={30} />
-        </button>
+      <HeroSection />
 
-        {/* Right Arrow */}
-        <button 
-          className="carousel-arrow right-arrow"
-          onClick={() => setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length)}
-          aria-label="Next slide"
-        >
-          <FaChevronRight size={30} />
-        </button>
-        
-        <div className="hero-carousel-indicators">
-          {heroImages.map((_, index) => (
-            <button
-              key={index}
-              className={`carousel-dot ${index === currentImageIndex ? 'active' : ''}`}
-              onClick={() => setCurrentImageIndex(index)}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-        <div className="hero-content">
-          <h1 className="hero-title">Integrated Security & Automation Solutions</h1>
-          <p className="hero-subtitle">Protecting Homes & Businesses with Smart Technology</p>
-          <div className="hero-buttons">
-            <Link to="/products" className="hero-btn hero-btn-secondary">Explore Products</Link>
-            <Link to="/contact" className="hero-btn hero-btn-secondary">Contact Us</Link>
+      {/* Hero Carousel with Left Sidebar */}
+      <div className="hero-section-wrapper">
+        {/* Left Sidebar - Categories & Filters */}
+        <div className={`left-sidebar-filters ${isSidebarOpen ? 'open' : ''}`}>
+          <div className="sidebar-header">
+            <h3>Categories & Filters</h3>
+            <button 
+              className="close-sidebar-btn"
+              onClick={closeSidebar}
+            >
+              ✕
+            </button>
           </div>
+          <CategorySidebar 
+            onCategorySelect={handleCategorySelect}
+            onPriceRangeChange={handlePriceRangeChange}
+          />
         </div>
-      </section>
 
-      {/* Product Categories Section */}
-      <section className="product-categories-section">
+        {/* Overlay for mobile */}
+        {isSidebarOpen && (
+          <div 
+            className="sidebar-overlay"
+            onClick={closeSidebar}
+          ></div>
+        )}
+      </div>
+
+      {/* Admin Created Products Section */}
+      <section className="admin-products-section">
         <div className="container">
-          <h2 className="section-title">Our Product Categories</h2>
-          <p className="section-subtitle">Comprehensive Security & Automation Solutions</p>
-          
-          <div className="categories-grid">
-            {productCategories.map((category) => {
-              const IconComponent = category.icon;
-              return (
-                <Link to={`/products?category=${category.name}`} key={category.id} className="category-card">
-                  <div className="category-icon" style={{ backgroundColor: category.color }}>
-                    <IconComponent size={40} color="white" />
-                  </div>
-                  <h3>{category.name}</h3>
-                  <p>View Products</p>
-                  <span className="arrow">→</span>
-                </Link>
-              );
-            })}
+          <div className="section-title-center">
+            <h2>Our Best Selling Products</h2>
           </div>
-        </div>
-      </section>
-
-      {/* Services Overview Section */}
-      <section className="services-overview-section">
-        <div className="container">
-          <h2 className="section-title">Our Services</h2>
-          <p className="section-subtitle">What We Offer - Comprehensive Solutions for Your Needs</p>
-          
-          <div className="services-grid">
-            {loading ? (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
-                <p>Loading services...</p>
-              </div>
-            ) : services && services.length > 0 ? (
-              services.map((service, index) => {
-                // Service icons mapping
-                const iconMap = {
-                  'Installation & Setup': '📦',
-                  'AMC & Maintenance': '🔧',
-                  'Expert Consultation': '💡',
-                  'Technical Support': '⚡',
-                  'Training Programs': '📚'
-                };
-                
-                const serviceIcon = iconMap[service.name] || '🎯';
-                
-                return (
-                  <div 
-                    key={service._id || index}
-                    className="service-card"
-                    onClick={() => navigate('/contact')}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="service-icon">{serviceIcon}</div>
-                    <h3>{service.name}</h3>
-                    <p>{service.description}</p>
-                    <div className="service-pricing">
-                      <span className="price-label">Starting from</span>
-                      <span className="price">
-                        {service.price === 0 ? 'Free' : `₹${service.price.toLocaleString()}`}
-                      </span>
-                    </div>
-                    <div className="learn-more-link">Contact Us →</div>
-                  </div>
-                );
-              })
+          <div className="admin-products-grid">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product}
+                />
+              ))
             ) : (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
-                <p>No services available at the moment.</p>
+              <div className="no-products-message">
+                <p>No products available at the moment. Check back soon!</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      <section className="why-choose-us-section">
+      {/* What We Offer Section */}
+      <section className="what-we-offer-section">
         <div className="container">
-          <h2 className="section-title">Why Choose Us</h2>
-          
-          <div className="why-grid">
-            <div className="why-card">
-              <h3>Industry Leaders</h3>
-              <p>Trusted partners with Hikvision and Dahua for premium security solutions.</p>
-            </div>
-            <div className="why-card">
-              <h3>Expert Team</h3>
-              <p>Certified professionals with years of experience in security and automation.</p>
-            </div>
-            <div className="why-card">
-              <h3>24/7 Support</h3>
-              <p>Round-the-clock customer support for all your concerns and emergencies.</p>
-            </div>
-            <div className="why-card">
-              <h3>Quality Assured</h3>
-              <p>ISO certified processes ensuring highest quality standards in all our work.</p>
-            </div>
+          <div className="section-title-center">
+            <h2>What We Offer</h2>
+            <p>Comprehensive Security & Automation Solutions</p>
           </div>
-
-          <div className="partners-section-wrapper">
-            <h2 className="partners-section-heading">🔗 Our Technology Partners</h2>
-            
-            <div className="partners-section">
-            {/* Left Arrow */}
-            <button 
-              className="carousel-arrow left-arrow"
-              onClick={handlePrevPartner}
-              aria-label="Previous Partner"
-            >
-              <FaChevronLeft size={30} />
-            </button>
-
-            {/* Center Content */}
-            <div className="partner-hero-content">
-              <div className="partner-logo-large">
-                <img 
-                  src={allPartners[currentPartnerIndex].img} 
-                  alt={allPartners[currentPartnerIndex].name}
-                  key={currentPartnerIndex}
-                  className="partner-hero-logo"
-                />
-              </div>
-              
-              <div className="partner-hero-info">
-                <h2 className="partner-hero-title">{allPartners[currentPartnerIndex].name}</h2>
-                <p className="partner-hero-category">{allPartners[currentPartnerIndex].category}</p>
-                <div className="partner-counter">{currentPartnerIndex + 1} of {allPartners.length}</div>
-              </div>
+          
+          <div className="services-text-container">
+            {/* Installation & Setup */}
+            <div className="service-text-item">
+              <h3>Installation & Setup</h3>
+              <p>Professional installation and configuration of security systems, cameras, and automation equipment at your premises with minimal downtime.</p>
+              <div className="service-price">₹5,000</div>
             </div>
 
-            {/* Right Arrow */}
-            <button 
-              className="carousel-arrow right-arrow"
-              onClick={handleNextPartner}
-              aria-label="Next Partner"
-            >
-              <FaChevronRight size={30} />
-            </button>
-
-            {/* Bottom Navigation Dots */}
-            <div className="hero-carousel-indicators partner-indicators">
-              {allPartners.map((_, index) => (
-                <button
-                  key={index}
-                  className={`carousel-dot ${index === currentPartnerIndex ? 'active' : ''}`}
-                  onClick={() => setCurrentPartnerIndex(index)}
-                  aria-label={`Partner ${index + 1}`}
-                  title={allPartners[index].name}
-                />
-              ))}
+            {/* AMC & Maintenance */}
+            <div className="service-text-item">
+              <h3>AMC & Maintenance</h3>
+              <p>Annual Maintenance Contracts with regular inspections, preventive maintenance, and emergency support to ensure optimal system performance.</p>
+              <div className="service-price">₹3,000</div>
             </div>
+
+            {/* Expert Consultation */}
+            <div className="service-text-item">
+              <h3>Expert Consultation</h3>
+              <p>Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.</p>
+              <div className="service-price">₹500</div>
+            </div>
+
+            {/* Technical Support */}
+            <div className="service-text-item">
+              <h3>Technical Support</h3>
+              <p>24/7 technical support with remote assistance, on-site troubleshooting, and quick resolution for all your security system issues.</p>
+              <div className="service-price">₹2,000</div>
+            </div>
+
+            {/* Training Programs */}
+            <div className="service-text-item">
+              <h3>Training Programs</h3>
+              <p>Comprehensive training sessions for your staff on system operation, maintenance, troubleshooting, and best practices for security management.</p>
+              <div className="service-price">₹2,000</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services Popup - Shows only once */}
+      {/* Featured Section */}
+      <FeaturedSection />
+
+      {/* Who We Are Section */}
+      <section className="who-we-are-section">
+        <div className="container">
+          <h2>Who We Are</h2>
+          <p className="who-we-are-text">
+            With years of hands-on industry expertise, we have built a strong reputation as a reliable and technology-driven partner, offering end-to-end solutions tailored to modern security and connectivity needs. EIRS Technology is a leading provider of integrated security and automation solutions for businesses and individuals. With over 15 years of proven expertise, we deliver cutting-edge security systems tailored to meet unique challenges and opportunities in today's digital world.
+          </p>
+        </div>
+      </section>
+
+      {/* Brand Carousel */}
+      <div className="section-container">
+        <BrandCarousel />
+      </div>
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Services Popup */}
       <ServicesPopup />
 
-    </main>
+      {/* WhatsApp Button */}
+      <WhatsAppButton />
+
+      {/* Instagram Button */}
+      <InstagramButton />
+
+      {/* Facebook Button */}
+      <FacebookButton />
+    </div>
   );
 };
 

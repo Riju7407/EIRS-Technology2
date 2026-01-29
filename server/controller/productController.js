@@ -62,3 +62,76 @@ exports.deleteProduct = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Get all unique subcategories
+exports.getAllSubcategories = async (req, res) => {
+    try {
+        const subcategories = await Product.distinct('subcategory');
+        const filteredSubcategories = subcategories.filter(sub => sub && sub.trim() !== '');
+        res.json({
+            success: true,
+            data: filteredSubcategories
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};
+
+// Get products by subcategory
+exports.getProductsBySubcategory = async (req, res) => {
+    try {
+        const { subcategory } = req.params;
+        const products = await Product.find({ subcategory });
+        res.json({
+            success: true,
+            data: products
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};
+
+// Add subcategory to product
+exports.addSubcategoryToProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { subcategory } = req.body;
+        
+        if (!subcategory || subcategory.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: 'Subcategory is required'
+            });
+        }
+        
+        const product = await Product.findByIdAndUpdate(
+            productId,
+            { subcategory: subcategory.trim() },
+            { new: true, runValidators: true }
+        );
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: 'Subcategory added successfully',
+            data: product
+        });
+    } catch (error) {
+        res.status(400).json({ 
+            success: false,
+            message: error.message 
+        });
+    }
+};

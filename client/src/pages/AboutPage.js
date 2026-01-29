@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaLightbulb, FaRocket, FaAward, FaShieldAlt, FaUsers, FaLock, FaChartLine } from 'react-icons/fa';
+import { FaLightbulb, FaRocket, FaAward, FaShieldAlt, FaUsers, FaLock, FaChartLine, FaTimes } from 'react-icons/fa';
+import { useCategoryFilter } from '../context/CategoryFilterContext';
+import CategorySidebar from '../components/CategorySidebar';
 import '../styles/AboutPage.css';
 
 const AboutPage = () => {
+  const { isSidebarOpen, closeSidebar } = useCategoryFilter();
   const coreValues = [
     {
       icon: FaShieldAlt,
@@ -36,17 +39,17 @@ const AboutPage = () => {
 
   const timeline = [
     {
-      year: '2009',
+      year: '2019',
       title: 'Company Founded',
       description: 'Started with a vision to revolutionize the security and automation industry.'
     },
     {
-      year: '2015',
+      year: '2021',
       title: 'Expansion Phase',
       description: 'Expanded services to enterprise clients and introduced IoT solutions.'
     },
     {
-      year: '2020',
+      year: '2022',
       title: 'Digital Innovation',
       description: 'Launched AI-powered analytics and cloud-based monitoring systems.'
     },
@@ -59,10 +62,10 @@ const AboutPage = () => {
 
   const services = [
     { title: 'CCTV & Surveillance', emoji: '📹' },
-    { title: 'IoT Solutions', emoji: '🌐' },
-    { title: 'Biometric Systems', emoji: '🔐' },
-    { title: 'Smart Automation', emoji: '🤖' },
+    { title: 'Biometric Systems', emoji: '👤' },
     { title: 'Network Security', emoji: '🛡️' },
+    { title: 'IoT Solutions', emoji: '🌐' },
+    { title: 'Smart Automation', emoji: '🤖' },
     { title: 'System Integration', emoji: '⚙️' }
   ];
 
@@ -81,33 +84,39 @@ const AboutPage = () => {
       icon: FaAward,
       title: 'Certified Experts',
       description: 'Team of certified professionals with industry expertise'
-    },
-    {
-      icon: FaRocket,
-      title: 'Fast Deployment',
-      description: 'Quick implementation without disrupting your operations'
     }
   ];
 
   return (
     <main className="about-page">
-      {/* Hero Section */}
-      <section className="about-hero">
-        <div className="hero-content">
-          <h1>About EIRS Technology</h1>
-          <p>Transforming Security into Smart Solutions</p>
-          <div className="hero-cta">
-            <Link to="/contact" className="btn btn-primary">Get in Touch</Link>
-          </div>
+      {/* Left Sidebar - Categories & Filters */}
+      <div className={`left-sidebar-filters ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Categories & Filters</h3>
+          <button 
+            className="close-sidebar-btn"
+            onClick={closeSidebar}
+          >
+            <FaTimes />
+          </button>
         </div>
-      </section>
+        <CategorySidebar />
+      </div>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={closeSidebar}
+        ></div>
+      )}
 
       {/* Company Overview */}
       <section className="company-overview">
         <div className="container">
           <h2>Who We Are</h2>
           <p className="overview-text">
-            EIRS Technology is a leading provider of integrated security and automation solutions for businesses and individuals. With over 15 years of proven expertise, we deliver cutting-edge security systems tailored to meet unique challenges and opportunities in today's digital world.
+            With years of hands-on industry expertise, we have built a strong reputation as a reliable and technology-driven partner, offering end-to-end solutions tailored to modern security and connectivity needs. EIRS Technology is a leading provider of integrated security and automation solutions for businesses and individuals. With over 15 years of proven expertise, we deliver cutting-edge security systems tailored to meet unique challenges and opportunities in today's digital world.
           </p>
           <div className="overview-grid">
             <div className="overview-card">
@@ -117,10 +126,6 @@ const AboutPage = () => {
             <div className="overview-card">
               <h3>Our Vision</h3>
               <p>To be the most trusted and innovative security partner, recognized for excellence, reliability, and customer success.</p>
-            </div>
-            <div className="overview-card">
-              <h3>Our Promise</h3>
-              <p>Delivering world-class solutions backed by expert support, continuous innovation, and unwavering commitment to your success.</p>
             </div>
           </div>
         </div>
@@ -143,22 +148,6 @@ const AboutPage = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* Achievements */}
-      <section className="achievements">
-        <div className="container">
-          <h2>Our Impact</h2>
-          <div className="achievements-grid">
-            {achievements.map((item, index) => (
-              <div key={index} className="achievement-item">
-                <div className="achievement-emoji">{item.icon}</div>
-                <h3>{item.number}</h3>
-                <p>{item.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -203,7 +192,7 @@ const AboutPage = () => {
             {whyChooseUs.map((item, index) => {
               const IconComponent = item.icon;
               return (
-                <div key={index} className="why-card">
+                <div key={index} className="why-text-item">
                   <div className="why-icon">
                     <IconComponent size={40} />
                   </div>

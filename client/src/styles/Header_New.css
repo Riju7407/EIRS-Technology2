@@ -1,0 +1,410 @@
+/* Header Styles - IPVoice Design Inspired */
+
+/* Top Bar */
+.top-bar {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 10px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #333;
+}
+
+.top-bar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.top-bar-left {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.top-bar-right {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.admin-badge {
+  background: #ff6b6b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.top-link {
+  color: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 0;
+}
+
+.top-link:hover {
+  color: #007bff;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 5px 0;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  color: #007bff;
+}
+
+/* Cart Icon */
+.cart-icon-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.cart-icon-link:hover {
+  color: #007bff;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff6b6b;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 13px;
+}
+
+.profile-icon {
+  font-size: 16px;
+}
+
+.username {
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main Header */
+.sticky-header {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #eee;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  margin-right: 40px;
+  flex-shrink: 0;
+}
+
+.logo-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo h1 {
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Desktop Navigation */
+.nav-desktop {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  flex: 1;
+}
+
+.nav-link {
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: #007bff;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #007bff;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.admin-link {
+  background: #ff6b6b;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.admin-link:hover {
+  background: #ff5252;
+  color: white;
+}
+
+.admin-link::after {
+  display: none;
+}
+
+/* Search Bar */
+.search-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  margin-right: 20px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  max-width: 250px;
+}
+
+.search-bar input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  flex: 1;
+}
+
+.search-bar button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.search-bar button:hover {
+  color: #0056b3;
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #333;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Mobile Menu */
+.nav-mobile {
+  display: none;
+  position: absolute;
+  top: 70px;
+  left: 0;
+  right: 0;
+  background: white;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.sticky-header.mobile-open .nav-mobile {
+  display: flex;
+}
+
+.nav-mobile .nav-link {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-desktop {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: block;
+  }
+
+  .search-bar-container {
+    margin-right: 10px;
+    margin-left: 0;
+  }
+
+  .search-bar {
+    max-width: 150px;
+  }
+
+  .header-container {
+    height: 60px;
+  }
+
+  .logo h1 {
+    font-size: 16px;
+    display: none;
+  }
+
+  .logo-icon {
+    height: 35px;
+  }
+
+  .top-bar .container {
+    padding: 0 15px;
+  }
+
+  .top-bar-right {
+    gap: 15px;
+  }
+
+  .top-link {
+    font-size: 12px;
+    display: none;
+  }
+
+  .cart-icon-link {
+    font-size: 20px;
+  }
+
+  .user-profile {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    height: 55px;
+    padding: 0 10px;
+  }
+
+  .logo {
+    margin-right: 10px;
+  }
+
+  .logo-icon {
+    height: 30px;
+  }
+
+  .search-bar-container {
+    margin: 0;
+  }
+
+  .search-bar {
+    max-width: 120px;
+  }
+
+  .search-bar input {
+    font-size: 12px;
+  }
+
+  .top-bar {
+    padding: 8px 0;
+    font-size: 11px;
+  }
+
+  .top-bar .container {
+    padding: 0 10px;
+  }
+
+  .top-bar-right {
+    gap: 10px;
+  }
+
+  .cart-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    top: -6px;
+    right: -6px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .nav-link::after,
+  .nav-link,
+  .top-link,
+  .cart-icon-link {
+    transition: none;
+  }
+}

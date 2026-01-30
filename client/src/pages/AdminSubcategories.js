@@ -11,102 +11,34 @@ const AdminSubcategories = () => {
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('categories'); // 'categories' or 'subcategories'
   
-  // Categories state
-  const [categories, setCategories] = useState([
-    {
-      name: 'CCTV Cameras',
-      subcategories: [
-        'IP Camera Solutions',
-        'HD Camera (Analog CCTV)',
-        'CCTV Bundle Packs',
-        'Wi-Fi / 4G Camera'
-      ]
-    },
-    {
-      name: 'CCTV Components',
-      subcategories: [
-        'NVR (Network Video Recorder)',
-        'DVR (Digital Video Recorder)',
-        'POE Switch',
-        'SMPS (Power Supply)',
-        'Hard Disk',
-        'Cables & Accessories'
-      ]
-    },
-    {
-      name: 'Biometric Devices',
-      subcategories: [
-        'Fingerprint Biometric',
-        'Face Recognition Biometric',
-        'Card + Fingerprint Devices',
-        'Time Attendance with Payroll Integration'
-      ]
-    },
-    {
-      name: 'Intercom System',
-      subcategories: [
-        'Landline Phones',
-        'Intercom Devices',
-        'EPABX System',
-        'PBX System'
-      ]
-    },
-    {
-      name: 'Home & Office Security',
-      subcategories: [
-        'Video Door Phone (VDP/VPP)',
-        'Smart Door Locks',
-        'Access Control System',
-        'Alarm Systems',
-        'Motion Sensors'
-      ]
-    },
-    {
-      name: 'IoT Solutions',
-      subcategories: [
-        'Smart Sensors',
-        'IoT Devices',
-        'Connected Systems',
-        'Wireless Modules'
-      ]
-    },
-    {
-      name: 'Automation Systems',
-      subcategories: [
-        'Smart Lighting',
-        'Climate Control',
-        'Access Control',
-        'Integration Modules'
-      ]
-    },
-    {
-      name: 'Fire Alarm Systems',
-      subcategories: [
-        'Smoke Detectors',
-        'Heat Detectors',
-        'Manual Call Points',
-        'Control Panels'
-      ]
-    }
-  ]);
+  // Categories state - now loaded from API
+  const [categories, setCategories] = useState([]);
 
+  // Subcategories state
   const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [editingCategoryName, setEditingCategoryName] = useState(null);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+
+  // Error/Success state
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // Category form data
   const [categoryFormData, setCategoryFormData] = useState({
     name: '',
-    subcategories: []
+    description: ''
   });
 
   // Subcategory form data
   const [subcategoryFormData, setSubcategoryFormData] = useState({
     name: '',
-    category: ''
+    category: '',
+    description: ''
   });
+
+  const API_BASE = 'http://localhost:5000/api';
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -117,16 +49,22 @@ const AdminSubcategories = () => {
         console.error('Error parsing user data:', error);
       }
     }
-    fetchSubcategories();
+    fetchData();
   }, []);
 
-  const fetchSubcategories = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/subcategories');
-      setSubcategories(response.data.data || []);
+      const [categoriesRes, subcategoriesRes] = await Promise.all([
+        axios.get(`${API_BASE}/categories`),
+        axios.get(`${API_BASE}/subcategories`)
+      ]);
+      setCategories(categoriesRes.data.data || []);
+      setSubcategories(subcategoriesRes.data.data || []);
+      setError('');
     } catch (error) {
-      console.error('Error fetching subcategories:', error);
+      console.error('Error fetching data:', error);
+      setError('Error fetching data: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -134,60 +72,90 @@ const AdminSubcategories = () => {
 
   // Category Management Functions
   const handleAddCategory = () => {
-    setCategoryFormData({ name: '', subcategories: [] });
-    setEditingCategoryName(null);
+    setCategoryFormData({ name: '', description: '' });
+    setEditingCategoryId(null);
     setShowForm(true);
   };
 
   const handleEditCategory = (category) => {
-    setCategoryFormData(category);
-    setEditingCategoryName(category.name);
+    setCategoryFormData({
+      name: category.name,
+      description: category.description || ''
+    });
+    setEditingCategoryId(category._id);
     setShowForm(true);
   };
 
-  const handleDeleteCategory = (categoryName) => {
-    if (window.confirm(`Are you sure you want to delete "${categoryName}"? This will remove all associated subcategories.`)) {
-      setCategories(categories.filter(cat => cat.name !== categoryName));
-      alert('Category deleted successfully');
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    if (window.confirm(`Are you sure you want to delete "${categoryName}"?`)) {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        await axios.delete(`${API_BASE}/categories/${categoryId}`, { headers });
+        setSuccess('Category deleted successfully');
+        fetchData();
+        setTimeout(() => setSuccess(''), 3000);
+      } catch (error) {
+        setError(error.response?.data?.message || 'Error deleting category');
+        console.error('Error deleting category:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleSaveCategory = (e) => {
+  const handleSaveCategory = async (e) => {
     e.preventDefault();
     
     if (!categoryFormData.name.trim()) {
-      alert('Please enter a category name');
+      setError('Please enter a category name');
       return;
     }
 
-    if (editingCategoryName) {
-      // Update existing category
-      setCategories(categories.map(cat => 
-        cat.name === editingCategoryName ? categoryFormData : cat
-      ));
-      alert('Category updated successfully');
-    } else {
-      // Add new category
-      if (categories.some(cat => cat.name === categoryFormData.name)) {
-        alert('Category already exists');
-        return;
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      if (editingCategoryId) {
+        await axios.put(
+          `${API_BASE}/categories/${editingCategoryId}`,
+          categoryFormData,
+          { headers }
+        );
+        setSuccess('Category updated successfully');
+      } else {
+        await axios.post(
+          `${API_BASE}/categories`,
+          categoryFormData,
+          { headers }
+        );
+        setSuccess('Category created successfully');
       }
-      setCategories([...categories, { name: categoryFormData.name, subcategories: [] }]);
-      alert('Category added successfully');
+      
+      resetCategoryForm();
+      fetchData();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error saving category');
+      console.error('Error saving category:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    resetCategoryForm();
   };
 
   const resetCategoryForm = () => {
-    setCategoryFormData({ name: '', subcategories: [] });
-    setEditingCategoryName(null);
+    setCategoryFormData({ name: '', description: '' });
+    setEditingCategoryId(null);
     setShowForm(false);
+    setError('');
   };
 
   // Subcategory Management Functions
   const handleAddSubcategory = () => {
-    setSubcategoryFormData({ name: '', category: '' });
+    setSubcategoryFormData({ name: '', category: '', description: '' });
     setEditingId(null);
     setShowForm(true);
   };
@@ -195,21 +163,29 @@ const AdminSubcategories = () => {
   const handleEditSubcategory = (subcategory) => {
     setSubcategoryFormData({ 
       name: subcategory.name,
-      category: subcategory.category
+      category: subcategory.category,
+      description: subcategory.description || ''
     });
     setEditingId(subcategory._id);
     setShowForm(true);
   };
 
-  const handleDeleteSubcategory = async (id) => {
-    if (window.confirm('Are you sure you want to delete this subcategory?')) {
+  const handleDeleteSubcategory = async (id, name) => {
+    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
-        await axios.delete(`/api/subcategories/${id}`);
-        alert('Subcategory deleted successfully');
-        fetchSubcategories();
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+
+        await axios.delete(`${API_BASE}/subcategories/${id}`, { headers });
+        setSuccess('Subcategory deleted successfully');
+        fetchData();
+        setTimeout(() => setSuccess(''), 3000);
       } catch (error) {
+        setError(error.response?.data?.message || 'Error deleting subcategory');
         console.error('Error deleting subcategory:', error);
-        alert('Error deleting subcategory');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -218,37 +194,60 @@ const AdminSubcategories = () => {
     e.preventDefault();
     
     if (!subcategoryFormData.name.trim() || !subcategoryFormData.category) {
-      alert('Please fill in all fields');
+      setError('Please fill in all required fields');
       return;
     }
 
     try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
       if (editingId) {
-        await axios.put(`/api/subcategories/${editingId}`, {
-          name: subcategoryFormData.name,
-          category: subcategoryFormData.category
-        });
-        alert('Subcategory updated successfully');
+        await axios.put(
+          `${API_BASE}/subcategories/${editingId}`,
+          {
+            name: subcategoryFormData.name,
+            category: subcategoryFormData.category,
+            description: subcategoryFormData.description
+          },
+          { headers }
+        );
+        setSuccess('Subcategory updated successfully');
       } else {
-        await axios.post('/api/subcategories', {
-          name: subcategoryFormData.name,
-          category: subcategoryFormData.category
-        });
-        alert('Subcategory created successfully');
+        await axios.post(
+          `${API_BASE}/subcategories`,
+          {
+            name: subcategoryFormData.name,
+            category: subcategoryFormData.category,
+            description: subcategoryFormData.description
+          },
+          { headers }
+        );
+        setSuccess('Subcategory created successfully');
       }
       
       resetSubcategoryForm();
-      fetchSubcategories();
+      fetchData();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      setError(error.response?.data?.message || 'Error saving subcategory');
       console.error('Error saving subcategory:', error);
-      alert('Error saving subcategory: ' + error.response?.data?.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const resetSubcategoryForm = () => {
-    setSubcategoryFormData({ name: '', category: '' });
+    setSubcategoryFormData({ name: '', category: '', description: '' });
     setEditingId(null);
     setShowForm(false);
+    setError('');
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(c => c._id === categoryId);
+    return category ? category.name : 'Unknown';
   };
 
   const handleLogout = async () => {
@@ -258,23 +257,6 @@ const AdminSubcategories = () => {
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
-
-  const handleAddSubcategoryToCategory = () => {
-    const newSubcategoryName = prompt('Enter subcategory name:');
-    if (newSubcategoryName && newSubcategoryName.trim()) {
-      setCategoryFormData(prev => ({
-        ...prev,
-        subcategories: [...prev.subcategories, newSubcategoryName.trim()]
-      }));
-    }
-  };
-
-  const handleRemoveSubcategoryFromCategory = (index) => {
-    setCategoryFormData(prev => ({
-      ...prev,
-      subcategories: prev.subcategories.filter((_, i) => i !== index)
-    }));
   };
 
   return (
@@ -358,14 +340,18 @@ const AdminSubcategories = () => {
             </button>
           </div>
 
+          {/* Alert Messages */}
+          {error && <div className="alert alert-error">{error}</div>}
+          {success && <div className="alert alert-success">{success}</div>}
+
           {/* CATEGORIES TAB */}
           {activeTab === 'categories' && (
             <div className="tab-content">
-              <button className="btn btn-primary" onClick={handleAddCategory}>
+              <button className="btn btn-primary" onClick={handleAddCategory} disabled={loading}>
                 <FaPlus /> Add New Category
               </button>
 
-              {showForm && editingCategoryName === null && (
+              {showForm && editingCategoryId === null && (
                 <form onSubmit={handleSaveCategory} className="admin-form">
                   <h2>Add New Category</h2>
                   
@@ -381,42 +367,29 @@ const AdminSubcategories = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Subcategories</label>
-                    <div className="subcategory-list">
-                      {categoryFormData.subcategories.map((subcat, idx) => (
-                        <div key={idx} className="subcat-item">
-                          <span>{subcat}</span>
-                          <button
-                            type="button"
-                            className="btn-remove"
-                            onClick={() => handleRemoveSubcategoryFromCategory(idx)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={handleAddSubcategoryToCategory}
-                    >
-                      + Add Subcategory
-                    </button>
+                    <label>Description</label>
+                    <textarea
+                      value={categoryFormData.description}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                      placeholder="Enter category description"
+                      rows="4"
+                    />
                   </div>
 
                   <div className="form-actions">
-                    <button type="submit" className="btn-success">Create Category</button>
-                    <button type="button" className="btn-secondary" onClick={resetCategoryForm}>
+                    <button type="submit" className="btn-success" disabled={loading}>
+                      {loading ? 'Creating...' : 'Create Category'}
+                    </button>
+                    <button type="button" className="btn-secondary" onClick={resetCategoryForm} disabled={loading}>
                       Cancel
                     </button>
                   </div>
                 </form>
               )}
 
-              {showForm && editingCategoryName && (
+              {showForm && editingCategoryId && (
                 <form onSubmit={handleSaveCategory} className="admin-form">
-                  <h2>Edit Category: {editingCategoryName}</h2>
+                  <h2>Edit Category</h2>
                   
                   <div className="form-group">
                     <label>Category Name *</label>
@@ -430,33 +403,20 @@ const AdminSubcategories = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Subcategories</label>
-                    <div className="subcategory-list">
-                      {categoryFormData.subcategories.map((subcat, idx) => (
-                        <div key={idx} className="subcat-item">
-                          <span>{subcat}</span>
-                          <button
-                            type="button"
-                            className="btn-remove"
-                            onClick={() => handleRemoveSubcategoryFromCategory(idx)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={handleAddSubcategoryToCategory}
-                    >
-                      + Add Subcategory
-                    </button>
+                    <label>Description</label>
+                    <textarea
+                      value={categoryFormData.description}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                      placeholder="Enter category description"
+                      rows="4"
+                    />
                   </div>
 
                   <div className="form-actions">
-                    <button type="submit" className="btn-success">Update Category</button>
-                    <button type="button" className="btn-secondary" onClick={resetCategoryForm}>
+                    <button type="submit" className="btn-success" disabled={loading}>
+                      {loading ? 'Updating...' : 'Update Category'}
+                    </button>
+                    <button type="button" className="btn-secondary" onClick={resetCategoryForm} disabled={loading}>
                       Cancel
                     </button>
                   </div>
@@ -471,7 +431,7 @@ const AdminSubcategories = () => {
                 ) : (
                   <div className="categories-grid">
                     {categories.map(category => (
-                      <div key={category.name} className="category-card">
+                      <div key={category._id} className="category-card">
                         <div className="card-header">
                           <h3>{category.name}</h3>
                           <div className="card-actions">
@@ -479,29 +439,23 @@ const AdminSubcategories = () => {
                               className="btn-edit" 
                               onClick={() => handleEditCategory(category)}
                               title="Edit"
+                              disabled={loading}
                             >
                               <FaEdit />
                             </button>
                             <button 
                               className="btn-delete" 
-                              onClick={() => handleDeleteCategory(category.name)}
+                              onClick={() => handleDeleteCategory(category._id, category.name)}
                               title="Delete"
+                              disabled={loading}
                             >
                               <FaTrash />
                             </button>
                           </div>
                         </div>
                         <div className="card-body">
-                          <p><strong>Subcategories ({category.subcategories?.length || 0}):</strong></p>
-                          <ul>
-                            {category.subcategories && category.subcategories.length > 0 ? (
-                              category.subcategories.map((subcat, idx) => (
-                                <li key={idx}>• {subcat}</li>
-                              ))
-                            ) : (
-                              <li className="empty">No subcategories</li>
-                            )}
-                          </ul>
+                          <p><strong>Description:</strong></p>
+                          <p className="description">{category.description || 'No description'}</p>
                         </div>
                       </div>
                     ))}
@@ -514,14 +468,34 @@ const AdminSubcategories = () => {
           {/* SUBCATEGORIES TAB */}
           {activeTab === 'subcategories' && (
             <div className="tab-content">
-              <button className="btn btn-primary" onClick={handleAddSubcategory}>
+              <button className="btn btn-primary" onClick={handleAddSubcategory} disabled={loading || categories.length === 0}>
                 <FaPlus /> Add New Subcategory
               </button>
+
+              {categories.length === 0 && !showForm && (
+                <div className="info-message">
+                  ℹ️ Please add categories first before adding subcategories.
+                </div>
+              )}
 
               {showForm && (
                 <form onSubmit={handleSaveSubcategory} className="admin-form">
                   <h2>{editingId ? 'Edit Subcategory' : 'Add New Subcategory'}</h2>
                   
+                  <div className="form-group">
+                    <label>Category *</label>
+                    <select
+                      value={subcategoryFormData.category}
+                      onChange={(e) => setSubcategoryFormData({ ...subcategoryFormData, category: e.target.value })}
+                      required
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map(cat => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="form-group">
                     <label>Subcategory Name *</label>
                     <input
@@ -534,24 +508,20 @@ const AdminSubcategories = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Category *</label>
-                    <select
-                      value={subcategoryFormData.category}
-                      onChange={(e) => setSubcategoryFormData({ ...subcategoryFormData, category: e.target.value })}
-                      required
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map(cat => (
-                        <option key={cat.name} value={cat.name}>{cat.name}</option>
-                      ))}
-                    </select>
+                    <label>Description</label>
+                    <textarea
+                      value={subcategoryFormData.description}
+                      onChange={(e) => setSubcategoryFormData({ ...subcategoryFormData, description: e.target.value })}
+                      placeholder="Enter subcategory description"
+                      rows="4"
+                    />
                   </div>
 
                   <div className="form-actions">
-                    <button type="submit" className="btn-success">
-                      {editingId ? 'Update' : 'Create'} Subcategory
+                    <button type="submit" className="btn-success" disabled={loading}>
+                      {loading ? (editingId ? 'Updating...' : 'Creating...') : (editingId ? 'Update' : 'Create')} Subcategory
                     </button>
-                    <button type="button" className="btn-secondary" onClick={resetSubcategoryForm}>
+                    <button type="button" className="btn-secondary" onClick={resetSubcategoryForm} disabled={loading}>
                       Cancel
                     </button>
                   </div>
@@ -561,9 +531,7 @@ const AdminSubcategories = () => {
               {/* Subcategories List */}
               <div className="table-section">
                 <h2>All Subcategories ({subcategories.length})</h2>
-                {loading ? (
-                  <p className="loading">Loading subcategories...</p>
-                ) : subcategories.length === 0 ? (
+                {subcategories.length === 0 ? (
                   <p className="no-data">No subcategories found.</p>
                 ) : (
                   <div className="table-responsive">
@@ -572,6 +540,7 @@ const AdminSubcategories = () => {
                         <tr>
                           <th>Subcategory Name</th>
                           <th>Category</th>
+                          <th>Description</th>
                           <th>Created Date</th>
                           <th>Actions</th>
                         </tr>
@@ -580,20 +549,23 @@ const AdminSubcategories = () => {
                         {subcategories.map(subcategory => (
                           <tr key={subcategory._id}>
                             <td><strong>{subcategory.name}</strong></td>
-                            <td>{subcategory.category}</td>
+                            <td>{getCategoryName(subcategory.category)}</td>
+                            <td className="description-cell">{subcategory.description || '-'}</td>
                             <td>{new Date(subcategory.createdAt).toLocaleDateString()}</td>
                             <td className="action-buttons">
                               <button
                                 className="btn-edit"
                                 onClick={() => handleEditSubcategory(subcategory)}
                                 title="Edit"
+                                disabled={loading}
                               >
                                 <FaEdit />
                               </button>
                               <button
                                 className="btn-delete"
-                                onClick={() => handleDeleteSubcategory(subcategory._id)}
+                                onClick={() => handleDeleteSubcategory(subcategory._id, subcategory.name)}
                                 title="Delete"
+                                disabled={loading}
                               >
                                 <FaTrash />
                               </button>

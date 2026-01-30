@@ -264,20 +264,6 @@ const ProductsPage = () => {
           </div>
 
           <div className="filters-grid">
-            {/* Search */}
-            <div className="filter-section">
-              <label>Search Products</label>
-              <div className="search-box">
-                <FaSearch />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
             {/* Category Dropdown */}
             <div className="filter-section">
             <label>Category</label>

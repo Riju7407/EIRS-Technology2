@@ -20,7 +20,11 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
+  const [selectedPrice, setSelectedPrice] = useState('all');
+  const [selectedIPCameraResolutions, setSelectedIPCameraResolutions] = useState(new Set());
+  const [selectedNVRChannels, setSelectedNVRChannels] = useState(new Set());
+  const [selectedPOESwitches, setSelectedPOESwitches] = useState(new Set());
   const [sortBy, setSortBy] = useState('newest');
   const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
@@ -32,7 +36,7 @@ const HomePage = () => {
   useEffect(() => {
     filterAndSortProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, selectedCategory, sortBy]);
+  }, [products, selectedCategories, selectedPrice, selectedIPCameraResolutions, selectedNVRChannels, selectedPOESwitches, sortBy]);
 
   const fetchServices = async () => {
     try {
@@ -61,11 +65,57 @@ const HomePage = () => {
     let filtered = [...products];
 
     // Filter by category if selected
-    if (selectedCategory) {
-      filtered = filtered.filter(
-        product => 
-          product.category?.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-          product.name?.toLowerCase().includes(selectedCategory.toLowerCase())
+    if (selectedCategories.size > 0) {
+      filtered = filtered.filter(product => {
+        return Array.from(selectedCategories).some(category =>
+          product.category?.toLowerCase().includes(category.toLowerCase()) ||
+          product.subcategory?.toLowerCase().includes(category.toLowerCase()) ||
+          product.name?.toLowerCase().includes(category.toLowerCase())
+        );
+      });
+    }
+
+    // Filter by price range
+    if (selectedPrice !== 'all') {
+      filtered = filtered.filter(product => {
+        const price = product.price || 0;
+        switch (selectedPrice) {
+          case '0-5000':
+            return price >= 0 && price <= 5000;
+          case '5000-10000':
+            return price > 5000 && price <= 10000;
+          case '10000-25000':
+            return price > 10000 && price <= 25000;
+          case '25000-50000':
+            return price > 25000 && price <= 50000;
+          case '50000-100000':
+            return price > 50000 && price <= 100000;
+          case '100000+':
+            return price > 100000;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter by IP Camera Resolution
+    if (selectedIPCameraResolutions.size > 0) {
+      filtered = filtered.filter(product =>
+        Array.from(selectedIPCameraResolutions).includes(product.cameraResolution)
+      );
+    }
+
+    // Filter by NVR Channels
+    if (selectedNVRChannels.size > 0) {
+      filtered = filtered.filter(product =>
+        Array.from(selectedNVRChannels).includes(product.nvrChannels)
+      );
+    }
+
+    // Filter by POE Switch
+    if (selectedPOESwitches.size > 0) {
+      filtered = filtered.filter(product =>
+        Array.from(selectedPOESwitches).includes(product.poeSwitch)
       );
     }
 
@@ -90,12 +140,29 @@ const HomePage = () => {
   };
 
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category === selectedCategory ? null : category);
+    const newCategories = new Set(selectedCategories);
+    if (newCategories.has(category)) {
+      newCategories.delete(category);
+    } else {
+      newCategories.add(category);
+    }
+    setSelectedCategories(newCategories);
   };
 
   const handlePriceRangeChange = (range) => {
-    // Price filter logic can be implemented here
-    console.log('Price range selected:', range);
+    setSelectedPrice(range);
+  };
+
+  const handleIPCameraResolutionChange = (resolutions) => {
+    setSelectedIPCameraResolutions(resolutions);
+  };
+
+  const handleNVRChannelChange = (channels) => {
+    setSelectedNVRChannels(channels);
+  };
+
+  const handlePOESwitchChange = (switches) => {
+    setSelectedPOESwitches(switches);
   };
 
   return (
@@ -119,6 +186,9 @@ const HomePage = () => {
           <CategorySidebar 
             onCategorySelect={handleCategorySelect}
             onPriceRangeChange={handlePriceRangeChange}
+            onIPCameraResolutionChange={handleIPCameraResolutionChange}
+            onNVRChannelChange={handleNVRChannelChange}
+            onPOESwitchChange={handlePOESwitchChange}
           />
         </div>
 

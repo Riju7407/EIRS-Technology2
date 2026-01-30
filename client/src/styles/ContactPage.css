@@ -149,9 +149,12 @@
 
 .contact-form-section h2 {
   margin-bottom: var(--spacing-md);
-  color: #000000;
-  font-weight: 700;
-  font-size: 1.5rem;
+  color: #1a202c;
+  font-weight: 600;
+  font-size: 1.3rem;
+  border-bottom: none;
+  padding-bottom: 0;
+  display: block;
 }
 
 .form-intro {

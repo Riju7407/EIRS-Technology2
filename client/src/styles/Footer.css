@@ -25,7 +25,7 @@
 }
 
 .footer-main-content {
-  padding: 60px 20px;
+  padding: 14px 20px;
   max-width: 1400px;
   margin: 0 auto;
   position: relative;
@@ -35,19 +35,19 @@
 .footer-content-wrapper {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 50px;
+  gap: 35px;
 }
 
 /* Footer Section */
 .footer-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 /* Company Section */
 .footer-company {
-  gap: 24px;
+  gap: 17px;
 }
 
 .footer-brand {

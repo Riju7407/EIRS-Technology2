@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaCheckCircle, FaExclamationCircle, FaLock } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import '../styles/ForgotPasswordPage.css';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   const [step, setStep] = useState(1); // Step 1: Enter Email, Step 2: Reset Password
   const [email, setEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
@@ -81,8 +83,14 @@ const ForgotPasswordPage = () => {
       });
 
       if (response.data.success) {
-        showNotification('Password reset successfully! Redirecting to login...', 'success');
-        setTimeout(() => navigate('/signin'), 2000);
+        showNotification('Password reset successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          if (isLoggedIn) {
+            navigate('/account');
+          } else {
+            navigate('/signin');
+          }
+        }, 2000);
       } else {
         showNotification(response.data.message || 'Failed to reset password', 'error');
       }
@@ -110,11 +118,6 @@ const ForgotPasswordPage = () => {
       )}
 
       <div className="forgot-password-container">
-        {/* Back Button */}
-        <Link to="/signin" className="back-link">
-          <FaArrowLeft /> Back to Sign In
-        </Link>
-
         <div className="forgot-password-card">
           <div className="card-icon">
             <FaLock />
@@ -209,11 +212,6 @@ const ForgotPasswordPage = () => {
               </button>
             </form>
           )}
-
-          {/* Sign In Link */}
-          <p className="signin-link">
-            Remember your password? <Link to="/signin">Sign In</Link>
-          </p>
         </div>
       </div>
     </div>

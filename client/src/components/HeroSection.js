@@ -3,20 +3,58 @@ import { Link } from 'react-router-dom';
 import '../styles/HeroSection.css';
 
 const HeroSection = () => {
+  const handleHeroClick = () => {
+    window.location.href = '/products?category=CCTV Cameras';
+  };
+
+  const handleWirelessClick = () => {
+    window.location.href = '/products?category=CCTV Components';
+  };
+
+  const handleIOTClick = () => {
+    window.location.href = '/products?category=IOT Based Products';
+  };
+
+  const handleAutomationClick = () => {
+    window.location.href = '/products?category=Automation Systems';
+  };
+
   return (
     <section className="hero-section">
       <div className="hero-background">
-        <div className="hero-images-container">
-          <img src="/heo1.jpg" alt="EIRS - Security Solutions" className="hero-image hero-image-1" />
-          <img src="/hero2.jpg" alt="EIRS - Enterprise Solutions" className="hero-image hero-image-2" />
-        </div>
+        <img 
+          src="/IOT.webp" 
+          alt="EIRS - IOT Based Solutions" 
+          className="hero-image iot-image"
+          onClick={handleIOTClick}
+          style={{ cursor: 'pointer' }}
+        />
+        <img 
+          src="/u6-plus.webp" 
+          alt="EIRS - Automation Systems" 
+          className="hero-image u6plus-image"
+          onClick={handleAutomationClick}
+          style={{ cursor: 'pointer' }}
+        />
+        <img 
+          src="/hero2.jpg" 
+          alt="EIRS - Enterprise Solutions" 
+          className="hero-image hero-image-2"
+          onClick={handleHeroClick}
+          style={{ cursor: 'pointer' }}
+        />
+        <img 
+          src="/Wireless.jpg" 
+          alt="EIRS - Wireless Solutions" 
+          className="hero-image wireless-image"
+          onClick={handleWirelessClick}
+          style={{ cursor: 'pointer' }}
+        />
         <div className="hero-overlay"></div>
       </div>
       
       <div className="hero-content">
         <div className="hero-text">
-          <h1 className="hero-title">Smart Security, Connected Living</h1>
-          <p className="hero-subtitle">Next-Generation Protection for Your Home & Business</p>
           
           <div className="hero-buttons">
             <Link to="/products" className="hero-btn hero-btn-primary">

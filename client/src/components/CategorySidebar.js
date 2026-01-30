@@ -3,7 +3,13 @@ import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import '../styles/CategorySidebar.css';
 
 // Category Sidebar with filtering - Flipkart style
-const CategorySidebar = ({ onCategorySelect = () => {}, onPriceRangeChange = () => {} }) => {
+const CategorySidebar = ({ 
+  onCategorySelect = () => {}, 
+  onPriceRangeChange = () => {},
+  onIPCameraResolutionChange = () => {},
+  onNVRChannelChange = () => {},
+  onPOESwitchChange = () => {}
+}) => {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [selectedPrice, setSelectedPrice] = useState('all');
   const [selectedBrands, setSelectedBrands] = useState(new Set());
@@ -171,6 +177,9 @@ const CategorySidebar = ({ onCategorySelect = () => {}, onPriceRangeChange = () 
       newResolutions.add(resolution);
     }
     setSelectedIPCameraResolution(newResolutions);
+    if (onIPCameraResolutionChange) {
+      onIPCameraResolutionChange(newResolutions);
+    }
   };
 
   const handleNVRChannelChange = (channel) => {
@@ -181,6 +190,9 @@ const CategorySidebar = ({ onCategorySelect = () => {}, onPriceRangeChange = () 
       newChannels.add(channel);
     }
     setSelectedNVRChannels(newChannels);
+    if (onNVRChannelChange) {
+      onNVRChannelChange(newChannels);
+    }
   };
 
   const handlePOESwitchChange = (poeSwitch) => {
@@ -191,6 +203,9 @@ const CategorySidebar = ({ onCategorySelect = () => {}, onPriceRangeChange = () 
       newSwitches.add(poeSwitch);
     }
     setSelectedPOESwitch(newSwitches);
+    if (onPOESwitchChange) {
+      onPOESwitchChange(newSwitches);
+    }
   };
 
   return (

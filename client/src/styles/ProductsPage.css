@@ -21,7 +21,7 @@
 /* Filters Top Section */
 .filters-top-section {
   background: white;
-  padding: var(--spacing-2xl);
+  padding: 15px var(--spacing-2xl);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
@@ -31,7 +31,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: 10px;
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-dark);

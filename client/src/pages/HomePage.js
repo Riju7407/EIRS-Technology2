@@ -235,37 +235,30 @@ const HomePage = () => {
           <div className="services-text-container">
             {/* Installation & Setup */}
             <div className="service-text-item">
+              <img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=200&fit=crop" alt="Installation & Setup" className="service-image" />
               <h3>Installation & Setup</h3>
               <p>Professional installation and configuration of security systems, cameras, and automation equipment at your premises with minimal downtime.</p>
-              <div className="service-price">₹5,000</div>
             </div>
 
             {/* AMC & Maintenance */}
             <div className="service-text-item">
+              <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=300&h=200&fit=crop" alt="AMC & Maintenance" className="service-image" />
               <h3>AMC & Maintenance</h3>
               <p>Annual Maintenance Contracts with regular inspections, preventive maintenance, and emergency support to ensure optimal system performance.</p>
-              <div className="service-price">₹3,000</div>
             </div>
 
             {/* Expert Consultation */}
             <div className="service-text-item">
+              <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop" alt="Expert Consultation" className="service-image" />
               <h3>Expert Consultation</h3>
               <p>Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.</p>
-              <div className="service-price">₹500</div>
             </div>
 
             {/* Technical Support */}
             <div className="service-text-item">
+              <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=300&h=200&fit=crop" alt="Technical Support" className="service-image" />
               <h3>Technical Support</h3>
               <p>24/7 technical support with remote assistance, on-site troubleshooting, and quick resolution for all your security system issues.</p>
-              <div className="service-price">₹2,000</div>
-            </div>
-
-            {/* Training Programs */}
-            <div className="service-text-item">
-              <h3>Training Programs</h3>
-              <p>Comprehensive training sessions for your staff on system operation, maintenance, troubleshooting, and best practices for security management.</p>
-              <div className="service-price">₹2,000</div>
             </div>
           </div>
         </div>

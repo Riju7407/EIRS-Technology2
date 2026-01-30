@@ -189,6 +189,18 @@ export const productService = {
       throw error.response?.data || error.message;
     }
   },
+
+  getProductsByCategory: async (category) => {
+    try {
+      const response = await api.get('/auth/products');
+      // Handle both direct array and nested data structure
+      let allProducts = Array.isArray(response.data) ? response.data : (response.data.data || response.data || []);
+      // Filter products by category on the client side
+      return allProducts.filter(product => product.category === category);
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 // Services (Company Services like Installation, AMC, etc.)

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { CategoryFilterProvider } from './context/CategoryFilterContext';
+import { WishlistProvider } from './context/WishlistContext';
 import Header from './components/Header';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Footer from './components/Footer';
@@ -12,6 +13,7 @@ import ServicesPage from './pages/ServicesPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
+import WishlistPage from './pages/WishlistPage';
 import ContactPage from './pages/ContactPage';
 import SignUpPage from './pages/SignUpPage';
 import SignInPage from './pages/SignInPage';
@@ -30,12 +32,11 @@ import './App.css';
 
 function AppContent() {
   const location = useLocation();
-  // Hide Footer on orders page and account page
+  // Hide Footer on orders page, account page, and product detail pages
   const hideFooterPaths = ['/', '/orders', '/account'];
-  // Also hide for product detail pages (any route starting with /products/)
-  const isProductDetailPage = location.pathname.startsWith('/products/');
+  const isProductDetailPage = location.pathname.startsWith('/products/') || location.pathname.startsWith('/product/');
   const isAdminPage = location.pathname.startsWith('/admin');
-  const shouldShowFooter = !hideFooterPaths.includes(location.pathname);
+  const shouldShowFooter = !hideFooterPaths.includes(location.pathname) && !isProductDetailPage && !isAdminPage;
 
   return (
     <div className="App">
@@ -49,6 +50,7 @@ function AppContent() {
         <Route path="/products/:id" element={<ProductDetailPage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/signup" element={<SignUpPage />} />
@@ -73,11 +75,13 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <CategoryFilterProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </CategoryFilterProvider>
+        <WishlistProvider>
+          <CategoryFilterProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </CategoryFilterProvider>
+        </WishlistProvider>
       </CartProvider>
     </AuthProvider>
   );

@@ -103,14 +103,14 @@ const Header = () => {
               {isUserMenuOpen && (
                 <div className="user-dropdown-menu">
                   {!isLoggedIn ? (
-                    <>
+                    <div className="auth-buttons-container">
                       <Link to="/signin" className="dropdown-link signin-link" onClick={() => setIsUserMenuOpen(false)}>
                         Sign In
                       </Link>
                       <Link to="/signup" className="dropdown-link signup-link" onClick={() => setIsUserMenuOpen(false)}>
                         Sign Up
                       </Link>
-                    </>
+                    </div>
                   ) : (
                     <>
                       <div className="dropdown-header">

@@ -30,14 +30,7 @@ const HeroSection = () => {
           style={{ cursor: 'pointer' }}
         />
         <img 
-          src="/u6-plus.webp" 
-          alt="EIRS - Automation Systems" 
-          className="hero-image u6plus-image"
-          onClick={handleAutomationClick}
-          style={{ cursor: 'pointer' }}
-        />
-        <img 
-          src="/hero2.jpg" 
+          src="/hero2.webp" 
           alt="EIRS - Enterprise Solutions" 
           className="hero-image hero-image-2"
           onClick={handleHeroClick}
@@ -55,6 +48,9 @@ const HeroSection = () => {
       
       <div className="hero-content">
         <div className="hero-text">
+          <h1 className="hero-title">EIRS Technology</h1>
+          <p className="hero-subtitle">Integrated Security & Automation Solutions</p>
+          <p className="hero-description">Advanced Technology for Modern Protection and Control</p>
           
           <div className="hero-buttons">
             <Link to="/products" className="hero-btn hero-btn-primary">

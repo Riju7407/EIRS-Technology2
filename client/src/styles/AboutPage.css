@@ -1,4 +1,13 @@
 /* About Page Styles - Modern IPVoice Style */
+:root {
+  --text-dark: #1a1a1a;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+}
+
 .about-page {
   background-color: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -370,6 +379,8 @@
   margin: 0 auto;
   min-height: 400px;
   grid-auto-flow: column;
+  place-items: center;
+  width: 100%;
 }
 
 .service-card {
@@ -380,6 +391,13 @@
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e7eb;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
 }
 
 .service-card:hover {

@@ -563,6 +563,19 @@
   overflow: hidden;
 }
 
+.service-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  transition: transform 0.3s ease;
+}
+
+.service-text-item:hover .service-image {
+  transform: scale(1.05);
+}
+
 .service-text-item::before {
   content: '';
   position: absolute;

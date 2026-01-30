@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar, FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import '../styles/ProductCard.css';
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { isLoggedIn } = useAuth();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const [isWishlisted, setIsWishlisted] = useState(isInWishlist(product._id));
   const {
     _id,
     name,
@@ -75,6 +78,21 @@ const ProductCard = ({ product }) => {
     }
   };
 
+  const handleWishlist = () => {
+    if (!isLoggedIn) {
+      navigate('/signin');
+      return;
+    }
+
+    if (isWishlisted) {
+      removeFromWishlist(productId);
+      setIsWishlisted(false);
+    } else {
+      addToWishlist(product);
+      setIsWishlisted(true);
+    }
+  };
+
   return (
     <div className="product-card">
       <div className="product-image-wrapper" onClick={handleViewDetails} style={{ cursor: 'pointer' }}>
@@ -83,7 +101,11 @@ const ProductCard = ({ product }) => {
           <div className="discount-badge">{discountPercentage}% OFF</div>
         )}
         {isOutOfStock && <div className="out-of-stock">Out of Stock</div>}
-        <button className="wishlist-btn" title="Add to Wishlist">
+        <button 
+          className={`wishlist-btn ${isWishlisted ? 'active' : ''}`} 
+          title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+          onClick={handleWishlist}
+        >
           <FaHeart />
         </button>
       </div>

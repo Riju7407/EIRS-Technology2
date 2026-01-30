@@ -10,6 +10,7 @@ import '../styles/ProductDetailPage.css';
 const ProductDetailPage = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -22,10 +23,15 @@ const ProductDetailPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await productService.getProductById(id);
-        setProduct(response || response.data);
+        console.log('Product API Response:', response);
+        // Handle both direct response and response.data structure
+        const productData = response.data ? response.data : response;
+        console.log('Product Data:', productData);
+        setProduct(productData);
+        setError('');
       } catch (err) {
         console.error('Error fetching product:', err);
-        setError('Failed to load product details');
+        setError('Failed to load product details. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -35,6 +41,34 @@ const ProductDetailPage = () => {
       fetchProduct();
     }
   }, [id]);
+
+  useEffect(() => {
+    // Fetch related products from the same category
+    const fetchRelatedProducts = async () => {
+      if (product && product.category) {
+        try {
+          const response = await productService.getProductsByCategory(product.category);
+          console.log('Related Products Response:', response);
+          // Handle both array response and nested data
+          let products = Array.isArray(response) ? response : (response.data || []);
+          console.log('All Category Products:', products);
+          // Filter out current product and limit to 6 related products
+          const related = products
+            .filter(p => p._id !== product._id)
+            .slice(0, 6);
+          console.log('Filtered Related Products:', related);
+          setRelatedProducts(related);
+        } catch (err) {
+          console.error('Error fetching related products:', err);
+          setRelatedProducts([]);
+        }
+      }
+    };
+
+    if (product) {
+      fetchRelatedProducts();
+    }
+  }, [product]);
 
   const handleAddToCart = () => {
     if (product && product.stock > 0) {
@@ -104,7 +138,7 @@ const ProductDetailPage = () => {
 
           {/* Info Section */}
           <section className="product-info-section">
-            <h1 className="product-name">{product.productName}</h1>
+            <h1 className="product-name">{product.productName || product.name}</h1>
             
             <div className="product-meta">
               <span className="category-badge">{product.category}</span>
@@ -125,7 +159,17 @@ const ProductDetailPage = () => {
               </div>
             </div>
 
-            <p className="product-description">{product.description}</p>
+            <p className="product-description">{product.description || 'No description available'}</p>
+
+            {/* Debug Info - Remove after testing */}
+            {process.env.NODE_ENV === 'development' && (
+              <details style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Debug Info</summary>
+                <pre style={{ fontSize: '12px', overflow: 'auto' }}>
+                  {JSON.stringify(product, null, 2)}
+                </pre>
+              </details>
+            )}
 
             {/* Quantity Selector */}
             <div className="quantity-selector">
@@ -213,15 +257,35 @@ const ProductDetailPage = () => {
         </div>
 
         {/* Related Products */}
-        {product.relatedProducts && product.relatedProducts.length > 0 && (
+        {relatedProducts && relatedProducts.length > 0 && (
           <section className="related-products">
             <h2>Related Products</h2>
             <div className="related-grid">
-              {product.relatedProducts.map((related, index) => (
-                <div key={index} className="related-card">
-                  <img src="https://via.placeholder.com/200x200?text=Product" alt={related} />
-                  <p>{related}</p>
-                  <Link to="/products" className="view-link">View →</Link>
+              {relatedProducts.map((relProduct) => (
+                <div key={relProduct._id} className="related-card">
+                  <div className="related-card-image">
+                    <img src={relProduct.image} alt={relProduct.productName || relProduct.name} />
+                  </div>
+                  <div className="related-card-info">
+                    <h3 className="related-card-name">{relProduct.productName || relProduct.name}</h3>
+                    <p className="related-card-brand">{relProduct.brand || 'EIRS Technology'}</p>
+                    <div className="related-card-price">
+                      <span className="price">₹{parseFloat(relProduct.price || 0).toLocaleString()}</span>
+                      {relProduct.originalPrice && (
+                        <span className="original-price">₹{parseFloat(relProduct.originalPrice || 0).toLocaleString()}</span>
+                      )}
+                    </div>
+                    <div className="related-card-stock">
+                      {relProduct.stock > 0 ? (
+                        <span className="in-stock">✓ In Stock</span>
+                      ) : (
+                        <span className="out-of-stock">Out of Stock</span>
+                      )}
+                    </div>
+                    <Link to={`/product/${relProduct._id}`} className="view-link">
+                      View Details →
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

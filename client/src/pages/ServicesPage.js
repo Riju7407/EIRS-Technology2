@@ -85,22 +85,13 @@ const ServicesPage = () => {
               <p className="loading">Loading services...</p>
             ) : dbServices.length > 0 ? (
               <div className="services-text-container">
-                {dbServices.map((service, index) => (
-                  <div
-                    key={index}
-                    className="service-text-item"
-                    onClick={() => handleServiceClick(service)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <h3>{service.name}</h3>
-                    <p>{service.description}</p>
-                    <div className="service-price">₹{service.price?.toLocaleString() || 'Contact'}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="services-text-container">
-                {mainServices.map((service, index) => {
+                {dbServices.map((service, index) => {
+                  const images = [
+                    'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=200&fit=crop',
+                    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop',
+                    'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=300&h=200&fit=crop',
+                    'https://images.unsplash.com/photo-1552664740-d8c86c986c9c?w=300&h=200&fit=crop'
+                  ];
                   return (
                     <div
                       key={index}
@@ -108,6 +99,30 @@ const ServicesPage = () => {
                       onClick={() => handleServiceClick(service)}
                       style={{ cursor: 'pointer' }}
                     >
+                      <img src={images[index % images.length]} alt={service.name} className="service-image" />
+                      <h3>{service.name}</h3>
+                      <p>{service.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="services-text-container">
+                {mainServices.map((service, index) => {
+                  const images = [
+                    'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=200&fit=crop',
+                    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop',
+                    'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=300&h=200&fit=crop',
+                    'https://images.unsplash.com/photo-1552664740-d8c86c986c9c?w=300&h=200&fit=crop'
+                  ];
+                  return (
+                    <div
+                      key={index}
+                      className="service-text-item"
+                      onClick={() => handleServiceClick(service)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img src={images[index % images.length]} alt={service.title} className="service-image" />
                       <h3>{service.title}</h3>
                       <p>{service.description}</p>
                     </div>

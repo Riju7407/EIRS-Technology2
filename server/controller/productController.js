@@ -20,18 +20,65 @@ exports.createProduct = async (req, res) => {
     }
 };
 
+// Cache for products (refresh every 5 minutes)
+let productsCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 exports.getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find();
-        res.json(products);
+        const now = Date.now();
+        
+        // Check if cache is still valid
+        if (productsCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+            console.log('✅ Returning cached products');
+            return res.json(productsCache);
+        }
+        
+        // Get pagination params
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
+        
+        // Get total count
+        const total = await Product.countDocuments();
+        
+        // Fetch products with optimized fields and pagination
+        const products = await Product.find()
+            .select('_id productName category subcategory brand price image description')
+            .lean() // Returns plain JavaScript objects, not Mongoose documents
+            .limit(limit)
+            .skip(skip)
+            .exec();
+        
+        const response = {
+            data: products,
+            pagination: {
+                total,
+                page,
+                limit,
+                pages: Math.ceil(total / limit)
+            }
+        };
+        
+        // Cache the response (only for full list)
+        if (!req.query.page) {
+            productsCache = response;
+            cacheTimestamp = now;
+        }
+        
+        res.json(response);
     } catch (error) {
+        console.error('Error fetching products:', error);
         res.status(500).json({ message: error.message });
     }
 };
 
 exports.getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id)
+            .lean()
+            .exec();
         if (!product) return res.status(404).json({ message: 'Product not found' });
         res.json(product);
     } catch (error) {

@@ -467,3 +467,71 @@
   letter-spacing: 0.3px;
   padding: 0 30px 20px 30px;
 }
+/* CTA Buttons Section */
+.cta-buttons-section {
+  padding: var(--spacing-3xl) var(--spacing-lg);
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f9 100%);
+  text-align: center;
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  flex-wrap: wrap;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.buttons-container .btn {
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 40px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+.buttons-container .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.buttons-container .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.buttons-container .btn-secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+}
+
+.buttons-container .btn-secondary:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .buttons-container {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .buttons-container .btn {
+    min-width: 100%;
+  }
+}

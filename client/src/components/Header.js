@@ -147,7 +147,7 @@ const Header = () => {
         {/* Desktop Navigation - Below Header */}
         <nav className="nav-desktop-bar">
           <div className="container nav-container">
-            <Link to="/" className="nav-link"><FaHome /> Home</Link>
+            <Link to="/" className="nav-link">Home</Link>
             {!isAdmin && (
               <>
                 <Link to="/products" className="nav-link">Products</Link>

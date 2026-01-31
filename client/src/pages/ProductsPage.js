@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FaFilter, FaChevronDown, FaTimes } from 'react-icons/fa';
 import { productService } from '../services/api';
@@ -23,6 +23,7 @@ const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedSidebarCategories, setSelectedSidebarCategories] = useState(new Set());
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubcategoryDropdownOpen, setIsSubcategoryDropdownOpen] = useState(false);
   const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
@@ -124,29 +125,20 @@ const ProductsPage = () => {
 
   useEffect(() => {
     filterProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedBrand]);
+  }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedBrand, selectedSidebarCategories]);
 
-  const fetchProducts = async () => {
-    try {
-      const data = await productService.getAllProducts();
-      const productsArray = Array.isArray(data) ? data : data.data || [];
-      setProducts(productsArray);
-      setFilteredProducts(productsArray); // Initialize filtered products
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setProducts([]);
-      setFilteredProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterProducts = () => {
+  const filterProducts = useCallback(() => {
     try {
       let filtered = Array.isArray(products) ? [...products] : [];
 
-      // Apply category filter
+      // Apply sidebar category filter if selected
+      if (selectedSidebarCategories.size > 0) {
+        filtered = filtered.filter(p => 
+          p.category && selectedSidebarCategories.has(p.category)
+        );
+      }
+
+      // Apply main category filter
       if (selectedCategory && selectedCategory.trim() !== '') {
         filtered = filtered.filter(p => 
           p.category && p.category.trim() === selectedCategory.trim()
@@ -179,34 +171,80 @@ const ProductsPage = () => {
       }
 
       setFilteredProducts(filtered);
+      setCurrentPage(1); // Reset to page 1 when filters change
     } catch (error) {
       console.error('Error filtering products:', error);
       setFilteredProducts(products);
     }
+  }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedBrand, selectedSidebarCategories]);
+
+  const fetchProducts = async () => {
+    try {
+      // Fetch first batch with pagination (50 items per request for faster loading)
+      const data = await productService.getAllProducts(1, 50);
+      
+      // Handle both array response and pagination object response
+      const productsArray = Array.isArray(data) 
+        ? data 
+        : (data.data ? data.data : []);
+      
+      setProducts(productsArray);
+      setFilteredProducts(productsArray);
+      console.log('✅ Products loaded successfully:', productsArray.length, 'items');
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getSubcategories = (category) => {
+  const getSubcategories = useCallback((category) => {
     const found = categoriesData.find(cat => cat.name === category);
     return found ? found.subcategories : [];
-  };
+  }, []);
 
-  const uniqueBrands = [...new Set(products.map(p => p.brand).filter(Boolean))];
+  const uniqueBrands = useMemo(
+    () => [...new Set(products.map(p => p.brand).filter(Boolean))],
+    [products]
+  );
+
+  const subcategories = useMemo(
+    () => getSubcategories(selectedCategory),
+    [selectedCategory, getSubcategories]
+  );
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCategory('');
     setSelectedSubcategory('');
     setSelectedBrand('');
+    setSelectedSidebarCategories(new Set());
     setCurrentPage(1);
   };
+
+  const handleSidebarCategorySelect = useCallback((categoryName) => {
+    setSelectedSidebarCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
+      return newSet;
+    });
+    setCurrentPage(1);
+  }, []);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-  const subcategories = getSubcategories(selectedCategory);
+  const paginatedProducts = useMemo(
+    () => filteredProducts.slice(startIndex, endIndex),
+    [filteredProducts, startIndex, endIndex]
+  );
 
   return (
     <main className="products-page">
@@ -218,7 +256,7 @@ const ProductsPage = () => {
             <FaTimes />
           </button>
         </div>
-        <CategorySidebar />
+        <CategorySidebar onCategorySelect={handleSidebarCategorySelect} />
       </div>
 
       {/* Overlay for mobile */}
@@ -369,6 +407,7 @@ const ProductsPage = () => {
 
           {loading ? (
             <div className="loading-container">
+              <div className="loader-spinner"></div>
               <p>Loading products...</p>
             </div>
           ) : paginatedProducts.length > 0 ? (

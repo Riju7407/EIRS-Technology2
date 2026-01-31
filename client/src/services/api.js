@@ -136,11 +136,29 @@ export const authService = {
 
 // Products Services
 export const productService = {
-  getAllProducts: async () => {
+  getAllProducts: async (page = 1, limit = 50) => {
     try {
-      const response = await api.get('/auth/products');
+      // Add caching to localStorage for faster subsequent loads
+      const cacheKey = `products_cache_${page}_${limit}`;
+      const cached = localStorage.getItem(cacheKey);
+      const cacheTime = localStorage.getItem(cacheKey + '_time');
+      
+      // Use cache if less than 5 minutes old
+      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
+        console.log('✅ Using cached products');
+        return JSON.parse(cached);
+      }
+      
+      console.log('🔄 Fetching products from server...');
+      const response = await api.get(`/auth/products?page=${page}&limit=${limit}`);
+      
+      // Cache the response
+      localStorage.setItem(cacheKey, JSON.stringify(response.data));
+      localStorage.setItem(cacheKey + '_time', Date.now().toString());
+      
       return response.data;
     } catch (error) {
+      console.error('Error fetching products:', error);
       throw error.response?.data || error.message;
     }
   },

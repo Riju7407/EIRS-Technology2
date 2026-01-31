@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar, FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
@@ -30,8 +30,14 @@ const ProductCard = ({ product }) => {
 
   const productId = _id;
   const displayName = productName || name;
-  const discountPercentage = discount || (originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0);
-  const isOutOfStock = stock === 0 || stock === undefined;
+  const discountPercentage = useMemo(
+    () => discount || (originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0),
+    [discount, originalPrice, price]
+  );
+  const isOutOfStock = useMemo(
+    () => stock === 0 || stock === undefined,
+    [stock]
+  );
 
   const handleBuyNow = () => {
     if (!isLoggedIn) {

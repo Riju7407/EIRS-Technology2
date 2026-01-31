@@ -23,6 +23,10 @@ const HeroSection = () => {
     window.location.href = '/products?category=Biometric Devices';
   };
 
+  const handleSmokeClick = () => {
+    window.location.href = '/products?category=Fire Alarm Systems';
+  };
+
   return (
     <section className="hero-section">
       <div className="hero-background">
@@ -31,6 +35,13 @@ const HeroSection = () => {
           alt="EIRS - IOT Based Solutions" 
           className="hero-image iot-image"
           onClick={handleIOTClick}
+          style={{ cursor: 'pointer' }}
+        />
+        <img 
+          src="/smoke.webp" 
+          alt="EIRS - Fire Alarm Systems" 
+          className="hero-image smoke-image"
+          onClick={handleSmokeClick}
           style={{ cursor: 'pointer' }}
         />
         <img 

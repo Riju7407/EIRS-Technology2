@@ -253,7 +253,8 @@ const CategorySidebar = ({
                         id={`category-${subcategory.id || subcategory.name}`}
                         className="subcategory-checkbox"
                         checked={selectedCategories.has(subcategory.id || subcategory.name)}
-                        onChange={() => {
+                        onChange={(e) => {
+                          e.preventDefault();
                           const newCategories = new Set(selectedCategories);
                           const subId = subcategory.id || subcategory.name;
                           if (newCategories.has(subId)) {

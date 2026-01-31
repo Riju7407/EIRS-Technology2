@@ -52,6 +52,23 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
+.smoke-image {
+  width: 200px;
+  height: 150px;
+  top: 20px;
+  left: calc(20px + 450px + 20px);
+  animation: slideInLeft 0.8s ease-out;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.smoke-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
 .bio-image {
   width: 300px;
   height: 150px;

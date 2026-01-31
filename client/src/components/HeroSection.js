@@ -19,6 +19,10 @@ const HeroSection = () => {
     window.location.href = '/products?category=Automation Systems';
   };
 
+  const handleBioClick = () => {
+    window.location.href = '/products?category=Biometric Devices';
+  };
+
   return (
     <section className="hero-section">
       <div className="hero-background">
@@ -27,6 +31,13 @@ const HeroSection = () => {
           alt="EIRS - IOT Based Solutions" 
           className="hero-image iot-image"
           onClick={handleIOTClick}
+          style={{ cursor: 'pointer' }}
+        />
+        <img 
+          src="/Bio.webp" 
+          alt="EIRS - Biometric Devices" 
+          className="hero-image bio-image"
+          onClick={handleBioClick}
           style={{ cursor: 'pointer' }}
         />
         <img 
@@ -48,9 +59,6 @@ const HeroSection = () => {
       
       <div className="hero-content">
         <div className="hero-text">
-          <h1 className="hero-title">EIRS Technology</h1>
-          <p className="hero-subtitle">Integrated Security & Automation Solutions</p>
-          <p className="hero-description">Advanced Technology for Modern Protection and Control</p>
           
           <div className="hero-buttons">
             <Link to="/products" className="hero-btn hero-btn-primary">

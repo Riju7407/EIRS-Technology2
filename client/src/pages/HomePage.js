@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { serviceService, productService } from '../services/api';
 import HeroSection from '../components/HeroSection';
@@ -61,7 +61,7 @@ const HomePage = () => {
     }
   };
 
-  const filterAndSortProducts = () => {
+  const filterAndSortProducts = useCallback(() => {
     let filtered = [...products];
 
     // Filter by category if selected
@@ -137,7 +137,7 @@ const HomePage = () => {
     }
 
     setFilteredProducts(filtered);
-  };
+  }, [products, selectedCategories, selectedPrice, selectedIPCameraResolutions, selectedNVRChannels, selectedPOESwitches, sortBy]);
 
   const handleCategorySelect = (category) => {
     const newCategories = new Set(selectedCategories);
@@ -208,8 +208,8 @@ const HomePage = () => {
             <h2>Our Best Selling Products</h2>
           </div>
           <div className="admin-products-grid">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
+            {filteredProducts.slice(0, 8).length > 0 ? (
+              filteredProducts.slice(0, 8).map((product) => (
                 <ProductCard 
                   key={product.id} 
                   product={product}

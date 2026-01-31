@@ -12,6 +12,7 @@ const ServicesPage = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [dbServices, setDbServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failedImages, setFailedImages] = useState({});
   const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
   const mainServices = [
@@ -36,6 +37,26 @@ const ServicesPage = () => {
       description: 'Rapid emergency response team to handle urgent security issues and system failures.'
     }
   ];
+
+  const handleImageError = (key) => {
+    setFailedImages(prev => ({ ...prev, [key]: true }));
+  };
+
+  const serviceImages = {
+    'Installation & Setup': 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop&crop=faces',
+    '24/7 Technical Support': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
+    'Maintenance & Monitoring': 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400&h=300&fit=crop',
+    'Emergency Response': 'https://images.unsplash.com/photo-1531746790731-6c087a29a605?w=400&h=300&fit=crop'
+  };
+
+  const getServiceImage = (serviceTitle, index) => {
+    return serviceImages[serviceTitle] || [
+      'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop&crop=faces',
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1531746790731-6c087a29a605?w=400&h=300&fit=crop'
+    ][index % 4];
+  };
 
   useEffect(() => {
     fetchServices();
@@ -86,12 +107,10 @@ const ServicesPage = () => {
             ) : dbServices.length > 0 ? (
               <div className="services-text-container">
                 {dbServices.map((service, index) => {
-                  const images = [
-                    'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=200&fit=crop',
-                    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop',
-                    'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=300&h=200&fit=crop',
-                    'https://images.unsplash.com/photo-1552664740-d8c86c986c9c?w=300&h=200&fit=crop'
-                  ];
+                  const imageKey = `db-${index}`;
+                  const showPlaceholder = failedImages[imageKey];
+                  const imageUrl = getServiceImage(service.name, index);
+                  
                   return (
                     <div
                       key={index}
@@ -99,7 +118,18 @@ const ServicesPage = () => {
                       onClick={() => handleServiceClick(service)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <img src={images[index % images.length]} alt={service.name} className="service-image" />
+                      {showPlaceholder ? (
+                        <div className="service-image-placeholder">
+                          <div className="placeholder-icon">📸</div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={imageUrl} 
+                          alt={service.name} 
+                          className="service-image"
+                          onError={() => handleImageError(imageKey)}
+                        />
+                      )}
                       <h3>{service.name}</h3>
                       <p>{service.description}</p>
                     </div>
@@ -109,12 +139,10 @@ const ServicesPage = () => {
             ) : (
               <div className="services-text-container">
                 {mainServices.map((service, index) => {
-                  const images = [
-                    'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=200&fit=crop',
-                    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop',
-                    'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=300&h=200&fit=crop',
-                    'https://images.unsplash.com/photo-1552664740-d8c86c986c9c?w=300&h=200&fit=crop'
-                  ];
+                  const imageKey = `main-${index}`;
+                  const showPlaceholder = failedImages[imageKey];
+                  const imageUrl = getServiceImage(service.title, index);
+                  
                   return (
                     <div
                       key={index}
@@ -122,7 +150,18 @@ const ServicesPage = () => {
                       onClick={() => handleServiceClick(service)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <img src={images[index % images.length]} alt={service.title} className="service-image" />
+                      {showPlaceholder ? (
+                        <div className="service-image-placeholder">
+                          <div className="placeholder-icon">📸</div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={imageUrl} 
+                          alt={service.title} 
+                          className="service-image"
+                          onError={() => handleImageError(imageKey)}
+                        />
+                      )}
                       <h3>{service.title}</h3>
                       <p>{service.description}</p>
                     </div>

@@ -27,7 +27,7 @@ const Footer = () => {
               Your trusted partner for advanced security systems, CCTV cameras, and smart automation solutions. Protecting what matters most to you.
             </p>
             <div className="footer-social">
-              <a href="#facebook" className="social-icon" title="Facebook">
+              <a href="https://www.facebook.com/share/1ByAdwoeVx/" className="social-icon" title="Facebook" target="_blank" rel="noopener noreferrer">
                 <FaFacebook />
               </a>
               <a href="#twitter" className="social-icon" title="Twitter">
@@ -86,7 +86,7 @@ const Footer = () => {
                 <FaMapMarkerAlt className="contact-icon" />
                 <div className="contact-text">
                   <p className="contact-label">Location</p>
-                  <p className="contact-value">New Delhi, India</p>
+                  <p className="contact-value">569/168, Barabirwan, Krishna Nagar, Near Piccadily Hotel, Kanpure Road, Alambagh, Lucknow-226005, Uttar Pradesh</p>
                 </div>
               </div>
             </div>

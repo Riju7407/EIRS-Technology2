@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const app = express();
 const port = process.env.PORT || 5000;
 const {authRouter} = require('./router/authRouter.js');
@@ -12,6 +13,9 @@ const User = require('./model/userSchema');
 const bcrypt = require('bcrypt');
 
 databaseconnect();
+
+// Enable compression for all responses
+app.use(compression());
 
 // Auto-create admin user on server startup if it doesn't exist
 const createAdminOnStartup = async () => {

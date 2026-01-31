@@ -32,6 +32,8 @@ const ProductsPage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [buyNowQuantity, setBuyNowQuantity] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
   const categoriesData = [
     {
@@ -198,7 +200,14 @@ const ProductsPage = () => {
     setSelectedCategory('');
     setSelectedSubcategory('');
     setSelectedBrand('');
+    setCurrentPage(1);
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   const handleAddToCart = (e, product) => {
     e.preventDefault();
@@ -393,7 +402,7 @@ const ProductsPage = () => {
         <section className="products-grid-section">
           <div className="results-header">
             <p className="results-count">
-              Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
             </p>
           </div>
 
@@ -401,15 +410,50 @@ const ProductsPage = () => {
             <div className="loading-container">
               <p>Loading products...</p>
             </div>
-          ) : filteredProducts.length > 0 ? (
-            <div className="admin-products-grid">
-              {filteredProducts.map(product => (
-                <ProductCard 
-                  key={product._id} 
-                  product={product}
-                />
-              ))}
-            </div>
+          ) : paginatedProducts.length > 0 ? (
+            <>
+              <div className="admin-products-grid">
+                {paginatedProducts.map(product => (
+                  <ProductCard 
+                    key={product._id} 
+                    product={product}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="pagination-controls">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="pagination-btn"
+                  >
+                    ← Previous
+                  </button>
+                  
+                  <div className="page-numbers">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="pagination-btn"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="no-products">
               <p>No products found matching your criteria.</p>

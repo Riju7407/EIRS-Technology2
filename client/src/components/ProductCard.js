@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar, FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
@@ -12,6 +12,7 @@ const ProductCard = ({ product }) => {
   const { isLoggedIn } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [isWishlisted, setIsWishlisted] = useState(isInWishlist(product._id));
+  const [imageLoaded, setImageLoaded] = useState(false);
   const {
     _id,
     name,
@@ -53,7 +54,7 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = useCallback(() => {
     if (!isLoggedIn) {
       navigate('/signin');
       return;
@@ -70,13 +71,13 @@ const ProductCard = ({ product }) => {
       });
       alert('Product added to cart!');
     }
-  };
+  }, [isLoggedIn, productId, isOutOfStock, displayName, price, image, stock, brand, navigate, addToCart]);
 
-  const handleViewDetails = () => {
+  const handleViewDetails = useCallback(() => {
     if (productId) {
       navigate(`/product/${productId}`);
     }
-  };
+  }, [productId, navigate]);
 
   const handleWishlist = () => {
     if (!isLoggedIn) {
@@ -96,7 +97,14 @@ const ProductCard = ({ product }) => {
   return (
     <div className="product-card">
       <div className="product-image-wrapper" onClick={handleViewDetails} style={{ cursor: 'pointer' }}>
-        <img src={image} alt={displayName} className="product-image" />
+        <img 
+          src={image} 
+          alt={displayName} 
+          className={`product-image ${imageLoaded ? 'loaded' : ''}`}
+          loading="lazy"
+          onLoad={() => setImageLoaded(true)}
+        />
+        {!imageLoaded && <div className="image-placeholder"></div>}
         {discountPercentage > 0 && (
           <div className="discount-badge">{discountPercentage}% OFF</div>
         )}
@@ -166,4 +174,4 @@ const ProductCard = ({ product }) => {
   );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

@@ -739,3 +739,71 @@
     gap: 3px;
   }
 }
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 40px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: white;
+  color: #2874f0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #2874f0;
+  color: white;
+  border-color: #2874f0;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-btn {
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: white;
+  color: #2874f0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover {
+  background: #e8eef7;
+  border-color: #2874f0;
+}
+
+.page-btn.active {
+  background: #2874f0;
+  color: white;
+  border-color: #2874f0;
+}

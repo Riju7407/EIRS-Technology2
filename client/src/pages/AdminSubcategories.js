@@ -351,9 +351,9 @@ const AdminSubcategories = () => {
                 <FaPlus /> Add New Category
               </button>
 
-              {showForm && editingCategoryId === null && (
+              {showForm && activeTab === 'categories' && (
                 <form onSubmit={handleSaveCategory} className="admin-form">
-                  <h2>Add New Category</h2>
+                  <h2>{editingCategoryId ? 'Edit Category' : 'Add New Category'}</h2>
                   
                   <div className="form-group">
                     <label>Category Name *</label>
@@ -378,43 +378,7 @@ const AdminSubcategories = () => {
 
                   <div className="form-actions">
                     <button type="submit" className="btn-success" disabled={loading}>
-                      {loading ? 'Creating...' : 'Create Category'}
-                    </button>
-                    <button type="button" className="btn-secondary" onClick={resetCategoryForm} disabled={loading}>
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {showForm && editingCategoryId && (
-                <form onSubmit={handleSaveCategory} className="admin-form">
-                  <h2>Edit Category</h2>
-                  
-                  <div className="form-group">
-                    <label>Category Name *</label>
-                    <input
-                      type="text"
-                      value={categoryFormData.name}
-                      onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                      placeholder="e.g., CCTV Cameras"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Description</label>
-                    <textarea
-                      value={categoryFormData.description}
-                      onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                      placeholder="Enter category description"
-                      rows="4"
-                    />
-                  </div>
-
-                  <div className="form-actions">
-                    <button type="submit" className="btn-success" disabled={loading}>
-                      {loading ? 'Updating...' : 'Update Category'}
+                      {loading ? (editingCategoryId ? 'Updating...' : 'Creating...') : (editingCategoryId ? 'Update Category' : 'Create Category')}
                     </button>
                     <button type="button" className="btn-secondary" onClick={resetCategoryForm} disabled={loading}>
                       Cancel

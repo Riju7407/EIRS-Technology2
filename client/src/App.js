@@ -25,7 +25,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 import AdminEnquiries from './pages/AdminEnquiries';
 import AdminProducts from './pages/AdminProducts';
-import AdminSubcategories from './pages/AdminSubcategories';
 import AdminServices from './pages/AdminServices';
 import AdminOrders from './pages/AdminOrders';
 import './App.css';
@@ -63,7 +62,6 @@ function AppContent() {
         <Route path="/admin/users" element={<ProtectedAdminRoute element={<AdminUsers />} />} />
         <Route path="/admin/enquiries" element={<ProtectedAdminRoute element={<AdminEnquiries />} />} />
         <Route path="/admin/products" element={<ProtectedAdminRoute element={<AdminProducts />} />} />
-        <Route path="/admin/subcategories" element={<ProtectedAdminRoute element={<AdminSubcategories />} />} />
         <Route path="/admin/services" element={<ProtectedAdminRoute element={<AdminServices />} />} />
         <Route path="/admin/orders" element={<ProtectedAdminRoute element={<AdminOrders />} />} />
       </Routes>

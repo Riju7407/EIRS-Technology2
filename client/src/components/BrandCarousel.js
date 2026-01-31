@@ -49,7 +49,7 @@ const BrandCarousel = () => {
 
   return (
     <section className="brand-carousel-section">
-      <h2>Our Trusted Partners</h2>
+      <h2>Our Brand Partners</h2>
       <div className="brand-carousel">
         <button 
           className="carousel-nav prev" 

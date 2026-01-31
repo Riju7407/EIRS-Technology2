@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { FaSearch, FaFilter, FaChevronDown, FaShoppingCart, FaTimes } from 'react-icons/fa';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { FaFilter, FaChevronDown, FaTimes } from 'react-icons/fa';
 import { productService } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,6 @@ import { useCategoryFilter } from '../context/CategoryFilterContext';
 import CheckoutModal from '../components/CheckoutModal';
 import ProductCard from '../components/ProductCard';
 import CategorySidebar from '../components/CategorySidebar';
-import Footer from '../components/Footer';
 import '../styles/ProductsPage.css';
 
 const ProductsPage = () => {
@@ -27,8 +26,6 @@ const ProductsPage = () => {
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubcategoryDropdownOpen, setIsSubcategoryDropdownOpen] = useState(false);
   const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
-  const [cartMessage, setCartMessage] = useState('');
-  const [cartMessageId, setCartMessageId] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [buyNowQuantity, setBuyNowQuantity] = useState(1);
@@ -208,42 +205,6 @@ const ProductsPage = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-  const handleAddToCart = (e, product) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!user) {
-      setCartMessage('Please login to add products to cart');
-      setCartMessageId(product._id);
-      setTimeout(() => {
-        navigate('/signin');
-      }, 1500);
-      return;
-    }
-    
-    addToCart(product, 1);
-    setCartMessage(`${product.productName} added to cart!`);
-    setCartMessageId(product._id);
-    setTimeout(() => setCartMessage(''), 2000);
-  };
-
-  const handleBuyNow = (e, product) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) {
-      alert('Please login first to proceed with purchase');
-      navigate('/signin');
-      return;
-    }
-    if (product.stock <= 0) {
-      alert('Product is out of stock');
-      return;
-    }
-    setSelectedProduct(product);
-    setBuyNowQuantity(1);
-    setShowCheckout(true);
-  };
 
   const subcategories = getSubcategories(selectedCategory);
 

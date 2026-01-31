@@ -173,11 +173,11 @@ const AboutPage = () => {
         <div className="container">
           <h2>What We Offer</h2>
           <p className="section-subtitle">Comprehensive security and automation solutions</p>
-          <div className="services-grid">
+          <div className="services-text-grid">
             {services.map((service, index) => (
-              <div key={index} className="service-card">
-                <div className="service-emoji">{service.emoji}</div>
-                <h3>{service.title}</h3>
+              <div key={index} className="service-text-item">
+                <span className="service-emoji">{service.emoji}</span>
+                <span className="service-title">{service.title}</span>
               </div>
             ))}
           </div>

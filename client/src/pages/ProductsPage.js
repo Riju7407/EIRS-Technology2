@@ -119,9 +119,56 @@ const ProductsPage = () => {
     }
   }, [searchParams]);
 
+  // Define fetch functions first
+  const fetchProducts = useCallback(async () => {
+    try {
+      // Fetch first batch with pagination (50 items per request for faster loading)
+      const data = await productService.getAllProducts(1, 50);
+      
+      // Handle both array response and pagination object response
+      const productsArray = Array.isArray(data) 
+        ? data 
+        : (data.data ? data.data : []);
+      
+      setProducts(productsArray);
+      setFilteredProducts(productsArray);
+      console.log('✅ Products loaded successfully:', productsArray.length, 'items');
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch fresh products (bypass cache) for dynamic stock updates
+  const fetchProductsFresh = useCallback(async () => {
+    try {
+      const data = await productService.getProductsFresh(1, 50);
+      const productsArray = Array.isArray(data) 
+        ? data 
+        : (data.data ? data.data : []);
+      
+      setProducts(productsArray);
+      setFilteredProducts(productsArray);
+      console.log('🔄 Stock data refreshed:', productsArray.length, 'items');
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
-  }, []);
+    
+    // Refresh products every 30 seconds to get dynamic stock updates
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 Auto-refreshing products for latest stock...');
+      fetchProductsFresh();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(refreshInterval);
+  }, [fetchProducts, fetchProductsFresh]);
 
   useEffect(() => {
     filterProducts();
@@ -177,28 +224,6 @@ const ProductsPage = () => {
       setFilteredProducts(products);
     }
   }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedBrand, selectedSidebarCategories]);
-
-  const fetchProducts = async () => {
-    try {
-      // Fetch first batch with pagination (50 items per request for faster loading)
-      const data = await productService.getAllProducts(1, 50);
-      
-      // Handle both array response and pagination object response
-      const productsArray = Array.isArray(data) 
-        ? data 
-        : (data.data ? data.data : []);
-      
-      setProducts(productsArray);
-      setFilteredProducts(productsArray);
-      console.log('✅ Products loaded successfully:', productsArray.length, 'items');
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setProducts([]);
-      setFilteredProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getSubcategories = useCallback((category) => {
     const found = categoriesData.find(cat => cat.name === category);

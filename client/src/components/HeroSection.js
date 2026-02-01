@@ -38,13 +38,6 @@ const HeroSection = () => {
           style={{ cursor: 'pointer' }}
         />
         <img 
-          src="/smoke.webp" 
-          alt="EIRS - Fire Alarm Systems" 
-          className="hero-image smoke-image"
-          onClick={handleSmokeClick}
-          style={{ cursor: 'pointer' }}
-        />
-        <img 
           src="/Bio.webp" 
           alt="EIRS - Biometric Devices" 
           className="hero-image bio-image"

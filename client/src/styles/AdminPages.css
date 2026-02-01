@@ -120,6 +120,26 @@
   color: white;
 }
 
+.action-btn.edit {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.action-btn.edit:hover {
+  background-color: #d97706;
+  color: white;
+}
+
+.action-btn.reviews {
+  background-color: #fce7f3;
+  color: #ec4899;
+}
+
+.action-btn.reviews:hover {
+  background-color: #ec4899;
+  color: white;
+}
+
 .action-btn.delete {
   background-color: #fee2e2;
   color: var(--error-color);
@@ -337,12 +357,16 @@
 }
 
 .product-admin-card .price-stock-display .stock {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  background: white;
-  padding: 4px 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #27ae60;
+  background: #d5f4e6;
+  padding: 6px 12px;
   border-radius: 4px;
+  border-left: 3px solid #27ae60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .admin-actions {

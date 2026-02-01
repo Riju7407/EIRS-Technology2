@@ -19,7 +19,13 @@ const jwtAuth = (req, res, next) => {
     }
     try {
         const payload = JWT.verify(token, process.env.JWT_SECRET);
-        req.user = { id: payload.id, email: payload.email, isAdmin: payload.isAdmin };
+        req.user = { 
+            _id: payload.id, 
+            id: payload.id,
+            email: payload.email, 
+            isAdmin: payload.isAdmin,
+            name: payload.name
+        };
     } catch (error) {
         return res.status(401).json({
             success: false, 

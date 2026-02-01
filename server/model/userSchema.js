@@ -79,7 +79,7 @@ userSchema.pre('save', async function (next) {
 
 userSchema.methods = {
     jwtToken() {
-        return jwt.sign({ id: this._id, email: this.email, isAdmin: this.isAdmin }, process.env.JWT_SECRET, {
+        return jwt.sign({ id: this._id, email: this.email, isAdmin: this.isAdmin, name: this.name }, process.env.JWT_SECRET, {
             expiresIn: '24h',
         });
     }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaTrash, FaEdit, FaPlus, FaImage, FaBars, FaTimes, FaChartBar, FaUsers, FaPhone, FaBox, FaTools, FaSignOutAlt, FaTags } from 'react-icons/fa';
-import { productService, authService } from '../services/api';
+import { FaTrash, FaEdit, FaPlus, FaImage, FaBars, FaTimes, FaChartBar, FaUsers, FaPhone, FaBox, FaTools, FaSignOutAlt, FaTags, FaStar } from 'react-icons/fa';
+import { productService, authService, reviewService } from '../services/api';
+import ProductReviewsSection from '../components/ProductReviewsSection';
 import '../styles/AdminPages.css';
 
 const AdminProducts = () => {
@@ -13,6 +14,7 @@ const AdminProducts = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  const [selectedProductForReviews, setSelectedProductForReviews] = useState(null);
   const [formData, setFormData] = useState({
     productName: '',
     category: '',
@@ -176,8 +178,11 @@ const AdminProducts = () => {
         await productService.createProduct(submitData);
         alert('Product added successfully!');
       }
+      // Clear product cache to ensure new/updated products appear immediately on homepage
+      productService.clearProductCache();
       fetchProducts();
       resetForm();
+      setShowForm(false);
     } catch (error) {
       console.error('Error saving product:', error);
       alert('Error saving product: ' + (error.message || 'Unknown error'));
@@ -209,10 +214,20 @@ const AdminProducts = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await productService.deleteProduct(id);
+        console.log('🗑️ Deleting product with ID:', id);
+        const response = await productService.deleteProduct(id);
+        console.log('✅ Delete response:', response);
+        
+        // Remove from UI immediately
         setProducts(products.filter(p => p._id !== id));
+        
+        // Clear product cache for fresh data
+        productService.clearProductCache();
+        
+        alert('✅ Product deleted successfully!');
       } catch (error) {
-        console.error('Error deleting product:', error);
+        console.error('❌ Error deleting product:', error);
+        alert('❌ Error deleting product: ' + (error.message || 'Unknown error'));
       }
     }
   };
@@ -381,7 +396,12 @@ const AdminProducts = () => {
             <p>Manage your product catalog</p>
           </div>
 
-          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          <button className="btn btn-primary" onClick={() => {
+            if (!showForm) {
+              resetForm(); // Clear form data when opening the form
+            }
+            setShowForm(!showForm);
+          }}>
             <FaPlus /> {showForm ? 'Cancel' : 'Add New Product'}
           </button>
 
@@ -498,11 +518,12 @@ const AdminProducts = () => {
                     placeholder="Enter product price"
                     step="0.01"
                     min="0"
+                    required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>Stock Quantity</label>
+                  <label><strong>Stock Quantity *</strong></label>
                   <input
                     type="number"
                     name="stock"
@@ -510,7 +531,10 @@ const AdminProducts = () => {
                     onChange={handleInputChange}
                     placeholder="Enter stock quantity"
                     min="0"
+                    required
+                    style={{ borderColor: '#ff6b6b', borderWidth: '2px' }}
                   />
+                  <small style={{ color: '#666', fontSize: '12px' }}>Required: Enter 0 to mark as out of stock</small>
                 </div>
               </div>
 
@@ -585,7 +609,7 @@ const AdminProducts = () => {
                   <p className="description">{product.description?.substring(0, 100)}...</p>
                   <div className="price-stock-display">
                     <span className="price">₹{product.price || 0}</span>
-                    <span className="stock">Stock: {product.stock || 0}</span>
+                    <span className="stock">{product.stock !== undefined && product.stock !== null ? `📦 Stock: ${product.stock}` : '📦 Stock: 0'}</span>
                   </div>
                   <div className="admin-actions">
                     <button
@@ -600,6 +624,13 @@ const AdminProducts = () => {
                     >
                       <FaTrash /> Delete
                     </button>
+                    <button
+                      className="action-btn reviews"
+                      onClick={() => setSelectedProductForReviews(product._id)}
+                      title="View customer reviews"
+                    >
+                      <FaStar /> Reviews
+                    </button>
                   </div>
                 </div>
               ))}
@@ -611,6 +642,14 @@ const AdminProducts = () => {
           )}
         </div>
       </main>
+
+      {/* Product Reviews Modal */}
+      {selectedProductForReviews && (
+        <ProductReviewsSection 
+          productId={selectedProductForReviews}
+          onClose={() => setSelectedProductForReviews(null)}
+        />
+      )}
     </div>
   );
 };

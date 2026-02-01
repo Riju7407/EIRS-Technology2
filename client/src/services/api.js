@@ -136,15 +136,15 @@ export const authService = {
 
 // Products Services
 export const productService = {
-  getAllProducts: async (page = 1, limit = 50) => {
+  getAllProducts: async (page = 1, limit = 50, skipCache = false) => {
     try {
       // Add caching to localStorage for faster subsequent loads
       const cacheKey = `products_cache_${page}_${limit}`;
       const cached = localStorage.getItem(cacheKey);
       const cacheTime = localStorage.getItem(cacheKey + '_time');
       
-      // Use cache if less than 5 minutes old
-      if (cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
+      // Use cache if less than 2 minutes old and not skipped (for dynamic stock updates)
+      if (!skipCache && cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 2 * 60 * 1000) {
         console.log('✅ Using cached products');
         return JSON.parse(cached);
       }
@@ -161,6 +161,22 @@ export const productService = {
       console.error('Error fetching products:', error);
       throw error.response?.data || error.message;
     }
+  },
+
+  // New method to clear product cache for fresh data
+  clearProductCache: () => {
+    try {
+      localStorage.removeItem('products_cache_1_50');
+      localStorage.removeItem('products_cache_1_50_time');
+      console.log('✅ Product cache cleared');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  },
+
+  // Fetch products with fresh data (bypasses cache)
+  getProductsFresh: async (page = 1, limit = 50) => {
+    return productService.getAllProducts(page, limit, true);
   },
 
   getProductById: async (id) => {
@@ -382,6 +398,74 @@ export const orderService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
+    }
+  },
+};
+
+// Review Services
+export const reviewService = {
+  addReview: async (reviewData) => {
+    try {
+      console.log('🚀 API Call: POST /auth/reviews/add');
+      console.log('Data:', reviewData);
+      const response = await api.post('/auth/reviews/add', reviewData);
+      console.log('✅ Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API Error in addReview:');
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      console.error('Message:', error.message);
+      throw error.response?.data || error;
+    }
+  },
+
+  getProductReviews: async (productId) => {
+    try {
+      console.log('🚀 API Call: GET /auth/reviews/product/:' + productId);
+      const response = await api.get(`/auth/reviews/product/${productId}`);
+      console.log('✅ Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API Error in getProductReviews:', error.message);
+      throw error.response?.data || error;
+    }
+  },
+
+  getUserProductReview: async (productId) => {
+    try {
+      console.log('🚀 API Call: GET /auth/reviews/product/:' + productId + '/user');
+      const response = await api.get(`/auth/reviews/product/${productId}/user`);
+      console.log('✅ Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API Error in getUserProductReview:', error.message);
+      throw error.response?.data || error;
+    }
+  },
+
+  updateReview: async (reviewId, reviewData) => {
+    try {
+      console.log('🚀 API Call: PUT /auth/reviews/:' + reviewId);
+      console.log('Data:', reviewData);
+      const response = await api.put(`/auth/reviews/${reviewId}`, reviewData);
+      console.log('✅ Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API Error in updateReview:', error.message);
+      throw error.response?.data || error;
+    }
+  },
+
+  deleteReview: async (reviewId) => {
+    try {
+      console.log('🚀 API Call: DELETE /auth/reviews/:' + reviewId);
+      const response = await api.delete(`/auth/reviews/${reviewId}`);
+      console.log('✅ Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API Error in deleteReview:', error.message);
+      throw error.response?.data || error;
     }
   },
 };

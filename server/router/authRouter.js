@@ -6,6 +6,7 @@ const { contactForm: submitContact, deleteContact } = require('../controller/con
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } = require('../controller/productController');
 const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder } = require('../controller/orderController');
 const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
+const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
 const jwtAuth = require('../middleware/jwtAuth');
 const authRouter = express.Router();
@@ -52,5 +53,12 @@ authRouter.get('/orders/:orderId', jwtAuth, getOrderById);
 authRouter.put('/orders/:orderId/status', jwtAuth, adminMiddleware, updateOrderStatus);
 authRouter.get('/orders/admin/all', adminMiddleware, getAllOrders);
 authRouter.delete('/orders/:orderId', jwtAuth, adminMiddleware, deleteOrder);
+
+// Review Routes
+authRouter.post('/reviews/add', jwtAuth, addReview);
+authRouter.get('/reviews/product/:productId/user', jwtAuth, getUserProductReview);
+authRouter.get('/reviews/product/:productId', getProductReviews);
+authRouter.put('/reviews/:reviewId', jwtAuth, updateReview);
+authRouter.delete('/reviews/:reviewId', jwtAuth, deleteReview);
 
 module.exports = {authRouter};

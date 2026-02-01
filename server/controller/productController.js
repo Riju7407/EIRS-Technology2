@@ -6,6 +6,11 @@ exports.createProduct = async (req, res) => {
         const product = new Product(req.body);
         await product.save();
         console.log('✅ Product saved:', product);
+        
+        // Clear cache when new product is added
+        productsCache = null;
+        cacheTimestamp = null;
+        
         res.status(201).json({
             success: true,
             message: 'Product created successfully',
@@ -45,7 +50,7 @@ exports.getAllProducts = async (req, res) => {
         
         // Fetch products with optimized fields and pagination
         const products = await Product.find()
-            .select('_id productName category subcategory brand price image description')
+            .select('_id productName category subcategory brand price image description stock')
             .lean() // Returns plain JavaScript objects, not Mongoose documents
             .limit(limit)
             .skip(skip)
@@ -92,6 +97,11 @@ exports.updateProduct = async (req, res) => {
         
         const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!product) return res.status(404).json({ message: 'Product not found' });
+        
+        // Clear cache when product is updated
+        productsCache = null;
+        cacheTimestamp = null;
+        
         console.log('✅ Product updated:', product);
         res.json(product);
     } catch (error) {
@@ -104,6 +114,11 @@ exports.deleteProduct = async (req, res) => {
     try {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
+        
+        // Clear cache when product is deleted
+        productsCache = null;
+        cacheTimestamp = null;
+        
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

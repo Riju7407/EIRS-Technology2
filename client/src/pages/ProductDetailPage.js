@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
-import { productService } from '../services/api';
+import { productService, reviewService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CheckoutModal from '../components/CheckoutModal';
+import ReviewForm from '../components/ReviewForm';
+import ReviewList from '../components/ReviewList';
 import '../styles/ProductDetailPage.css';
 
 const ProductDetailPage = () => {
@@ -17,6 +19,14 @@ const ProductDetailPage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const { user } = useAuth();
   const { addToCart } = useCart();
+
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [userReview, setUserReview] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     // Fetch product from backend API
@@ -69,6 +79,42 @@ const ProductDetailPage = () => {
       fetchRelatedProducts();
     }
   }, [product]);
+
+  // Fetch reviews
+  const fetchReviews = async () => {
+    try {
+      console.log('📚 Fetching reviews for product:', id);
+      setReviewsLoading(true);
+      const reviewsData = await reviewService.getProductReviews(id);
+      console.log('📚 Reviews data received:', reviewsData);
+      setReviews(reviewsData.reviews || []);
+      setAverageRating(reviewsData.averageRating || 0);
+      setTotalReviews(reviewsData.totalReviews || 0);
+
+      // Fetch user's review if logged in
+      if (user) {
+        try {
+          console.log('👤 Fetching user review for product:', id);
+          const userReviewData = await reviewService.getUserProductReview(id);
+          console.log('👤 User review data:', userReviewData);
+          setUserReview(userReviewData.review);
+          setEditingReview(userReviewData.review);
+        } catch (err) {
+          console.error('⚠️ Error fetching user review:', err);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error fetching reviews:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchReviews();
+    }
+  }, [id, user]);
 
   const handleAddToCart = () => {
     if (product && product.stock > 0) {
@@ -255,6 +301,33 @@ const ProductDetailPage = () => {
             )}
           </section>
         </div>
+
+        {/* Reviews Section */}
+        <section className="reviews-section">
+          {user ? (
+            <>
+              <ReviewForm 
+                productId={id}
+                onReviewAdded={fetchReviews}
+                existingReview={editingReview}
+              />
+              {!reviewsLoading && (
+                <ReviewList 
+                  reviews={reviews}
+                  averageRating={averageRating}
+                  totalReviews={totalReviews}
+                  userId={user._id}
+                  onReviewDeleted={fetchReviews}
+                  onEditReview={setEditingReview}
+                />
+              )}
+            </>
+          ) : (
+            <div className="login-to-review">
+              <p>Please <Link to="/signin">login</Link> to write a review</p>
+            </div>
+          )}
+        </section>
 
         {/* Related Products */}
         {relatedProducts && relatedProducts.length > 0 && (

@@ -1,78 +1,94 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../styles/HeroSection.css';
 
 const HeroSection = () => {
-  const handleHeroClick = () => {
-    window.location.href = '/products?category=CCTV Cameras';
+  const navigate = useNavigate();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const heroCards = [
+    {
+      image: '/CCTVInstall.png',
+      title: 'CCTV Installation',
+      onClick: () => navigate('/contact')
+    },
+    {
+      image: '/IntercomSystem.png',
+      title: 'Intercom System',
+      onClick: () => navigate('/products?category=Intercom System')
+    },
+    {
+      image: '/cctv.png',
+      title: 'CCTV Cameras',
+      onClick: () => navigate('/products?category=CCTV Cameras')
+    },
+    {
+      image: '/Biometric.png',
+      title: 'Biometric Devices',
+      onClick: () => navigate('/products?category=Biometric Devices')
+    },
+    {
+      image: '/Smoke.png',
+      title: 'Fire Alarm Systems',
+      onClick: () => navigate('/products?category=Fire Alarm Systems')
+    },
+    {
+      image: '/Router.png',
+      title: 'CCTV Components',
+      onClick: () => navigate('/products?category=CCTV Components')
+    }
+  ];
+
+  // Handle touch events for better mobile experience
+  const handleTouchStart = (e) => {
+    e.currentTarget.style.opacity = '0.9';
   };
 
-  const handleWirelessClick = () => {
-    window.location.href = '/products?category=CCTV Components';
-  };
-
-  const handleIOTClick = () => {
-    window.location.href = '/products?category=IOT Based Products';
-  };
-
-  const handleAutomationClick = () => {
-    window.location.href = '/products?category=Automation Systems';
-  };
-
-  const handleBioClick = () => {
-    window.location.href = '/products?category=Biometric Devices';
-  };
-
-  const handleSmokeClick = () => {
-    window.location.href = '/products?category=Fire Alarm Systems';
+  const handleTouchEnd = (e) => {
+    e.currentTarget.style.opacity = '1';
   };
 
   return (
     <section className="hero-section">
-      <div className="hero-background">
-        <img 
-          src="/IOT.webp" 
-          alt="EIRS - IOT Based Solutions" 
-          className="hero-image iot-image"
-          onClick={handleIOTClick}
-          style={{ cursor: 'pointer' }}
-        />
-        <img 
-          src="/Bio.webp" 
-          alt="EIRS - Biometric Devices" 
-          className="hero-image bio-image"
-          onClick={handleBioClick}
-          style={{ cursor: 'pointer' }}
-        />
-        <img 
-          src="/hero2.webp" 
-          alt="EIRS - Enterprise Solutions" 
-          className="hero-image hero-image-2"
-          onClick={handleHeroClick}
-          style={{ cursor: 'pointer' }}
-        />
-        <img 
-          src="/Wireless.jpg" 
-          alt="EIRS - Wireless Solutions" 
-          className="hero-image wireless-image"
-          onClick={handleWirelessClick}
-          style={{ cursor: 'pointer' }}
-        />
-        <div className="hero-overlay"></div>
-      </div>
-      
-      <div className="hero-content">
-        <div className="hero-text">
-          
-          <div className="hero-buttons">
-            <Link to="/products" className="hero-btn hero-btn-primary">
-              Explore Solutions
-            </Link>
-            <Link to="/services" className="hero-btn hero-btn-secondary">
-              Get Started Today
-            </Link>
+      <div className="hero-cards-container">
+        {heroCards.map((card, index) => (
+          <div
+            key={index}
+            className="hero-card"
+            onClick={card.onClick}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                card.onClick();
+              }
+            }}
+          >
+            <div className="hero-card-image-wrapper">
+              <img 
+                src={card.image} 
+                alt={card.title}
+                className="hero-card-image"
+                loading="lazy"
+              />
+              <div className="hero-card-overlay"></div>
+            </div>
+            <div className="hero-card-title">
+              <h3>{card.title}</h3>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     </section>
   );

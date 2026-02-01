@@ -6,10 +6,7 @@ import '../styles/CategorySidebar.css';
 // Category Sidebar with filtering - Flipkart style
 const CategorySidebar = ({ 
   onCategorySelect = () => {}, 
-  onPriceRangeChange = () => {},
-  onIPCameraResolutionChange = () => {},
-  onNVRChannelChange = () => {},
-  onPOESwitchChange = () => {}
+  onPriceRangeChange = () => {}
 }) => {
   const { categories = [], subcategories = [], filters = [], loading } = useCategoryFilter();
   
@@ -20,100 +17,118 @@ const CategorySidebar = ({
   const [selectedFilters, setSelectedFilters] = useState(new Map());
 
   // Build categories with their subcategories
-  const categoriesWithSubs = categories.map(category => ({
-    id: category._id,
-    name: category.name,
-    subcategories: subcategories
-      .filter(sub => sub.categoryId === category._id || sub.categoryName === category.name)
-      .map(sub => ({
+  const categoriesWithSubs = categories.map(category => {
+    const categorySubs = subcategories.filter(
+      sub => sub.categoryId === category._id || sub.category === category.name
+    );
+    
+    // Group subcategories by their parent (handle nested structure)
+    const grouped = {};
+    const mainSubs = [];
+    
+    categorySubs.forEach(sub => {
+      // Check if this is a top-level subcategory or a nested one
+      const isNested = sub.name.includes(' - ');
+      if (!isNested) {
+        mainSubs.push({
+          id: sub._id,
+          name: sub.name,
+          children: []
+        });
+      }
+    });
+    
+    // Attach nested items to their parents
+    categorySubs.forEach(sub => {
+      const isNested = sub.name.includes(' - ');
+      if (isNested) {
+        const parentName = sub.name.split(' - ')[0];
+        const parent = mainSubs.find(s => s.name === parentName);
+        if (parent) {
+          parent.children.push({
+            id: sub._id,
+            name: sub.name.split(' - ')[1]
+          });
+        }
+      }
+    });
+    
+    return {
+      id: category._id,
+      name: category.name,
+      subcategories: mainSubs.length > 0 ? mainSubs : categorySubs.map(sub => ({
         id: sub._id,
-        name: sub.name
+        name: sub.name,
+        children: []
       }))
-  }));
+    };
+  });
 
   // Fallback categories if no data
   const displayCategories = categoriesWithSubs.length > 0 ? categoriesWithSubs : [
     {
       id: 'cctv',
-      name: 'CCTV Cameras',
+      name: 'CCTV Camera',
       subcategories: [
-        { id: '1', name: 'IP Camera Solutions' },
-        { id: '2', name: 'HD Camera (Analog CCTV)' },
-        { id: '3', name: 'CCTV Bundle Packs' },
-        { id: '4', name: 'Wi-Fi / 4G Camera' }
-      ]
-    },
-    {
-      id: 'cctv-components',
-      name: 'CCTV Components',
-      subcategories: [
-        { id: '5', name: 'NVR (Network Video Recorder)' },
-        { id: '6', name: 'DVR (Digital Video Recorder)' },
-        { id: '7', name: 'POE Switch' },
-        { id: '8', name: 'SMPS (Power Supply)' },
-        { id: '9', name: 'Hard Disk' },
-        { id: '10', name: 'Cables & Accessories' }
+        { 
+          id: '1', 
+          name: 'IP Camera',
+          children: [
+            { id: '1a', name: 'Camera' },
+            { id: '1b', name: 'NVR' },
+            { id: '1c', name: 'POE' }
+          ]
+        },
+        { 
+          id: '2', 
+          name: 'HD Camera',
+          children: [
+            { id: '2a', name: 'Camera' },
+            { id: '2b', name: 'SMPS' },
+            { id: '2c', name: 'DVR' }
+          ]
+        },
+        { id: '3', name: 'Wi-Fi/4G Camera', children: [] },
+        { id: '4', name: 'CCTV Bundle Pack', children: [] }
       ]
     },
     {
       id: 'biometric',
       name: 'Biometric Devices',
       subcategories: [
-        { id: '11', name: 'Fingerprint Biometric' },
-        { id: '12', name: 'Face Recognition Biometric' },
-        { id: '13', name: 'Card + Fingerprint Devices' },
-        { id: '14', name: 'Time Attendance with Payroll Integration' }
+        { id: '11', name: 'Fingerprint Biometric', children: [] },
+        { id: '12', name: 'Face Recognition Biometric', children: [] },
+        { id: '13', name: 'Card + Fingerprint Devices', children: [] },
+        { id: '14', name: 'Time Attendance with Payroll Integration', children: [] }
       ]
     },
     {
       id: 'intercom',
       name: 'Intercom System',
       subcategories: [
-        { id: '15', name: 'Landline Phones' },
-        { id: '16', name: 'Intercom Devices' },
-        { id: '17', name: 'EPABX System' },
-        { id: '18', name: 'PBX System' }
+        { id: '15', name: 'EPBX', children: [] },
+        { id: '16', name: 'IPBX', children: [] }
       ]
     },
     {
       id: 'home-office',
       name: 'Home & Office Security',
       subcategories: [
-        { id: '19', name: 'Video Door Phone (VDP/VPP)' },
-        { id: '20', name: 'Smart Door Locks' },
-        { id: '21', name: 'Access Control System' },
-        { id: '22', name: 'Alarm Systems' },
-        { id: '23', name: 'Motion Sensors' }
-      ]
-    },
-    {
-      id: 'iot',
-      name: 'IoT Solutions',
-      subcategories: [
-        { id: '24', name: 'Smart Sensors' },
-        { id: '25', name: 'IoT Devices' },
-        { id: '26', name: 'Connected Systems' },
-        { id: '27', name: 'Wireless Modules' }
-      ]
-    },
-    {
-      id: 'automation',
-      name: 'Automation Systems',
-      subcategories: [
-        { id: '28', name: 'Smart Lighting' },
-        { id: '29', name: 'Climate Control' },
-        { id: '30', name: 'Access Control' },
-        { id: '31', name: 'Integration Modules' }
+        { id: '19', name: 'Video Door Phone (VDP/VPP)', children: [] },
+        { id: '20', name: 'Smart Door Locks', children: [] },
+        { id: '21', name: 'Access Control System', children: [] },
+        { id: '22', name: 'Alarm Systems', children: [] },
+        { id: '23', name: 'Motion Sensors', children: [] }
       ]
     },
     {
       id: 'fire',
       name: 'Fire Alarm Systems',
       subcategories: [
-        { id: '32', name: 'Smoke Detectors' },
-        { id: '33', name: 'Heat Detectors' },
-        { id: '34', name: 'Manual Call Points' },
-        { id: '35', name: 'Control Panels' }
+        { id: '32', name: 'Smoke Detectors', children: [] },
+        { id: '33', name: 'Heat Detectors', children: [] },
+        { id: '34', name: 'Manual Call Points', children: [] },
+        { id: '35', name: 'Control Panels', children: [] }
       ]
     }
   ];
@@ -144,31 +159,6 @@ const CategorySidebar = ({
         { label: 'SUNELL', value: 'sunell' },
         { label: 'AXIS', value: 'axis' },
         { label: 'BOSCH', value: 'bosch' }
-      ];
-
-  const ipCameraResolutions = getFiltersByType('resolution').length > 0
-    ? getFiltersByType('resolution')
-    : [
-        { label: '2 MP IP Camera', value: '2mp', description: 'Budget-friendly, basic surveillance' },
-        { label: '4 MP IP Camera', value: '4mp', description: 'Balanced clarity & performance' },
-        { label: '6 MP IP Camera', value: '6mp', description: 'High-definition professional monitoring' }
-      ];
-
-  const nvrChannels = getFiltersByType('channels').length > 0
-    ? getFiltersByType('channels')
-    : [
-        { label: '4 Channel NVR', value: '4ch' },
-        { label: '8 Channel NVR', value: '8ch' },
-        { label: '16 Channel NVR', value: '16ch' },
-        { label: '32 Channel NVR', value: '32ch' }
-      ];
-
-  const poeSwitches = getFiltersByType('poeSwitches')?.length > 0
-    ? getFiltersByType('poeSwitches')
-    : [
-        { label: '4 Port POE', value: '4port' },
-        { label: '8 Port POE', value: '8port' },
-        { label: '16 Port POE', value: '16port' }
       ];
 
   const toggleCategory = (categoryId) => {
@@ -248,29 +238,63 @@ const CategorySidebar = ({
                       key={subcategory.id || subcategory.name}
                       className="subcategory-item"
                     >
-                      <input
-                        type="checkbox"
-                        id={`category-${subcategory.id || subcategory.name}`}
-                        className="subcategory-checkbox"
-                        checked={selectedCategories.has(subcategory.id || subcategory.name)}
-                        onChange={(e) => {
-                          e.preventDefault();
-                          const newCategories = new Set(selectedCategories);
-                          const subId = subcategory.id || subcategory.name;
-                          if (newCategories.has(subId)) {
-                            newCategories.delete(subId);
-                          } else {
-                            newCategories.add(subId);
-                          }
-                          setSelectedCategories(newCategories);
-                          if (onCategorySelect) {
-                            onCategorySelect(subcategory.name || subcategory);
-                          }
-                        }}
-                      />
-                      <label htmlFor={`category-${subcategory.id || subcategory.name}`} style={{ cursor: 'pointer' }}>
-                        {subcategory.name || subcategory}
-                      </label>
+                      <div className="subcategory-main">
+                        <input
+                          type="checkbox"
+                          id={`category-${subcategory.id || subcategory.name}`}
+                          className="subcategory-checkbox"
+                          checked={selectedCategories.has(subcategory.id || subcategory.name)}
+                          onChange={(e) => {
+                            e.preventDefault();
+                            const newCategories = new Set(selectedCategories);
+                            const subId = subcategory.id || subcategory.name;
+                            if (newCategories.has(subId)) {
+                              newCategories.delete(subId);
+                            } else {
+                              newCategories.add(subId);
+                            }
+                            setSelectedCategories(newCategories);
+                            if (onCategorySelect) {
+                              onCategorySelect(subcategory.name || subcategory);
+                            }
+                          }}
+                        />
+                        <label htmlFor={`category-${subcategory.id || subcategory.name}`} style={{ cursor: 'pointer' }}>
+                          {subcategory.name || subcategory}
+                        </label>
+                      </div>
+                      
+                      {/* Render nested children if they exist */}
+                      {subcategory.children && subcategory.children.length > 0 && (
+                        <div className="subcategory-children">
+                          {subcategory.children.map((child) => (
+                            <div key={child.id} className="child-item">
+                              <input
+                                type="checkbox"
+                                id={`child-${child.id}`}
+                                className="child-checkbox"
+                                checked={selectedCategories.has(child.id)}
+                                onChange={(e) => {
+                                  e.preventDefault();
+                                  const newCategories = new Set(selectedCategories);
+                                  if (newCategories.has(child.id)) {
+                                    newCategories.delete(child.id);
+                                  } else {
+                                    newCategories.add(child.id);
+                                  }
+                                  setSelectedCategories(newCategories);
+                                  if (onCategorySelect) {
+                                    onCategorySelect(child.name);
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`child-${child.id}`} style={{ cursor: 'pointer' }}>
+                                {child.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -303,102 +327,7 @@ const CategorySidebar = ({
         </div>
       </div>
 
-      {/* Brand Filter - Dynamic from API */}
-      {brands.length > 0 && (
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">Brands</div>
-          <div className="specifications-list">
-            {brands.map((brand) => (
-              <div key={brand.value || brand} className="specification-item">
-                <input
-                  type="checkbox"
-                  id={`brand-${brand.value || brand}`}
-                  className="specification-checkbox"
-                  checked={selectedBrands.has(brand.value || brand)}
-                  onChange={() => handleBrandChange(brand)}
-                />
-                <label htmlFor={`brand-${brand.value || brand}`} className="specification-label">
-                  {brand.label || brand}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* IP Camera Resolution Filter - Dynamic */}
-      {ipCameraResolutions.length > 0 && (
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">IP Camera Resolution</div>
-          <div className="specifications-list">
-            {ipCameraResolutions.map((resolution) => (
-              <div key={resolution.value || resolution.id} className="specification-item">
-                <input
-                  type="checkbox"
-                  id={`resolution-${resolution.value || resolution.id}`}
-                  className="specification-checkbox"
-                  checked={selectedFilters.has(`resolution-${resolution.value || resolution.id}`)}
-                  onChange={() => handleFilterChange('resolution', resolution)}
-                />
-                <div style={{ flex: 1 }}>
-                  <label htmlFor={`resolution-${resolution.value || resolution.id}`} className="specification-label">
-                    {resolution.label}
-                  </label>
-                  {resolution.description && (
-                    <div className="specification-description">{resolution.description}</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* NVR Channels Filter - Dynamic */}
-      {nvrChannels.length > 0 && (
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">NVR Channel Options</div>
-          <div className="specifications-list">
-            {nvrChannels.map((channel) => (
-              <div key={channel.value || channel.id} className="specification-item">
-                <input
-                  type="checkbox"
-                  id={`nvr-${channel.value || channel.id}`}
-                  className="specification-checkbox"
-                  checked={selectedFilters.has(`channels-${channel.value || channel.id}`)}
-                  onChange={() => handleFilterChange('channels', channel)}
-                />
-                <label htmlFor={`nvr-${channel.value || channel.id}`} className="specification-label">
-                  {channel.label}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* POE Switch Filter - Dynamic */}
-      {poeSwitches.length > 0 && (
-        <div className="sidebar-section">
-          <div className="sidebar-section-title">POE Switch Options</div>
-          <div className="specifications-list">
-            {poeSwitches.map((poeSwitch) => (
-              <div key={poeSwitch.value || poeSwitch.id} className="specification-item">
-                <input
-                  type="checkbox"
-                  id={`poe-${poeSwitch.value || poeSwitch.id}`}
-                  className="specification-checkbox"
-                  checked={selectedFilters.has(`poe-${poeSwitch.value || poeSwitch.id}`)}
-                  onChange={() => handleFilterChange('poe', poeSwitch)}
-                />
-                <label htmlFor={`poe-${poeSwitch.value || poeSwitch.id}`} className="specification-label">
-                  {poeSwitch.label}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Additional filters section removed */}
 
       {/* Clear Filters Button */}
       <button className="clear-filters-btn" onClick={handleClearFilters}>Clear All Filters</button>

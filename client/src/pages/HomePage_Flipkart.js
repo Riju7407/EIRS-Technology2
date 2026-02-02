@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaTimes } from 'react-icons/fa';
 import { serviceService } from '../services/api';
+import { useCategoryFilter } from '../context/CategoryFilterContext';
 import HeroCarousel from '../components/HeroCarousel';
 import CategoryGrid from '../components/CategoryGrid';
 import BrandCarousel from '../components/BrandCarousel';
@@ -18,6 +20,7 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
+  const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
   useEffect(() => {
     fetchServices();
@@ -181,6 +184,22 @@ const HomePage = () => {
 
   return (
     <div className="home-page">
+      {/* Left Sidebar - Categories & Filters */}
+      <div className={`left-sidebar-filters ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Categories & Filters</h3>
+          <button className="close-sidebar-btn" onClick={closeSidebar}>
+            <FaTimes />
+          </button>
+        </div>
+        <CategorySidebar />
+      </div>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
       {/* Hero Carousel */}
       <HeroCarousel />
 

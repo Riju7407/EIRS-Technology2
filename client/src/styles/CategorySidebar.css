@@ -13,7 +13,7 @@
 }
 
 .sidebar-title {
-  display: none;
+  display: block;
   padding: 16px;
   font-size: 14px;
   font-weight: 700;

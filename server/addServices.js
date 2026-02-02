@@ -21,11 +21,6 @@ const services = [
     price: 0
   },
   {
-    name: 'Technical Support',
-    description: '24/7 technical support with remote assistance, on-site troubleshooting, and quick resolution for all your security system issues.',
-    price: 2000
-  },
-  {
     name: 'Training Programs',
     description: 'Comprehensive training sessions for your staff on system operation, maintenance, troubleshooting, and best practices for security management.',
     price: 10000

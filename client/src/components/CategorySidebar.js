@@ -10,7 +10,7 @@ const CategorySidebar = ({
   onPriceRangeChange = () => {}
 }) => {
   const navigate = useNavigate();
-  const { categories = [], subcategories = [], filters = {}, loading } = useCategoryFilter();
+  const { categories = [], subcategories = [], filters = {}, loading, closeSidebar } = useCategoryFilter();
   
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [hoveredSubcategory, setHoveredSubcategory] = useState(null);
@@ -100,16 +100,19 @@ const CategorySidebar = ({
   const handleCategoryClick = (categoryName) => {
     console.log('🔗 Navigating to category:', categoryName);
     navigate(`/products?category=${encodeURIComponent(categoryName)}`);
+    closeSidebar();
   };
 
   const handleSubcategoryClick = (categoryName, subcategoryName) => {
     console.log('🔗 Navigating to:', categoryName, '>', subcategoryName);
     navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}`);
+    closeSidebar();
   };
 
   const handleLeafItemClick = (categoryName, subcategoryName, itemName) => {
     console.log('🔗 Navigating to:', categoryName, '>', subcategoryName, '>', itemName);
     navigate(`/products?category=${encodeURIComponent(categoryName)}&search=${encodeURIComponent(itemName)}`);
+    closeSidebar();
   };
 
   return (
@@ -120,7 +123,7 @@ const CategorySidebar = ({
         {mainCategories.map((category) => (
           <div
             key={category.id}
-            className="menu-item-main"
+            className={`menu-item-main ${category.id === 'biometric' ? 'break-line' : ''}`}
             onMouseEnter={() => setHoveredCategory(category.id)}
             onMouseLeave={() => {
               setHoveredCategory(null);

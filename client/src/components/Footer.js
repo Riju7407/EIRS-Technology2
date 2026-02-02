@@ -60,7 +60,6 @@ const Footer = () => {
               <li><a href="#installation">Installation</a></li>
               <li><a href="#maintenance">Maintenance</a></li>
               <li><a href="#support">Technical Support</a></li>
-              <li><a href="#training">Training</a></li>
             </ul>
           </div>
 
@@ -92,7 +91,6 @@ const Footer = () => {
           <div className="footer-bottom-links">
             <Link to="#">Privacy Policy</Link>
             <Link to="#">Terms of Service</Link>
-            <Link to="#">Sitemap</Link>
           </div>
         </div>
       </div>

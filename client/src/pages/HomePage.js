@@ -247,18 +247,11 @@ const HomePage = () => {
               <p>Annual Maintenance Contracts with regular inspections, preventive maintenance, and emergency support to ensure optimal system performance.</p>
             </div>
 
-            {/* Expert Consultation */}
+            {/* Technical Expert Consultation */}
             <div className="service-text-item">
-              <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop" alt="Expert Consultation" className="service-image" />
-              <h3>Expert Consultation</h3>
+              <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop" alt="Technical Expert Consultation" className="service-image" />
+              <h3>Technical Expert Consultation</h3>
               <p>Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.</p>
-            </div>
-
-            {/* Technical Support */}
-            <div className="service-text-item">
-              <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=300&h=200&fit=crop" alt="Technical Support" className="service-image" />
-              <h3>Technical Support</h3>
-              <p>24/7 technical support with remote assistance, on-site troubleshooting, and quick resolution for all your security system issues.</p>
             </div>
           </div>
         </div>

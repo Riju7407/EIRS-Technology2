@@ -22,11 +22,6 @@ const ServicesPage = () => {
       description: 'Professional installation of all security and automation systems with minimal downtime and maximum efficiency.'
     },
     {
-      icon: FaHeadset,
-      title: '24/7 Technical Support',
-      description: 'Round-the-clock customer support team ready to assist you with any questions or issues.'
-    },
-    {
       icon: FaClipboardList,
       title: 'Maintenance & Monitoring',
       description: 'Regular maintenance checks and system monitoring to ensure optimal performance of your security systems.'
@@ -44,7 +39,6 @@ const ServicesPage = () => {
 
   const serviceImages = {
     'Installation & Setup': 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop&crop=faces',
-    '24/7 Technical Support': 'https://images.unsplash.com/photo-1516321318423-f06f70504c00?w=400&h=300&fit=crop',
     'Maintenance & Monitoring': 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400&h=300&fit=crop',
     'Emergency Response': 'https://images.unsplash.com/photo-1531746790731-6c087a29a605?w=400&h=300&fit=crop'
   };

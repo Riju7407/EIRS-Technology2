@@ -139,7 +139,7 @@
 
 /* ===== WHO WE ARE SECTION ===== */
 .who-we-are-section {
-  padding: 80px 0;
+  padding: 20px 0;
   background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fa 50%, #e8ecf1 100%);
   text-align: center;
 }
@@ -162,7 +162,7 @@
 
 /* ===== WHAT WE OFFER SECTION ===== */
 .what-we-offer-section {
-  padding: 60px 0;
+  padding: 60px 0 8px 0;
   background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
   margin-top: 0;
   margin-bottom: 0;

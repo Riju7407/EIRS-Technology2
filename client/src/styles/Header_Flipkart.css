@@ -776,13 +776,13 @@
   }
 
   .hamburger-menu-left {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
   }
 
   .nav-desktop-bar {
-    display: none;
+    display: block;
   }
 }
 
@@ -823,6 +823,24 @@
 
   .action-item {
     padding: 4px 6px;
+  }
+
+  .nav-desktop-bar {
+    display: block;
+  }
+
+  .nav-container {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .nav-link {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 70px;
+    text-align: center;
   }
 }
 

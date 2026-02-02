@@ -5,6 +5,7 @@ import '../styles/HeroSection.css';
 const HeroSection = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+  const containerRef = React.useRef(null);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -15,36 +16,77 @@ const HeroSection = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Add click handler at container level
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleContainerClick = (e) => {
+      const card = e.target.closest('.hero-card');
+      if (!card) return;
+
+      const title = card.querySelector('.hero-card-title h3')?.textContent;
+      console.log('🎯 Container click detected on card:', title);
+
+      const cardIndex = Array.from(container.querySelectorAll('.hero-card')).indexOf(card);
+      if (cardIndex >= 0 && heroCards[cardIndex]) {
+        console.log('🔗 Executing navigation for:', heroCards[cardIndex].title);
+        heroCards[cardIndex].onClick();
+      }
+    };
+
+    container.addEventListener('click', handleContainerClick);
+    return () => container.removeEventListener('click', handleContainerClick);
+  }, []);
+
   const heroCards = [
     {
       image: '/CCTVInstall.png',
       title: 'CCTV Installation',
-      onClick: () => navigate('/contact')
+      onClick: () => {
+        console.log('🔗 Navigating to contact');
+        navigate('/contact');
+      }
     },
     {
       image: '/IntercomSystem.png',
       title: 'Intercom System',
-      onClick: () => navigate('/products?category=Intercom System')
+      onClick: () => {
+        console.log('🔗 Navigating to products with category: Intercom System');
+        navigate('/products?category=Intercom System');
+      }
     },
     {
       image: '/cctv.png',
       title: 'CCTV Cameras',
-      onClick: () => navigate('/products?category=CCTV Cameras')
+      onClick: () => {
+        console.log('🔗 Navigating to products with category: CCTV Cameras');
+        navigate('/products?category=CCTV Cameras');
+      }
     },
     {
       image: '/Biometric.png',
       title: 'Biometric Devices',
-      onClick: () => navigate('/products?category=Biometric Devices')
+      onClick: () => {
+        console.log('🔗 Navigating to products with category: Biometric Devices');
+        navigate('/products?category=Biometric Devices');
+      }
     },
     {
       image: '/Smoke.png',
       title: 'Fire Alarm Systems',
-      onClick: () => navigate('/products?category=Fire Alarm Systems')
+      onClick: () => {
+        console.log('🔗 Navigating to products with category: Fire Alarm Systems');
+        navigate('/products?category=Fire Alarm Systems');
+      }
     },
     {
       image: '/Router.png',
       title: 'CCTV Components',
-      onClick: () => navigate('/products?category=CCTV Components')
+      onClick: () => {
+        console.log('🔗 Navigating to products with category: CCTV Components');
+        navigate('/products?category=CCTV Components');
+      }
     }
   ];
 
@@ -59,12 +101,16 @@ const HeroSection = () => {
 
   return (
     <section className="hero-section">
-      <div className="hero-cards-container">
+      <div className="hero-cards-container" ref={containerRef}>
         {heroCards.map((card, index) => (
           <div
             key={index}
             className="hero-card"
-            onClick={card.onClick}
+            data-card-image={card.image}
+            onClick={() => {
+              console.log('✅ Click detected on:', card.title);
+              card.onClick();
+            }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             role="button"

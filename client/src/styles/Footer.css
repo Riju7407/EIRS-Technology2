@@ -25,7 +25,7 @@
 }
 
 .footer-main-content {
-  padding: 8px 20px;
+  padding: 2px 20px;
   max-width: 1400px;
   margin: 0 auto;
   position: relative;
@@ -35,14 +35,14 @@
 .footer-content-wrapper {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 35px;
+  gap: 20px;
 }
 
 /* Footer Section */
 .footer-section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 
 /* Company Section */
@@ -119,7 +119,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   position: relative;
-  padding-bottom: 12px;
+  padding-bottom: 4px;
 }
 
 .footer-title::after {
@@ -176,13 +176,13 @@
 
 /* Contact Section */
 .footer-contact {
-  gap: 16px;
+  gap: 2px;
 }
 
 .contact-block {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 4px;
 }
 
 .contact-item {
@@ -197,6 +197,18 @@
 
 .contact-item:hover {
   background: rgba(16, 185, 129, 0.15);
+  transform: translateX(4px);
+}
+
+.contact-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  padding: 4px 0;
+  transition: transform 0.3s ease;
+}
+
+.contact-item-text:hover {
   transform: translateX(4px);
 }
 
@@ -245,7 +257,7 @@
 /* Newsletter Section */
 .footer-newsletter {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  padding: 50px 20px;
+  padding: 15px 20px;
   color: white;
   position: relative;
   overflow: hidden;
@@ -268,7 +280,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 40px;
+  gap: 20px;
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
@@ -345,7 +357,7 @@
 /* Footer Bottom */
 .footer-bottom {
   background: linear-gradient(135deg, #0d1821 0%, #0f172a 100%);
-  padding: 24px 20px;
+  padding: 4px 20px;
   border-top: 1px solid rgba(16, 185, 129, 0.2);
   position: relative;
   z-index: 1;

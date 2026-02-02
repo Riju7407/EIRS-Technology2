@@ -68,26 +68,17 @@ const Footer = () => {
           <div className="footer-section footer-contact">
             <h4 className="footer-title">Get In Touch</h4>
             <div className="contact-block">
-              <div className="contact-item">
-                <FaPhone className="contact-icon" />
-                <div className="contact-text">
-                  <p className="contact-label">Call Us</p>
-                  <a href="tel:+918707095798">+91 8707-095-798</a>
-                </div>
+              <div className="contact-item-text">
+                <p className="contact-label">Call Us</p>
+                <p className="contact-value"><a href="tel:+918707095798">+91 8707-095-798</a></p>
               </div>
-              <div className="contact-item">
-                <FaEnvelope className="contact-icon" />
-                <div className="contact-text">
-                  <p className="contact-label">Email</p>
-                  <a href="mailto:info@eirstechnology.com">info@eirstechnology.com</a>
-                </div>
+              <div className="contact-item-text">
+                <p className="contact-label">Email</p>
+                <p className="contact-value"><a href="mailto:info@eirstechnology.com">info@eirstechnology.com</a></p>
               </div>
-              <div className="contact-item">
-                <FaMapMarkerAlt className="contact-icon" />
-                <div className="contact-text">
-                  <p className="contact-label">Location</p>
-                  <p className="contact-value">569/168, Barabirwan, Krishna Nagar, Near Piccadily Hotel, Kanpure Road, Alambagh, Lucknow-226005, Uttar Pradesh</p>
-                </div>
+              <div className="contact-item-text">
+                <p className="contact-label">Location</p>
+                <p className="contact-value">569/168, Barabirwan, Krishna Nagar, Near Piccadily Hotel, Kanpure Road, Alambagh, Lucknow-226005, Uttar Pradesh</p>
               </div>
             </div>
           </div>

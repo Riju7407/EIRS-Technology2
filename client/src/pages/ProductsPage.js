@@ -20,7 +20,10 @@ const ProductsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    const category = searchParams.get('category');
+    return category ? decodeURIComponent(category) : '';
+  });
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedSidebarCategories, setSelectedSidebarCategories] = useState(new Set());
@@ -117,6 +120,21 @@ const ProductsPage = () => {
     if (searchQuery) {
       setSearchTerm(decodeURIComponent(searchQuery));
     }
+
+    // Initialize category from URL parameters
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl) {
+      const decodedCategory = decodeURIComponent(categoryFromUrl);
+      console.log('🔍 Category from URL:', decodedCategory);
+      setSelectedCategory(decodedCategory);
+      // Clear other filters when category is set from URL
+      setSelectedSubcategory('');
+      setSelectedBrand('');
+      setSelectedSidebarCategories(new Set());
+    } else {
+      // If no category in URL, reset it
+      setSelectedCategory('');
+    }
   }, [searchParams]);
 
   // Define fetch functions first
@@ -170,6 +188,16 @@ const ProductsPage = () => {
     return () => clearInterval(refreshInterval);
   }, [fetchProducts, fetchProductsFresh]);
 
+  // Debug effect to log products and selected category
+  useEffect(() => {
+    console.log('📦 Products loaded:', products.length);
+    console.log('🔍 Selected category:', selectedCategory);
+    if (products.length > 0) {
+      const categories = [...new Set(products.map(p => p.category))];
+      console.log('📋 Available categories in DB:', categories);
+    }
+  }, [products, selectedCategory]);
+
   useEffect(() => {
     filterProducts();
   }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedBrand, selectedSidebarCategories]);
@@ -187,9 +215,12 @@ const ProductsPage = () => {
 
       // Apply main category filter
       if (selectedCategory && selectedCategory.trim() !== '') {
+        console.log('📊 Filtering by category:', selectedCategory);
+        console.log('📦 Total products before filter:', filtered.length);
         filtered = filtered.filter(p => 
           p.category && p.category.trim() === selectedCategory.trim()
         );
+        console.log('✅ Products after category filter:', filtered.length);
       }
 
       // Apply subcategory filter

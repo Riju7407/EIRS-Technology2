@@ -7,6 +7,7 @@
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: auto;
   z-index: 1;
+  overflow: visible;
 }
 
 .hero-cards-container {
@@ -45,11 +46,13 @@
   transform: translateY(-5px) scale(1.01);
 }
 
-/* Reduce top margin for specific cards */
-.hero-card[data-card-image='/CCTVInstall.png'],
-.hero-card[data-card-image='/IntercomSystem.png'],
-.hero-card[data-card-image='/cctv.png'] {
-  margin-top: -20px;
+/* Reduce top margin for specific cards - disabled on mobile */
+@media (min-width: 769px) {
+  .hero-card[data-card-image='/CCTVInstall.png'],
+  .hero-card[data-card-image='/IntercomSystem.png'],
+  .hero-card[data-card-image='/cctv.png'] {
+    margin-top: -20px;
+  }
 }
 
 .hero-card-image-wrapper {
@@ -147,24 +150,28 @@
 /* Tablets & Small Laptops (768px and below) */
 @media (max-width: 768px) {
   .hero-section {
-    padding: 25px 12px;
-    margin-bottom: 25px;
+    padding: 30px 15px 25px 15px;
+    margin-bottom: 30px;
+    overflow: visible;
+    width: 100%;
   }
 
   .hero-cards-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
-    padding: 0 8px;
+    padding: 0 10px;
     max-width: 100%;
+    overflow: visible;
   }
 
   .hero-card {
-    height: 220px;
+    height: 240px;
+    overflow: visible;
   }
 
   .hero-card-title {
-    padding: 30px 12px 15px;
-    min-height: 70px;
+    padding: 35px 12px 18px;
+    min-height: 75px;
   }
 
   .hero-card-title h3 {
@@ -180,21 +187,26 @@
 /* Mobile Phones - Medium (600px and below) */
 @media (max-width: 600px) {
   .hero-section {
-    padding: 20px 10px;
-    margin-bottom: 20px;
+    padding: 35px 12px 25px 12px;
+    margin-bottom: 25px;
     background: linear-gradient(135deg, #f8f9fa 0%, #d5dce6 100%);
+    min-height: auto;
+    overflow: visible;
+    width: 100%;
   }
 
   .hero-cards-container {
     grid-template-columns: 1fr;
-    gap: 15px;
-    padding: 0 5px;
+    gap: 18px;
+    padding: 0 8px;
     max-width: 100%;
+    overflow: visible;
   }
 
   .hero-card {
-    height: 200px;
+    height: 260px;
     border-radius: 10px;
+    overflow: visible;
   }
 
   .hero-card:hover {
@@ -203,8 +215,8 @@
   }
 
   .hero-card-title {
-    padding: 25px 10px 12px;
-    min-height: 65px;
+    padding: 30px 12px 15px;
+    min-height: 70px;
   }
 
   .hero-card-title h3 {
@@ -223,18 +235,23 @@
 /* Mobile Phones - Small (480px and below) */
 @media (max-width: 480px) {
   .hero-section {
-    padding: 15px 8px;
-    margin-bottom: 15px;
+    padding: 30px 10px 20px 10px;
+    margin-bottom: 20px;
+    min-height: auto;
+    overflow: visible;
+    width: 100%;
   }
 
   .hero-cards-container {
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 0 3px;
+    gap: 15px;
+    padding: 0 5px;
+    overflow: visible;
   }
 
   .hero-card {
-    height: 180px;
+    height: 240px;
+    overflow: visible;
   }
 
   .hero-card-image {
@@ -242,8 +259,8 @@
   }
 
   .hero-card-title {
-    padding: 20px 8px 10px;
-    min-height: 60px;
+    padding: 25px 10px 12px;
+    min-height: 65px;
   }
 
   .hero-card-title h3 {
@@ -263,23 +280,28 @@
 /* Mobile Phones - Extra Small (380px and below) */
 @media (max-width: 380px) {
   .hero-section {
-    padding: 12px 6px;
-    margin-bottom: 12px;
+    padding: 25px 10px 18px 10px;
+    margin-bottom: 18px;
+    min-height: auto;
+    overflow: visible;
+    width: 100%;
   }
 
   .hero-cards-container {
-    gap: 10px;
-    padding: 0;
+    gap: 12px;
+    padding: 0 5px;
+    overflow: visible;
   }
 
   .hero-card {
-    height: 160px;
+    height: 220px;
     border-radius: 8px;
+    overflow: visible;
   }
 
   .hero-card-title {
-    padding: 15px 6px 8px;
-    min-height: 55px;
+    padding: 20px 8px 10px;
+    min-height: 60px;
   }
 
   .hero-card-title h3 {

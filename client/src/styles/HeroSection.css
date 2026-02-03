@@ -151,6 +151,7 @@
 @media (max-width: 768px) {
   .hero-section {
     padding: 20px 12px 18px 12px;
+    margin-top: 50px;
     margin-bottom: 25px;
     overflow: visible;
     width: 100%;
@@ -188,6 +189,7 @@
 @media (max-width: 600px) {
   .hero-section {
     padding: 18px 10px 15px 10px;
+    margin-top: 50px;
     margin-bottom: 20px;
     background: linear-gradient(135deg, #f8f9fa 0%, #d5dce6 100%);
     min-height: auto;
@@ -196,7 +198,7 @@
   }
 
   .hero-cards-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 14px;
     padding: 0 6px;
     max-width: 100%;
@@ -236,6 +238,7 @@
 @media (max-width: 480px) {
   .hero-section {
     padding: 15px 8px 12px 8px;
+    margin-top: 50px;
     margin-bottom: 18px;
     min-height: auto;
     overflow: visible;
@@ -243,7 +246,7 @@
   }
 
   .hero-cards-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     padding: 0 4px;
     overflow: visible;
@@ -281,6 +284,7 @@
 @media (max-width: 380px) {
   .hero-section {
     padding: 12px 8px 10px 8px;
+    margin-top: 50px;
     margin-bottom: 15px;
     min-height: auto;
     overflow: visible;
@@ -288,6 +292,7 @@
   }
 
   .hero-cards-container {
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     padding: 0 4px;
     overflow: visible;

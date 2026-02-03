@@ -254,10 +254,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .hero-section-wrapper {
-    margin-top: 20px;
-  }
-
   .what-we-offer-section {
     padding: 40px 0;
   }
@@ -295,10 +291,6 @@
 }
 
 @media (max-width: 480px) {
-  .hero-section-wrapper {
-    margin-top: 15px;
-  }
-
   .section-title-center h2 {
     font-size: 24px;
   }

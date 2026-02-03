@@ -564,6 +564,28 @@
     grid-template-columns: 1fr;
   }
 
+  .services-text-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    gap: 16px;
+  }
+
+  .service-text-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px 12px;
+    font-size: 14px;
+  }
+
+  .service-emoji {
+    font-size: 48px;
+    min-width: auto;
+  }
+
+  .service-title {
+    font-size: 14px;
+  }
+
   .about-hero {
     min-height: 400px;
     padding: 60px var(--spacing-lg) 40px;
@@ -613,6 +635,28 @@
 
   .achievement-emoji {
     font-size: 1.8rem;
+  }
+
+  .services-text-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .service-text-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .service-emoji {
+    font-size: 40px;
+    min-width: auto;
+    margin-bottom: 8px;
+  }
+
+  .service-title {
+    font-size: 12px;
   }
 
   .cta-buttons {

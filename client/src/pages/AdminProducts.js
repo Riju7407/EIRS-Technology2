@@ -245,6 +245,8 @@ const AdminProducts = () => {
       productName: product.productName,
       category: product.category,
       subcategory: product.subcategory || '',
+      submenu: product.submenu || '',
+      channels: product.channels || '',
       brand: product.brand,
       description: product.description,
       image: product.image,

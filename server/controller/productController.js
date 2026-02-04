@@ -50,7 +50,7 @@ exports.getAllProducts = async (req, res) => {
         
         // Fetch products with optimized fields and pagination
         const products = await Product.find()
-            .select('_id productName category subcategory brand price image description stock')
+            .select('_id productName category subcategory submenu channels brand price image description stock')
             .lean() // Returns plain JavaScript objects, not Mongoose documents
             .limit(limit)
             .skip(skip)

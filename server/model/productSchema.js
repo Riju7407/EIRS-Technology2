@@ -16,6 +16,14 @@ const productSchema = new Schema({
         type: String,
         trim: true
     },
+    submenu: {
+        type: String,
+        trim: true
+    },
+    channels: {
+        type: String,
+        trim: true
+    },
     brand: {
         type: String,
         trim: true

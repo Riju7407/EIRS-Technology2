@@ -14,11 +14,15 @@ const AdminProducts = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  const [submenus, setSubmenus] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [selectedProductForReviews, setSelectedProductForReviews] = useState(null);
   const [formData, setFormData] = useState({
     productName: '',
     category: '',
     subcategory: '',
+    submenu: '',
+    channels: '',
     brand: '',
     description: '',
     image: '',
@@ -52,15 +56,59 @@ const AdminProducts = () => {
       if (selectedCategory && selectedCategory.subcategories) {
         const subcategoryExists = selectedCategory.subcategories.includes(formData.subcategory);
         if (!subcategoryExists) {
-          setFormData(prev => ({ ...prev, subcategory: '' }));
+          setFormData(prev => ({ ...prev, subcategory: '', submenu: '' }));
         }
       }
     } else {
       setSubcategories([]);
-      setFormData(prev => ({ ...prev, subcategory: '' }));
+      setSubmenus([]);
+      setFormData(prev => ({ ...prev, subcategory: '', submenu: '' }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.category]);
+
+  // Handle submenu options when HD Camera, IP Camera Solutions, or Camera subcategory is selected
+  useEffect(() => {
+    if (formData.subcategory === 'HD Camera (Analog CCTV)') {
+      setSubmenus(['Camera', 'SMPS', 'DVR']);
+      setFormData(prev => ({ ...prev, submenu: '', channels: '' })); // Reset submenu and channels when subcategory changes
+    } else if (formData.subcategory === 'IP Camera Solutions') {
+      setSubmenus(['Camera', 'NVR', 'POE']);
+      setFormData(prev => ({ ...prev, submenu: '', channels: '' })); // Reset submenu and channels when subcategory changes
+    } else if (formData.subcategory === 'Camera') {
+      setSubmenus(['2MP', '4MP', '6MP']);
+      setFormData(prev => ({ ...prev, submenu: '', channels: '' })); // Reset submenu and channels when subcategory changes
+    } else {
+      setSubmenus([]);
+      setChannels([]);
+      setFormData(prev => ({ ...prev, submenu: '', channels: '' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.subcategory]);
+
+  // Handle channel options based on submenu selection
+  useEffect(() => {
+    if (formData.submenu === 'Camera') {
+      setChannels(['2MP', '4MP', '6MP']);
+      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
+    } else if (formData.submenu === 'SMPS') {
+      setChannels(['4CH', '8CH', '16CH']);
+      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
+    } else if (formData.submenu === 'NVR') {
+      setChannels(['4CH', '8CH', '16CH', '32CH']);
+      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
+    } else if (formData.submenu === 'DVR') {
+      setChannels(['4CH', '8CH', '16CH', '32CH']);
+      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
+    } else if (formData.submenu === 'POE') {
+      setChannels(['4CH', '8CH', '16CH']);
+      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
+    } else {
+      setChannels([]);
+      setFormData(prev => ({ ...prev, channels: '' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.submenu]);
 
   const fetchSubcategoriesByCategory = async (category) => {
     try {
@@ -158,6 +206,8 @@ const AdminProducts = () => {
       productName: formData.productName,
       category: formData.category,
       subcategory: formData.subcategory || '',
+      submenu: formData.submenu || '',
+      channels: formData.channels || '',
       brand: formData.brand || '',
       description: formData.description,
       image: formData.image || '',
@@ -237,6 +287,8 @@ const AdminProducts = () => {
       productName: '',
       category: '',
       subcategory: '',
+      submenu: '',
+      channels: '',
       brand: '',
       description: '',
       image: '',
@@ -246,6 +298,8 @@ const AdminProducts = () => {
       nvrChannels: '',
       poeSwitch: '',
     });
+    setSubmenus([]);
+    setChannels([]);
     setEditingId(null);
     setShowForm(false);
   };
@@ -265,6 +319,7 @@ const AdminProducts = () => {
       subcategories: [
         'IP Camera Solutions',
         'HD Camera (Analog CCTV)',
+        'Camera',
         'CCTV Bundle Packs',
         'Wi-Fi / 4G Camera'
       ]
@@ -454,6 +509,38 @@ const AdminProducts = () => {
                     ))}
                   </select>
                 </div>
+
+                {submenus.length > 0 && (
+                  <div className="form-group">
+                    <label>Submenu (Type)</label>
+                    <select
+                      name="submenu"
+                      value={formData.submenu}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select a submenu</option>
+                      {submenus.map((submenu, idx) => (
+                        <option key={idx} value={submenu}>{submenu}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {channels.length > 0 && (
+                  <div className="form-group">
+                    <label>Channels</label>
+                    <select
+                      name="channels"
+                      value={formData.channels}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select channels</option>
+                      {channels.map((channel, idx) => (
+                        <option key={idx} value={channel}>{channel}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="form-row">
@@ -538,52 +625,6 @@ const AdminProducts = () => {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>IP Camera Resolution</label>
-                  <select
-                    name="cameraResolution"
-                    value={formData.cameraResolution}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select Resolution</option>
-                    <option value="2mp">2 MP</option>
-                    <option value="4mp">4 MP</option>
-                    <option value="6mp">6 MP</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>NVR Channels</label>
-                  <select
-                    name="nvrChannels"
-                    value={formData.nvrChannels}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select Channels</option>
-                    <option value="4ch">4 Channel</option>
-                    <option value="8ch">8 Channel</option>
-                    <option value="16ch">16 Channel</option>
-                    <option value="32ch">32 Channel</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>POE Switch Ports</label>
-                  <select
-                    name="poeSwitch"
-                    value={formData.poeSwitch}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select Ports</option>
-                    <option value="4port">4 Port</option>
-                    <option value="8port">8 Port</option>
-                    <option value="16port">16 Port</option>
-                  </select>
-                </div>
-              </div>
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary">

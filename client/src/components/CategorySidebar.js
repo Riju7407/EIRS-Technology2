@@ -23,36 +23,30 @@ const CategorySidebar = ({
       name: 'CCTV Cameras',
       subcategories: [
         {
-          name: 'IP Camera',
+          name: 'IP Camera Solutions',
           submenus: [
             {
-              name: 'Camera',
-              items: ['2 MP IP Camera', '4 MP IP Camera', '6 MP IP Camera']
+              name: 'Camera'
             },
             {
-              name: 'NVR',
-              items: ['4 CH', '8 CH', '16 CH', '22 CH']
+              name: 'NVR'
             },
             {
-              name: 'POE',
-              items: ['4 CH', '8 CH', '16 CH']
+              name: 'POE'
             }
           ]
         },
         {
-          name: 'HD Camera',
+          name: 'HD Camera (Analog CCTV)',
           submenus: [
             {
-              name: 'Camera',
-              items: ['2 MP', '4 MP', '6 MP']
+              name: 'Camera'
             },
             {
-              name: 'SMPS',
-              items: ['4 CH', '8 CH', '16 CH']
+              name: 'SMPS'
             },
             {
-              name: 'DVR',
-              items: ['4 CH', '8 CH', '16 CH', '32 CH']
+              name: 'DVR'
             }
           ]
         },
@@ -99,19 +93,25 @@ const CategorySidebar = ({
 
   const handleCategoryClick = (categoryName) => {
     console.log('🔗 Navigating to category:', categoryName);
-    navigate(`/products?category=${encodeURIComponent(categoryName)}`);
+    navigate(`/products?category=${encodeURIComponent(categoryName)}&fromSidebar=true`);
     closeSidebar();
   };
 
   const handleSubcategoryClick = (categoryName, subcategoryName) => {
     console.log('🔗 Navigating to:', categoryName, '>', subcategoryName);
-    navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}`);
+    navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}&fromSidebar=true`);
     closeSidebar();
   };
 
   const handleLeafItemClick = (categoryName, subcategoryName, itemName) => {
     console.log('🔗 Navigating to:', categoryName, '>', subcategoryName, '>', itemName);
-    navigate(`/products?category=${encodeURIComponent(categoryName)}&search=${encodeURIComponent(itemName)}`);
+    navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}&submenu=${encodeURIComponent(itemName)}`);
+    closeSidebar();
+  };
+
+  const handleSubmenuClick = (categoryName, subcategoryName, submenuName) => {
+    console.log('🔗 Navigating to submenu:', categoryName, '>', subcategoryName, '>', submenuName);
+    navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}&submenu=${encodeURIComponent(submenuName)}&fromSidebar=true`);
     closeSidebar();
   };
 
@@ -168,7 +168,13 @@ const CategorySidebar = ({
                       <div className="submenu-level-2">
                         {sub.submenus.map((submenu, sidx) => (
                           <div key={sidx} className="menu-item-sub2">
-                            <div className="menu-item-label">{submenu.name}</div>
+                            <div 
+                              className="menu-item-label"
+                              onClick={() => handleSubmenuClick(category.name, sub.name, submenu.name)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {submenu.name}
+                            </div>
                             
                             {/* Third level submenu */}
                             {submenu.items && (

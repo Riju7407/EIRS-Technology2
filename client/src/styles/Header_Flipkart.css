@@ -878,7 +878,10 @@
   }
 
   .logo h1 {
-    display: none;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .header-container {

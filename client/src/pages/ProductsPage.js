@@ -20,11 +20,21 @@ const ProductsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFromSidebar, setIsFromSidebar] = useState(() => {
+    return searchParams.get('fromSidebar') === 'true';
+  });
   const [selectedCategory, setSelectedCategory] = useState(() => {
     const category = searchParams.get('category');
     return category ? decodeURIComponent(category) : '';
   });
-  const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(() => {
+    const subcategory = searchParams.get('subcategory');
+    return subcategory ? decodeURIComponent(subcategory) : '';
+  });
+  const [selectedSubmenu, setSelectedSubmenu] = useState(() => {
+    const submenu = searchParams.get('submenu');
+    return submenu ? decodeURIComponent(submenu) : '';
+  });
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedSidebarCategories, setSelectedSidebarCategories] = useState(new Set());
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
@@ -200,7 +210,7 @@ const ProductsPage = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedBrand, selectedSidebarCategories]);
+  }, [products, searchTerm, selectedCategory, selectedSubcategory, selectedSubmenu, selectedBrand, selectedSidebarCategories]);
 
   const filterProducts = useCallback(() => {
     try {
@@ -230,15 +240,22 @@ const ProductsPage = () => {
         );
       }
 
-      // Apply brand filter
-      if (selectedBrand && selectedBrand.trim() !== '') {
+      // Apply submenu filter (from sidebar)
+      if (selectedSubmenu && selectedSubmenu.trim() !== '') {
+        filtered = filtered.filter(p => 
+          p.submenu && p.submenu.trim() === selectedSubmenu.trim()
+        );
+      }
+
+      // Apply brand filter (only if NOT from sidebar)
+      if (!isFromSidebar && selectedBrand && selectedBrand.trim() !== '') {
         filtered = filtered.filter(p => 
           p.brand && p.brand.trim() === selectedBrand.trim()
         );
       }
 
-      // Apply search term filter
-      if (searchTerm && searchTerm.trim() !== '') {
+      // Apply search term filter (only if NOT from sidebar)
+      if (!isFromSidebar && searchTerm && searchTerm.trim() !== '') {
         const lowerSearchTerm = searchTerm.toLowerCase().trim();
         filtered = filtered.filter(p =>
           (p.productName && p.productName.toLowerCase().includes(lowerSearchTerm)) ||
@@ -321,7 +338,8 @@ const ProductsPage = () => {
       )}
 
       <div className="container products-container">
-        {/* Filters Section at Top */}
+        {/* Filters Section at Top - Only show if NOT from sidebar */}
+        {!isFromSidebar && (
         <section className="filters-top-section">
           <div className="filters-header">
             <FaFilter /> <span>Filters</span>
@@ -452,6 +470,7 @@ const ProductsPage = () => {
             )}
           </div>
         </section>
+        )}
 
         {/* Products Grid */}
         <section className="products-grid-section">

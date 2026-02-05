@@ -280,9 +280,18 @@ textarea::placeholder {
   opacity: 1;
 }
 
-label,
-.form-group label {
+/* Exclude account page labels from dark color */
+label:not(.profile-edit label):not(.account-page label),
+.form-group:not(.profile-edit .form-group):not(.account-page .form-group) label {
   color: #1a1a1a !important;
+}
+
+/* Account page labels and field text should be white */
+.profile-edit .form-group label,
+.account-page .form-group label,
+.account-page .field-label,
+.account-page .field-value {
+  color: #ffffff !important;
 }
 
 /* Ensure input focus states maintain readability */

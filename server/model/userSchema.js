@@ -62,6 +62,19 @@ const userSchema = new Schema({
         type: Date,
         default: undefined
     },
+    otp: {
+        type: String,
+        default: undefined
+    },
+    otpExpiry: {
+        type: Date,
+        default: undefined
+    },
+    otpPurpose: {
+        type: String,
+        enum: ['forgot-password', 'change-password'],
+        default: undefined
+    },
     isAdmin: {
         type: Boolean,
         default: false

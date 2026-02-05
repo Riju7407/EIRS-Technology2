@@ -132,6 +132,52 @@ export const authService = {
       throw error.response?.data || error.message;
     }
   },
+
+  requestPasswordChangeOTP: async (email, purpose) => {
+    try {
+      const response = await api.post('/auth/request-otp', { email, purpose });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  verifyOTP: async (email, otp) => {
+    try {
+      const response = await api.post('/auth/verify-otp', { email, otp });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  resetPasswordWithOTP: async (email, otp, newPassword, confirmPassword) => {
+    try {
+      const response = await api.post('/auth/reset-password-otp', { 
+        email, 
+        otp, 
+        newPassword, 
+        confirmPassword 
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  changePasswordWithOTP: async (email, otp, newPassword, confirmPassword) => {
+    try {
+      const response = await api.post('/auth/change-password-otp', { 
+        email, 
+        otp, 
+        newPassword, 
+        confirmPassword 
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 // Products Services

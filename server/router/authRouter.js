@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, changePassword, forgotPassword, resetPassword } = require('../controller/authController');
+const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, changePassword, forgotPassword, resetPassword, requestPasswordChangeOTP, verifyOTP, resetPasswordWithOTP, changePasswordWithOTP } = require('../controller/authController');
 const { services, getAllServices, deleteService, addService, updateService } = require('../controller/serviceController');
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
@@ -20,6 +20,13 @@ authRouter.post('/contact', jwtAuth, submitContact);
 authRouter.put('/change-password/:id', jwtAuth, changePassword);
 authRouter.post('/forgot-password', forgotPassword);
 authRouter.post('/reset-password', resetPassword);
+
+// OTP-based password reset/change routes
+authRouter.post('/request-otp', requestPasswordChangeOTP);
+authRouter.post('/verify-otp', verifyOTP);
+authRouter.post('/reset-password-otp', resetPasswordWithOTP);
+authRouter.post('/change-password-otp', jwtAuth, changePasswordWithOTP);
+
 authRouter.get('/services', services);
 authRouter.get('/users', adminMiddleware, getAllUsers);
 authRouter.get('/contacts', adminMiddleware, getContacts);

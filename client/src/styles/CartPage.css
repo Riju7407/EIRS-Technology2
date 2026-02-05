@@ -159,8 +159,9 @@
 }
 
 .stock-status.out-of-stock {
-  background-color: #fee2e2;
-  color: #7f1d1d;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  font-weight: 600;
 }
 
 /* Quantity Controls */

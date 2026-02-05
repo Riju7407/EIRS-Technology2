@@ -242,14 +242,14 @@ const HomePage = () => {
 
             {/* AMC & Maintenance */}
             <div className="service-text-item">
-              <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=300&h=200&fit=crop" alt="AMC & Maintenance" className="service-image" />
+              <img src="/AMC.png" alt="AMC & Maintenance" className="service-image" />
               <h3>AMC & Maintenance</h3>
               <p>Annual Maintenance Contracts with regular inspections, preventive maintenance, and emergency support to ensure optimal system performance.</p>
             </div>
 
             {/* Technical Expert Consultation */}
             <div className="service-text-item">
-              <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=300&h=200&fit=crop" alt="Technical Expert Consultation" className="service-image" />
+              <img src="/Technical.png" alt="Technical Expert Consultation" className="service-image" />
               <h3>Technical Expert Consultation</h3>
               <p>Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.</p>
             </div>

@@ -1,6 +1,7 @@
 const userSchema = require("../model/userSchema");
 const emailvalidator = require("email-validation");
 const bcrypt = require("bcrypt");
+const { generateOTP, sendOTPEmail } = require("../services/emailService");
 
 // Signup logic
 
@@ -410,6 +411,230 @@ const resetPassword = async (req, res, next) => {
     }
 }
 
+// Request OTP for Password Change or Forgot Password
+const requestPasswordChangeOTP = async (req, res, next) => {
+    try {
+        const { email, purpose } = req.body; // purpose: 'change-password' or 'forgot-password'
+
+        if (!email || !purpose) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and purpose are required"
+            });
+        }
+
+        if (!['change-password', 'forgot-password'].includes(purpose)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid purpose. Must be 'change-password' or 'forgot-password'"
+            });
+        }
+
+        // Check if user exists
+        const user = await userSchema.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "No account found with this email"
+            });
+        }
+
+        // Generate OTP
+        const otp = generateOTP();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+        // Store OTP in user document
+        user.otp = otp;
+        user.otpExpiry = otpExpiry;
+        user.otpPurpose = purpose;
+        await user.save();
+
+        // Send OTP email
+        try {
+            await sendOTPEmail(email, otp, purpose);
+        } catch (emailError) {
+            console.error('Email sending failed:', emailError);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send OTP. Please check your email configuration."
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `OTP has been sent to ${email}. Valid for 10 minutes.`
+        });
+    } catch (error) {
+        console.error('Request OTP error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while requesting OTP"
+        });
+    }
+}
+
+// Verify OTP
+const verifyOTP = async (req, res, next) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and OTP are required"
+            });
+        }
+
+        // Find user with matching OTP
+        const user = await userSchema.findOne({ 
+            email: email.toLowerCase().trim(),
+            otp: otp,
+            otpExpiry: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "OTP verified successfully",
+            verified: true
+        });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while verifying OTP"
+        });
+    }
+}
+
+// Reset Password with OTP
+const resetPasswordWithOTP = async (req, res, next) => {
+    try {
+        const { email, otp, newPassword, confirmPassword } = req.body;
+
+        if (!email || !otp || !newPassword || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Email, OTP, new password, and confirm password are required"
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "New password and confirm password do not match"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters long"
+            });
+        }
+
+        // Find user with matching OTP
+        const user = await userSchema.findOne({ 
+            email: email.toLowerCase().trim(),
+            otp: otp,
+            otpExpiry: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP"
+            });
+        }
+
+        // Update password and clear OTP
+        user.password = newPassword;
+        user.otp = undefined;
+        user.otpExpiry = undefined;
+        user.otpPurpose = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password has been reset successfully. Please login with your new password."
+        });
+    } catch (error) {
+        console.error('Reset password with OTP error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while resetting password"
+        });
+    }
+}
+
+// Change Password with OTP (for logged-in users)
+const changePasswordWithOTP = async (req, res, next) => {
+    try {
+        const { email, otp, newPassword, confirmPassword } = req.body;
+        const userId = req.user?.id;
+
+        if (!email || !otp || !newPassword || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Email, OTP, new password, and confirm password are required"
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "New password and confirm password do not match"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters long"
+            });
+        }
+
+        // Find user with matching OTP
+        const user = await userSchema.findOne({ 
+            email: email.toLowerCase().trim(),
+            otp: otp,
+            otpExpiry: { $gt: new Date() },
+            otpPurpose: 'change-password'
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP"
+            });
+        }
+
+        // Update password and clear OTP
+        user.password = newPassword;
+        user.otp = undefined;
+        user.otpExpiry = undefined;
+        user.otpPurpose = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password has been changed successfully"
+        });
+    } catch (error) {
+        console.error('Change password with OTP error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error while changing password"
+        });
+    }
+}
+
 module.exports = {
     signup,
     signin,
@@ -419,5 +644,9 @@ module.exports = {
     postEditUserProfile,
     changePassword,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    requestPasswordChangeOTP,
+    verifyOTP,
+    resetPasswordWithOTP,
+    changePasswordWithOTP
 };

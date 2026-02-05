@@ -15,6 +15,7 @@ const CategorySidebar = ({
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [hoveredSubcategory, setHoveredSubcategory] = useState(null);
   const [clickedCategory, setClickedCategory] = useState(null);
+  const [clickedSubcategory, setClickedSubcategory] = useState(null);
 
   // Main categories structure with detailed subcategories
   const mainCategories = [
@@ -51,11 +52,11 @@ const CategorySidebar = ({
           ]
         },
         {
-          name: 'Wi-Fi/4G Camera',
+          name: 'Wi-Fi / 4G Camera',
           redirect: true
         },
         {
-          name: 'CCTV Bundle Pack',
+          name: 'CCTV Bundle Packs',
           redirect: true
         }
       ]
@@ -71,11 +72,15 @@ const CategorySidebar = ({
       subcategories: [
         {
           name: 'EPBX',
-          redirect: true
+          displayName: 'EPBX',
+          redirect: true,
+          actualSubcategory: 'EPABX System'
         },
         {
           name: 'IPBX',
-          redirect: true
+          displayName: 'IPBX',
+          redirect: true,
+          actualSubcategory: 'PBX System'
         }
       ]
     },
@@ -97,9 +102,10 @@ const CategorySidebar = ({
     closeSidebar();
   };
 
-  const handleSubcategoryClick = (categoryName, subcategoryName) => {
-    console.log('🔗 Navigating to:', categoryName, '>', subcategoryName);
-    navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}&fromSidebar=true`);
+  const handleSubcategoryClick = (categoryName, subcategoryName, actualSubcategory = null) => {
+    const subcatToUse = actualSubcategory || subcategoryName;
+    console.log('🔗 Navigating to:', categoryName, '>', subcatToUse);
+    navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcatToUse)}&fromSidebar=true`);
     closeSidebar();
   };
 
@@ -157,14 +163,21 @@ const CategorySidebar = ({
                   >
                     <div
                       className="menu-item-label"
-                      onClick={() => sub.redirect && handleSubcategoryClick(category.name, sub.name)}
+                      onClick={() => {
+                        if (sub.redirect) {
+                          handleSubcategoryClick(category.name, sub.name, sub.actualSubcategory);
+                        } else {
+                          // Toggle submenu on click if it has submenus
+                          setClickedSubcategory(clickedSubcategory === `${category.id}-${idx}` ? null : `${category.id}-${idx}`);
+                        }
+                      }}
                     >
                       <span>{sub.name}</span>
                       {sub.submenus && <FaChevronRight className="chevron-icon" />}
                     </div>
 
-                    {/* Second level submenu */}
-                    {hoveredSubcategory === idx && sub.submenus && (
+                    {/* First level submenu - show on hover OR click */}
+                    {(hoveredSubcategory === idx || clickedSubcategory === `${category.id}-${idx}`) && sub.submenus && (
                       <div className="submenu-level-2">
                         {sub.submenus.map((submenu, sidx) => (
                           <div key={sidx} className="menu-item-sub2">

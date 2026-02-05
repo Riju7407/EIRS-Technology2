@@ -342,7 +342,8 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
+  color: #333;
 }
 
 .user-menu-trigger:hover {
@@ -802,27 +803,37 @@
   }
 
   .header-left-section {
-    gap: 12px;
+    gap: 10px;
   }
 
   .logo {
-    min-width: 120px;
+    min-width: 55px;
   }
 
   .logo h1 {
-    font-size: 16px;
+    font-size: 6px;
   }
 
   .logo-icon {
-    height: 32px;
+    height: 14px;
   }
 
   .header-actions {
     gap: 8px;
+    display: flex !important;
   }
 
   .action-item {
-    padding: 4px 6px;
+    padding: 4px 8px;
+    display: flex !important;
+  }
+
+  .action-label {
+    display: block !important;
+  }
+
+  .user-account-hamburger {
+    display: flex !important;
   }
 
   .nav-desktop-bar {
@@ -865,28 +876,34 @@
     display: none;
   }
 
-  .orders-link {
-    display: none;
-  }
-
   .header-left-section {
-    gap: 8px;
+    gap: 6px;
+    padding-left: 4px;
+    flex: 1;
   }
 
   .logo {
-    min-width: 100px;
+    min-width: 35px;
+    flex-shrink: 1;
   }
 
   .logo h1 {
-    font-size: 12px;
+    font-size: 5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #667eea;
+  }
+
+  .logo-icon {
+    height: 12px;
+    width: auto;
   }
 
   .header-container {
     gap: 8px;
     padding: 8px;
+    justify-content: space-between;
   }
 
   .hamburger-menu-left {
@@ -896,5 +913,64 @@
 
   .header-actions {
     gap: 6px;
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .action-item {
+    padding: 4px 6px;
+    gap: 3px;
+    font-size: 10px;
+    min-width: auto;
+    display: flex !important;
+    align-items: center;
+  }
+
+  .action-item:not(.cart-item) {
+    display: none !important;
+  }
+
+  .cart-item {
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .action-label {
+    display: block !important;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .user-account-hamburger {
+    display: flex !important;
+    align-items: center;
+  }
+
+  .user-menu-trigger {
+    padding: 6px 10px;
+    gap: 4px;
+    background-color: transparent;
+    border: 2px solid #667eea;
+    border-radius: 6px;
+    color: #667eea;
+  }
+
+  .user-menu-trigger:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+    border-color: #764ba2;
+    color: #764ba2;
+  }
+
+  .user-icon {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+  }
+
+  .chevron-icon {
+    font-size: 11px;
   }
 }

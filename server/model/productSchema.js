@@ -57,33 +57,6 @@ const productSchema = new Schema({
             return parseInt(value, 10);
         }
     },
-    cameraResolution: {
-        type: String,
-        trim: true,
-        enum: {
-            values: ['2mp', '4mp', '6mp', ''],
-            message: '{VALUE} is not a valid camera resolution'
-        },
-        default: ''
-    },
-    nvrChannels: {
-        type: String,
-        trim: true,
-        enum: {
-            values: ['4ch', '8ch', '16ch', '32ch', ''],
-            message: '{VALUE} is not a valid NVR channel option'
-        },
-        default: ''
-    },
-    poeSwitch: {
-        type: String,
-        trim: true,
-        enum: {
-            values: ['4port', '8port', '16port', ''],
-            message: '{VALUE} is not a valid POE switch option'
-        },
-        default: ''
-    }
 }, {
     timestamps: true
 });

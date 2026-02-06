@@ -171,11 +171,6 @@ const ProductCard = ({ product }) => {
         {/* Product Name */}
         <h3 className="product-name" onClick={handleViewDetails} style={{ cursor: 'pointer' }}>{displayName}</h3>
 
-        {/* Product Description */}
-        {description && (
-          <p className="product-description">{description}</p>
-        )}
-
         {/* Stock Information - Display Original Database Stock (Dynamic) */}
         <div className="product-stock">
           {getStockStatus()}

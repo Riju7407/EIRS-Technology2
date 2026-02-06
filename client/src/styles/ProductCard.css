@@ -169,7 +169,7 @@
 
 /* Product Name */
 .product-name {
-  font-size: 12px;
+  font-size: 5px;
   color: #1a1a2e;
   margin: 0;
   line-height: 1.3;
@@ -371,7 +371,7 @@
   }
 
   .product-name {
-    font-size: 12px;
+    font-size: 5px;
     min-height: 30px;
   }
 
@@ -446,7 +446,7 @@
   }
 
   .product-name {
-    font-size: 11px;
+    font-size: 5px;
     line-height: 1.3;
     min-height: 26px;
   }

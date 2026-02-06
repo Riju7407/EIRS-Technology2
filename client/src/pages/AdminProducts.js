@@ -56,13 +56,14 @@ const AdminProducts = () => {
       if (selectedCategory && selectedCategory.subcategories) {
         const subcategoryExists = selectedCategory.subcategories.includes(formData.subcategory);
         if (!subcategoryExists) {
-          setFormData(prev => ({ ...prev, subcategory: '', submenu: '' }));
+          setFormData(prev => ({ ...prev, subcategory: '', submenu: '', channels: '' }));
         }
       }
     } else {
       setSubcategories([]);
       setSubmenus([]);
-      setFormData(prev => ({ ...prev, subcategory: '', submenu: '' }));
+      setChannels([]);
+      setFormData(prev => ({ ...prev, subcategory: '', submenu: '', channels: '' }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.category]);
@@ -71,13 +72,16 @@ const AdminProducts = () => {
   useEffect(() => {
     if (formData.subcategory === 'HD Camera (Analog CCTV)') {
       setSubmenus(['Camera', 'SMPS', 'DVR']);
-      setFormData(prev => ({ ...prev, submenu: '', channels: '' })); // Reset submenu and channels when subcategory changes
+      // Only reset channels, not submenu
+      setChannels([]);
     } else if (formData.subcategory === 'IP Camera Solutions') {
       setSubmenus(['Camera', 'NVR', 'POE']);
-      setFormData(prev => ({ ...prev, submenu: '', channels: '' })); // Reset submenu and channels when subcategory changes
+      // Only reset channels, not submenu
+      setChannels([]);
     } else if (formData.subcategory === 'Camera') {
       setSubmenus(['2MP', '4MP', '6MP']);
-      setFormData(prev => ({ ...prev, submenu: '', channels: '' })); // Reset submenu and channels when subcategory changes
+      // Only reset channels, not submenu
+      setChannels([]);
     } else {
       setSubmenus([]);
       setChannels([]);
@@ -90,23 +94,18 @@ const AdminProducts = () => {
   useEffect(() => {
     if (formData.submenu === 'Camera') {
       setChannels(['2MP', '4MP', '6MP']);
-      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
     } else if (formData.submenu === 'SMPS') {
       setChannels(['4CH', '8CH', '16CH']);
-      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
     } else if (formData.submenu === 'NVR') {
       setChannels(['4CH', '8CH', '16CH', '32CH']);
-      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
     } else if (formData.submenu === 'DVR') {
       setChannels(['4CH', '8CH', '16CH', '32CH']);
-      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
     } else if (formData.submenu === 'POE') {
       setChannels(['4CH', '8CH', '16CH']);
-      setFormData(prev => ({ ...prev, channels: '' })); // Reset channels when submenu changes
     } else {
       setChannels([]);
-      setFormData(prev => ({ ...prev, channels: '' }));
     }
+    // Don't reset channels value here - let user select it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.submenu]);
 

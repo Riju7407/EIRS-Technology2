@@ -87,6 +87,8 @@
 .product-info-section {
   display: flex;
   flex-direction: column;
+  overflow: visible;
+  height: auto;
 }
 
 .product-name {
@@ -183,10 +185,18 @@
 }
 
 .product-description {
-  color: var(--text-light);
+  color: #000000;
   font-size: 1.05rem;
   line-height: 1.8;
   margin-bottom: var(--spacing-lg);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: none;
+  min-height: auto;
+  height: auto;
+  display: block;
+  overflow: visible;
 }
 
 /* Quantity Selector */

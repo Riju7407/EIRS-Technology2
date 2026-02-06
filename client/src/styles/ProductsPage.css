@@ -1,7 +1,7 @@
 /* Products Page Styles */
 .products-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #d3d3d3;
   padding: var(--spacing-2xl) 0 var(--spacing-6xl) 0;
   margin-bottom: var(--spacing-7xl);
   position: relative;

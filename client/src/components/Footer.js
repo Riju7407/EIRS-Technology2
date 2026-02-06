@@ -77,7 +77,7 @@ const Footer = () => {
               </div>
               <div className="contact-item-text">
                 <p className="contact-label">Location</p>
-                <p className="contact-value">569/168, Barabirwan, Krishna Nagar, Near Piccadily Hotel, Kanpure Road, Alambagh, Lucknow-226005, Uttar Pradesh</p>
+                <p className="contact-value">569/168, Barabirwan, Krishna Nagar, Near Piccadily Hotel, Kanpur Road, Alambagh, Lucknow-226005, Uttar Pradesh</p>
               </div>
             </div>
           </div>

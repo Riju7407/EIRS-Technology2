@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -27,12 +27,22 @@ import AdminEnquiries from './pages/AdminEnquiries';
 import AdminProducts from './pages/AdminProducts';
 import AdminServices from './pages/AdminServices';
 import AdminOrders from './pages/AdminOrders';
+import PhoneNumberLoginPopUp from './components/PhoneNumberLoginPopUp';
+import PhoneSignUp from './components/PhoneSignUp';
 import './App.css';
+
 
 function AppContent() {
   const location = useLocation();
-  // Hide Footer on orders page, account page, and product detail pages
-  const hideFooterPaths = ['/', '/orders', '/account'];
+  const [showPhonePopup, setShowPhonePopup] = useState(false);
+
+  useEffect(() => {
+    // Show the phone number login popup when the app first loads
+    setShowPhonePopup(true);
+  }, []);
+
+  // Hide Footer on orders page, account page, phone signup page, and product detail pages
+  const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup'];
   const isProductDetailPage = location.pathname.startsWith('/products/') || location.pathname.startsWith('/product/');
   const isAdminPage = location.pathname.startsWith('/admin');
   const shouldShowFooter = !hideFooterPaths.includes(location.pathname) && !isProductDetailPage && !isAdminPage;
@@ -40,6 +50,7 @@ function AppContent() {
   return (
     <div className="App">
       <Header />
+      {showPhonePopup && <PhoneNumberLoginPopUp onClose={() => setShowPhonePopup(false)} />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
@@ -53,6 +64,7 @@ function AppContent() {
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/phonesignup" element={<PhoneSignUp />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/account" element={<AccountPage />} />

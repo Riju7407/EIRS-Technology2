@@ -6,11 +6,11 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from '../context/firebase';
 
 function PhoneSignUp() {
-  const [phone, setPhone] = React.useState('');
-  const [user, setUser] = React.useState(null);
-  const [otp, setOtp] = React.useState('');
-  const [error, setError] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  const [phone, setPhone] = useState('');
+  const [user, setUser] = useState(null);
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
   const sendOtp = async() => {
     try {
@@ -27,12 +27,7 @@ function PhoneSignUp() {
       const phoneNumber = phone.startsWith('+') ? phone : '+' + phone;
       
       try {
-        const recaptcha = new RecaptchaVerifier(auth, 'recaptcha', {
-          size: 'normal',
-          callback: (response) => {
-            console.log('Recaptcha verified');
-          }
-        });
+        const recaptcha = new RecaptchaVerifier(auth, 'recaptcha', {});
         
         const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptcha);
         setUser(confirmation);

@@ -29,6 +29,7 @@
     "firebase": "^12.9.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.2",
+    "nodemailer": "^6.9.7",
     "razorpay": "^2.9.6",
     "react-phone-input-2": "^2.15.1",
     "react-phone-number-input": "^3.4.14"

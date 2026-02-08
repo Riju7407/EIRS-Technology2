@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css';
 import '../styles/ServicesPopup.css';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../context/firebase';
 
 function PhoneSignUp() {
@@ -11,6 +11,18 @@ function PhoneSignUp() {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
+  
+  React.useEffect(() => {
+    const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      size: 'invisible',
+      callback: (token) => {
+        console.log('reCAPTCHA verified');
+      }
+    });
+    setRecaptchaVerifier(verifier);
+    return () => verifier.clear();
+  }, []);
   
   const sendOtp = async() => {
     try {
@@ -26,17 +38,8 @@ function PhoneSignUp() {
       // Format phone number with + if not already present
       const phoneNumber = phone.startsWith('+') ? phone : '+' + phone;
       
-      try {
-        const recaptcha = new RecaptchaVerifier(auth, 'recaptcha', {});
-        
-        const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptcha);
-        setUser(confirmation);
-      } catch (recaptchaError) {
-        console.error('reCAPTCHA initialization error:', recaptchaError);
-        setError(recaptchaError.message || 'reCAPTCHA initialization failed. Please refresh and try again.');
-        setLoading(false);
-        return;
-      }
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      setUser(confirmation);
       setLoading(false);
     } catch (error) {
       console.error('Error sending OTP:', error);
@@ -110,7 +113,7 @@ function PhoneSignUp() {
           </>
         )}
         
-        <div style={{marginTop:'10px'}} id="recaptcha"></div>
+        <div id="recaptcha-container" style={{display: 'none'}}></div>
         
         {error && <p style={{color: 'red', marginTop: '10px'}}>{error}</p>}
       </div>

@@ -4,6 +4,7 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { CategoryFilterProvider } from './context/CategoryFilterContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { useAuth } from './context/AuthContext';
 import Header from './components/Header';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Footer from './components/Footer';
@@ -27,19 +28,13 @@ import AdminEnquiries from './pages/AdminEnquiries';
 import AdminProducts from './pages/AdminProducts';
 import AdminServices from './pages/AdminServices';
 import AdminOrders from './pages/AdminOrders';
-import PhoneNumberLoginPopUp from './components/PhoneNumberLoginPopUp';
-import PhoneSignUp from './components/PhoneSignUp';
+import PhoneSignUp from './pages/PhoneSignUp';
 import './App.css';
 
 
 function AppContent() {
   const location = useLocation();
-  const [showPhonePopup, setShowPhonePopup] = useState(false);
-
-  useEffect(() => {
-    // Show the phone number login popup when the app first loads
-    setShowPhonePopup(true);
-  }, []);
+  const { isAdmin } = useAuth();
 
   // Hide Footer on orders page, account page, phone signup page, and product detail pages
   const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup'];
@@ -50,7 +45,6 @@ function AppContent() {
   return (
     <div className="App">
       <Header />
-      {showPhonePopup && <PhoneNumberLoginPopUp onClose={() => setShowPhonePopup(false)} />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

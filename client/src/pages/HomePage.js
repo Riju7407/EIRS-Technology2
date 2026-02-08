@@ -6,7 +6,6 @@ import BrandCarousel from '../components/BrandCarousel';
 import ProductCard from '../components/ProductCard';
 import FeaturedSection from '../components/FeaturedSection';
 import CategorySidebar from '../components/CategorySidebar';
-import ServicesPopup from '../components/PhoneNumberLoginPopUp';
 import WhatsAppButton from '../components/WhatsAppButton';
 import InstagramButton from '../components/InstagramButton';
 import FacebookButton from '../components/FacebookButton';
@@ -277,9 +276,6 @@ const HomePage = () => {
 
       {/* Footer */}
       <Footer />
-
-      {/* Services Popup */}
-      <ServicesPopup />
 
       {/* WhatsApp Button */}
       <WhatsAppButton />

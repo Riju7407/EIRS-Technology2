@@ -191,6 +191,12 @@ const ProductDetailPage = () => {
               {product.brand && <span className="brand-info">Brand: {product.brand}</span>}
             </div>
 
+            {product.modelNo && (
+              <div style={{ marginBottom: '15px' }}>
+                <span className="model-info">Model No: {product.modelNo}</span>
+              </div>
+            )}
+
             {/* Price and Stock Section */}
             <div className="price-stock-section">
               <div className="price-info">
@@ -206,16 +212,6 @@ const ProductDetailPage = () => {
             </div>
 
             <p className="product-description">{product.description || 'No description available'}</p>
-
-            {/* Debug Info - Remove after testing */}
-            {process.env.NODE_ENV === 'development' && (
-              <details style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Debug Info</summary>
-                <pre style={{ fontSize: '12px', overflow: 'auto' }}>
-                  {JSON.stringify(product, null, 2)}
-                </pre>
-              </details>
-            )}
 
             {/* Quantity Selector */}
             <div className="quantity-selector">

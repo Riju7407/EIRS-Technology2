@@ -1,13 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTimes, FaPhone } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/ServicesPopup.css';
 
 const PhoneNumberLoginPopUp = ({ onClose }) => {
+  const navigate = useNavigate();
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Cleanup effect to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      setIsClosing(false);
+    };
+  }, []);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before fully closing
+    setTimeout(() => {
+      if (typeof onClose === 'function') {
+        onClose();
+      }
+    }, 300);
+  };
+
+  const handlePhoneSignIn = () => {
+    setIsClosing(true);
+    // Wait for animation then navigate
+    setTimeout(() => {
+      if (typeof onClose === 'function') {
+        onClose();
+      }
+      navigate('/phonesignup');
+    }, 300);
+  };
+
+  const handleEmailSignIn = () => {
+    setIsClosing(true);
+    // Wait for animation then navigate
+    setTimeout(() => {
+      if (typeof onClose === 'function') {
+        onClose();
+      }
+      navigate('/signin');
+    }, 300);
+  };
+
   return (
-    <div className="services-popup-overlay">
-      <div className="services-popup-container">
-        <button className="popup-close-btn" onClick={onClose} title="Close">
+    <div className={`services-popup-overlay ${isClosing ? 'closing' : ''}`}>
+      <div className={`services-popup-container ${isClosing ? 'closing' : ''}`}>
+        <button className="popup-close-btn" onClick={handleClose} title="Close">
           <FaTimes size={24} />
         </button>
 
@@ -20,11 +62,9 @@ const PhoneNumberLoginPopUp = ({ onClose }) => {
           <p style={styles.subtitle}>Sign in with your phone number to continue</p>
           
           <div style={styles.buttonContainer}>
-            <Link to="/phonesignup" style={styles.link} onClick={onClose}>
-              <button style={styles.primaryButton}>
-                Sign In with Phone Number
-              </button>
-            </Link>
+            <button style={styles.primaryButton} onClick={handlePhoneSignIn}>
+              Sign In with Phone Number
+            </button>
           </div>
 
           <div style={styles.divider}>
@@ -32,11 +72,9 @@ const PhoneNumberLoginPopUp = ({ onClose }) => {
           </div>
 
           <p style={styles.alternateText}>You can also sign in using email:</p>
-          <Link to="/signin" style={styles.link} onClick={onClose}>
-            <button style={styles.secondaryButton}>
-              Sign In with Email
-            </button>
-          </Link>
+          <button style={styles.secondaryButton} onClick={handleEmailSignIn}>
+            Sign In with Email
+          </button>
         </div>
       </div>
     </div>
@@ -67,10 +105,6 @@ const styles = {
   },
   buttonContainer: {
     marginBottom: '20px',
-  },
-  link: {
-    textDecoration: 'none',
-    display: 'block',
   },
   primaryButton: {
     width: '100%',

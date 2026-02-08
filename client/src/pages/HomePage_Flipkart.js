@@ -9,7 +9,6 @@ import BrandCarousel from '../components/BrandCarousel';
 import ProductCard from '../components/ProductCard';
 import FeaturedSection from '../components/FeaturedSection';
 import CategorySidebar from '../components/CategorySidebar';
-import ServicesPopup from '../components/PhoneNumberLoginPopUp';
 import '../styles/HomePage_New.css';
 
 const HomePage = () => {

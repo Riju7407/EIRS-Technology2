@@ -25,6 +25,7 @@ const AdminProducts = () => {
     channels: '',
     brand: '',
     description: '',
+    modelNo: '',
     image: '',
     price: '',
     stock: '',
@@ -157,6 +158,7 @@ const AdminProducts = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    console.log(`✏️ Field changed: ${name} = ${value}`);
     setFormData(prev => ({
       ...prev,
       [name]: value,
@@ -209,6 +211,7 @@ const AdminProducts = () => {
       channels: formData.channels || '',
       brand: formData.brand || '',
       description: formData.description,
+      modelNo: formData.modelNo || '',
       image: formData.image || '',
       price: formData.price !== '' ? parseFloat(formData.price) : 0,
       stock: formData.stock !== '' ? parseInt(formData.stock, 10) : 0,
@@ -217,7 +220,9 @@ const AdminProducts = () => {
       poeSwitch: formData.poeSwitch || '',
     };
 
-    console.log('Submitting product data:', submitData);
+    console.log('📤 Full Form Data Before Submit:', formData);
+    console.log('📤 Submitting product data:', submitData);
+    console.log('📌 ModelNo being sent:', submitData.modelNo);
 
     try {
       if (editingId) {
@@ -248,6 +253,7 @@ const AdminProducts = () => {
       channels: product.channels || '',
       brand: product.brand,
       description: product.description,
+      modelNo: product.modelNo || '',
       image: product.image,
       price: product.price !== null && product.price !== undefined ? product.price : '',
       stock: product.stock !== null && product.stock !== undefined ? product.stock : '',
@@ -292,6 +298,7 @@ const AdminProducts = () => {
       channels: '',
       brand: '',
       description: '',
+      modelNo: '',
       image: '',
       price: '',
       stock: '',
@@ -593,6 +600,17 @@ const AdminProducts = () => {
                   onChange={handleInputChange}
                   rows="4"
                 ></textarea>
+              </div>
+
+              <div className="form-group full-width">
+                <label>Model No</label>
+                <input
+                  type="text"
+                  name="modelNo"
+                  value={formData.modelNo}
+                  onChange={handleInputChange}
+                  placeholder="Enter Model Number (e.g., XYZ-2024-01)"
+                />
               </div>
 
               <div className="form-row">

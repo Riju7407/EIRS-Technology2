@@ -64,7 +64,7 @@ router.post('/orders', jwtAuth, async (req, res) => {
       else if (method === 'wallet') normalizedPaymentMethod = 'Wallet';
       else if (method === 'cashondelivery' || method === 'cash on delivery' || method === 'cod') normalizedPaymentMethod = 'CashOnDelivery';
     }
-
+    
     // Create Razorpay order
     console.log('Creating Razorpay order for amount:', amount, 'paise');
     let razorpayOrder = null;

@@ -2,10 +2,14 @@ const Product = require('../model/productSchema.js');
 
 exports.createProduct = async (req, res) => {
     try {
-        console.log('📦 Creating product with data:', req.body);
+        console.log('📦 Creating product with data:', JSON.stringify(req.body, null, 2));
+        console.log('📌 ModelNo value:', req.body.modelNo);
+        
         const product = new Product(req.body);
         await product.save();
-        console.log('✅ Product saved:', product);
+        
+        console.log('✅ Product saved:', JSON.stringify(product, null, 2));
+        console.log('📌 Saved ModelNo:', product.modelNo);
         
         // Clear cache when new product is added
         productsCache = null;
@@ -50,7 +54,7 @@ exports.getAllProducts = async (req, res) => {
         
         // Fetch products with optimized fields and pagination
         const products = await Product.find()
-            .select('_id productName category subcategory submenu channels brand price image description stock')
+            .select('_id productName category subcategory submenu channels brand price image description stock modelNo')
             .lean() // Returns plain JavaScript objects, not Mongoose documents
             .limit(limit)
             .skip(skip)
@@ -93,7 +97,8 @@ exports.getProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
     try {
-        console.log('📝 Updating product', req.params.id, 'with data:', req.body);
+        console.log('📝 Updating product', req.params.id, 'with data:', JSON.stringify(req.body, null, 2));
+        console.log('📌 ModelNo value to update:', req.body.modelNo);
         
         const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!product) return res.status(404).json({ message: 'Product not found' });
@@ -102,7 +107,9 @@ exports.updateProduct = async (req, res) => {
         productsCache = null;
         cacheTimestamp = null;
         
-        console.log('✅ Product updated:', product);
+        console.log('✅ Product updated:', JSON.stringify(product, null, 2));
+        console.log('📌 Updated ModelNo:', product.modelNo);
+        
         res.json(product);
     } catch (error) {
         console.error('❌ Error updating product:', error);

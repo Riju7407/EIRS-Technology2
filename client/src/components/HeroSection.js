@@ -82,7 +82,7 @@ const HeroSection = () => {
     },
     {
       image: '/Router.png',
-      title: 'CCTV Components',
+      title: 'Networking Devices',
       onClick: () => {
         console.log('🔗 Navigating to products with category: CCTV Components');
         navigate('/products?category=CCTV Components');

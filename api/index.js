@@ -43,35 +43,36 @@ const ensureAdminExists = async () => {
     }
 };
 
-// CORS configuration - CRITICAL for fixing 405 errors
+// CORS configuration - CRITICAL for fixing CORS errors in production
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow localhost for development and any vercel domain for production
+        // Allow localhost for development and production domains
         const allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:3001',
-            'https://eirstechnology.com',
-            /\.vercel\.app$/
+            'http://localhost:3002',
+            'https://eirstechnology.com'
         ];
         
-        const isAllowed = allowedOrigins.some(o => {
-            if (o instanceof RegExp) {
-                return o.test(origin);
-            }
-            return o === origin;
-        });
+        // Check if origin matches allowed list
+        const isAllowed = allowedOrigins.includes(origin) || 
+                         !origin || // Allow requests without origin (like mobile apps, curl, etc)
+                         /^https:\/\/.*\.vercel\.app$/.test(origin) || // Allow all Vercel domains
+                         /^https:\/\/.*\.onrender\.com$/.test(origin); // Allow all Render domains
 
-        if (isAllowed || !origin) {
+        if (isAllowed) {
             callback(null, true);
         } else {
+            console.warn(`CORS blocked origin: ${origin}`);
             callback(new Error('CORS not allowed'));
         }
     },
     credentials: true,
     optionsSuccessStatus: 200,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    maxAge: 86400
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    maxAge: 86400,
+    preflightContinue: false
 };
 
 // Apply CORS middleware BEFORE routes

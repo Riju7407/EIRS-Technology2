@@ -49,7 +49,26 @@ createAdminOnStartup();
 
 // CORS configuration - Updated for production
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://192.168.0.147:3000', 'http://192.168.0.147:3001', 'https://*.vercel.app'],
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:3002',
+            'http://192.168.0.147:3000',
+            'http://192.168.0.147:3001',
+            'https://eirstechnology.com'
+        ];
+
+        // Check if origin matches allowed list or regex patterns
+        const isAllowed = allowedOrigins.some(o => o === origin) || 
+                         /^https:\/\/.*\.vercel\.app$/.test(origin);
+
+        if (isAllowed || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS not allowed'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

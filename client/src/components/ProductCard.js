@@ -87,8 +87,8 @@ const ProductCard = ({ product }) => {
     if (productId && !isOutOfStock) {
       // Add product to cart first
       addToCart({
-        id: productId,
-        name: displayName,
+        _id: productId,
+        productName: displayName,
         price: price,
         image: image,
         quantity: 1,
@@ -107,8 +107,8 @@ const ProductCard = ({ product }) => {
     }
     if (productId && !isOutOfStock) {
       addToCart({
-        id: productId,
-        name: displayName,
+        _id: productId,
+        productName: displayName,
         price: price,
         image: image,
         quantity: 1,

@@ -446,6 +446,52 @@ export const orderService = {
       throw error.response?.data || error.message;
     }
   },
+
+  cancelOrder: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/orders/${orderId}/cancel`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  requestRefund: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/orders/${orderId}/refund`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Admin Refund Management
+  approveRefund: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/refunds/${orderId}/approve`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  rejectRefund: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/refunds/${orderId}/reject`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  processRefund: async (orderId) => {
+    try {
+      const response = await api.post(`/auth/refunds/${orderId}/process`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 // Review Services

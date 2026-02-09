@@ -103,6 +103,39 @@ const orderSchema = new Schema({
     },
     notes: {
         type: String
+    },
+    cancelledAt: {
+        type: Date,
+        default: null
+    },
+    cancellationReason: {
+        type: String
+    },
+    refundInfo: {
+        status: {
+            type: String,
+            enum: ['None', 'Requested', 'Approved', 'Rejected', 'Processed'],
+            default: 'None'
+        },
+        reason: {
+            type: String
+        },
+        refundAmount: {
+            type: Number,
+            default: 0
+        },
+        requestedAt: {
+            type: Date
+        },
+        approvedAt: {
+            type: Date
+        },
+        processedAt: {
+            type: Date
+        },
+        adminNotes: {
+            type: String
+        }
     }
 }, {
     timestamps: true

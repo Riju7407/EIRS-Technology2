@@ -4,7 +4,7 @@ const { services, getAllServices, deleteService, addService, updateService } = r
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } = require('../controller/productController');
-const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder } = require('../controller/orderController');
+const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder, cancelOrder, requestRefund, approveRefund, rejectRefund, processRefund } = require('../controller/orderController');
 const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
 const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
@@ -55,11 +55,18 @@ authRouter.delete('/subcategories/:id', jwtAuth, adminMiddleware, deleteSubcateg
 
 // Order Routes
 authRouter.post('/orders/create', jwtAuth, createOrder);
+authRouter.get('/orders/admin/all', adminMiddleware, getAllOrders);
 authRouter.get('/orders', jwtAuth, getUserOrders);
 authRouter.get('/orders/:orderId', jwtAuth, getOrderById);
+authRouter.post('/orders/:orderId/cancel', jwtAuth, cancelOrder);
+authRouter.post('/orders/:orderId/refund', jwtAuth, requestRefund);
 authRouter.put('/orders/:orderId/status', jwtAuth, adminMiddleware, updateOrderStatus);
-authRouter.get('/orders/admin/all', adminMiddleware, getAllOrders);
 authRouter.delete('/orders/:orderId', jwtAuth, adminMiddleware, deleteOrder);
+
+// Admin Refund Management Routes
+authRouter.post('/refunds/:orderId/approve', jwtAuth, adminMiddleware, approveRefund);
+authRouter.post('/refunds/:orderId/reject', jwtAuth, adminMiddleware, rejectRefund);
+authRouter.post('/refunds/:orderId/process', jwtAuth, adminMiddleware, processRefund);
 
 // Review Routes
 authRouter.post('/reviews/add', jwtAuth, addReview);

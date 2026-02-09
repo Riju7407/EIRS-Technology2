@@ -64,7 +64,7 @@ router.post('/orders', jwtAuth, async (req, res) => {
       else if (method === 'wallet') normalizedPaymentMethod = 'Wallet';
       else if (method === 'cashondelivery' || method === 'cash on delivery' || method === 'cod') normalizedPaymentMethod = 'CashOnDelivery';
     }
-    
+
     // Create Razorpay order
     console.log('Creating Razorpay order for amount:', amount, 'paise');
     let razorpayOrder = null;
@@ -93,19 +93,37 @@ router.post('/orders', jwtAuth, async (req, res) => {
       console.log('Using fallback order ID:', razorpayOrderId);
     }
 
+    // Validate and map items
+    const mappedItems = items.map((item, index) => {
+      const productId = item.productId || item._id || item.id;
+      if (!productId) {
+        throw new Error(`Item ${index} is missing productId. Received: ${JSON.stringify(item)}`);
+      }
+      return {
+        productId: productId,
+        productName: item.productName || item.name || 'Product',
+        category: item.category || '',
+        brand: item.brand || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        image: item.image || item.productImage || ''
+      };
+    });
+
+    // Validate all items have productId before proceeding
+    const missingIds = mappedItems.filter(item => !item.productId);
+    if (missingIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Some items are missing product IDs'
+      });
+    }
+
     // Save order to database
     console.log('Saving order to database...');
     const order = new Order({
       userId,
-      items: items.map(item => ({
-        productId: item.productId || item._id,
-        productName: item.name || item.productName || 'Product',
-        category: item.category || '',
-        brand: item.brand || '',
-        price: item.price,
-        quantity: item.quantity || 1,
-        image: item.image || item.productImage || ''
-      })),
+      items: mappedItems,
       totalPrice: totalPrice,
       totalItems: totalItems,
       shippingAddress: {

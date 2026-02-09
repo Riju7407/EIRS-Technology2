@@ -53,7 +53,7 @@ const ForgotPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/auth/forgot-password', { email });
+      const response = await axios.post('https://eirs-technology2-2.onrender.com/auth/forgot-password', { email });
 
       if (response.data.success) {
         setResetToken(response.data.resetToken);
@@ -76,7 +76,7 @@ const ForgotPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/auth/reset-password', {
+      const response = await axios.post('https://eirs-technology2-2.onrender.com/auth/reset-password', {
         email,
         resetToken,
         newPassword

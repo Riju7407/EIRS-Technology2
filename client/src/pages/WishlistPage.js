@@ -18,8 +18,8 @@ const WishlistPage = () => {
       return;
     }
     addToCart({
-      id: product._id,
-      name: product.productName || product.name,
+      _id: product._id,
+      productName: product.productName || product.name,
       price: product.price,
       image: product.image,
       quantity: 1,

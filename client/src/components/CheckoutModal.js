@@ -94,18 +94,32 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
       console.log('Creating order on backend...');
       let orderResponse;
       try {
-        const orderData = {
-          amount: Math.round(totalAmount * 100), // Razorpay expects amount in paise
-          currency: 'INR',
-          items: cartItems.map(item => ({
-            productId: item._id,
-            name: item.name || item.productName || 'Product',
-            quantity: item.quantity,
-            price: item.price,
+        // Validate and prepare items with proper structure
+        const items = cartItems.map((item, index) => {
+          // Ensure productId exists - use _id or id as fallback
+          const productId = item._id || item.id;
+          if (!productId) {
+            console.warn(`⚠️ Item ${index} missing productId:`, item);
+            throw new Error(`Item ${index} (${item.name || item.productName}) is missing product ID`);
+          }
+          
+          return {
+            productId: productId,
+            productName: item.productName || item.name || 'Product',  // Use productName as primary
+            quantity: item.quantity || 1,
+            price: item.price || 0,
             category: item.category || '',
             brand: item.brand || '',
             image: item.image || item.productImage || ''
-          })),
+          };
+        });
+
+        console.log('Cart items validation passed:', items);
+
+        const orderData = {
+          amount: Math.round(totalAmount * 100), // Razorpay expects amount in paise
+          currency: 'INR',
+          items: items,
           userId,
           email: userEmail,
           phone: shippingAddress.phone,

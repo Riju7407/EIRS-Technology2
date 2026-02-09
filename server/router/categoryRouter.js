@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const categoryController = require('../controller/categoryController');
+const filterController = require('../controller/filterController');
 const { verifyToken, verifyAdmin } = require('../middleware/auth');
 
 // CATEGORY ROUTES
@@ -28,5 +29,12 @@ router.put('/subcategories/:id', verifyToken, verifyAdmin, categoryController.up
 
 // Delete subcategory (Admin only)
 router.delete('/subcategories/:id', verifyToken, verifyAdmin, categoryController.deleteSubcategory);
+
+// FILTER ROUTES
+// Get all filters
+router.get('/filters', filterController.getAllFilters);
+
+// Get filter by type
+router.get('/filters/:type', filterController.getFilterByType);
 
 module.exports = router;

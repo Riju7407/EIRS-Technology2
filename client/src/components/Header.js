@@ -56,7 +56,7 @@ const Header = () => {
             <Link to="/" className="logo">
               <div className="logo-content">
                 <img src="/EIRSLogo.png" alt="EIRS Technology" className="logo-icon" />
-                <h1>EIRS Technology</h1>
+                <h1>EIRS TECHNOLOGY</h1>
               </div>
             </Link>
           </div>

@@ -154,11 +154,11 @@ const CategorySidebar = ({
             {/* First level submenu - show on hover OR click */}
             {(hoveredCategory === category.id || clickedCategory === category.id) && category.subcategories && (
               <div className="submenu-level-1">
-                {category.subcategories.map((sub, idx) => (
+                {category.subcategories.map((sub) => (
                   <div
-                    key={idx}
+                    key={`${category.id}-${sub.name}`}
                     className="menu-item-sub"
-                    onMouseEnter={() => setHoveredSubcategory(idx)}
+                    onMouseEnter={() => setHoveredSubcategory(sub.name)}
                     onMouseLeave={() => setHoveredSubcategory(null)}
                   >
                     <div
@@ -168,7 +168,7 @@ const CategorySidebar = ({
                           handleSubcategoryClick(category.name, sub.name, sub.actualSubcategory);
                         } else {
                           // Toggle submenu on click if it has submenus
-                          setClickedSubcategory(clickedSubcategory === `${category.id}-${idx}` ? null : `${category.id}-${idx}`);
+                          setClickedSubcategory(clickedSubcategory === `${category.id}-${sub.name}` ? null : `${category.id}-${sub.name}`);
                         }
                       }}
                     >
@@ -177,10 +177,10 @@ const CategorySidebar = ({
                     </div>
 
                     {/* First level submenu - show on hover OR click */}
-                    {(hoveredSubcategory === idx || clickedSubcategory === `${category.id}-${idx}`) && sub.submenus && (
+                    {(hoveredSubcategory === sub.name || clickedSubcategory === `${category.id}-${sub.name}`) && sub.submenus && (
                       <div className="submenu-level-2">
-                        {sub.submenus.map((submenu, sidx) => (
-                          <div key={sidx} className="menu-item-sub2">
+                        {sub.submenus.map((submenu) => (
+                          <div key={`${category.id}-${sub.name}-${submenu.name}`} className="menu-item-sub2">
                             <div 
                               className="menu-item-label"
                               onClick={() => handleSubmenuClick(category.name, sub.name, submenu.name)}
@@ -192,9 +192,9 @@ const CategorySidebar = ({
                             {/* Third level submenu */}
                             {submenu.items && (
                               <div className="submenu-level-3">
-                                {submenu.items.map((item, iidx) => (
+                                {submenu.items.map((item) => (
                                   <div
-                                    key={iidx}
+                                    key={`${category.id}-${sub.name}-${submenu.name}-${item}`}
                                     className="menu-item-leaf"
                                     onClick={() => handleLeafItemClick(category.name, sub.name, item)}
                                   >

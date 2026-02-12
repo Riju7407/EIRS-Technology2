@@ -11,8 +11,8 @@ const FeaturedSection = ({ title, description, products }) => {
         </div>
 
         <div className="featured-grid">
-          {products && products.map((product, index) => (
-            <div key={index} className="featured-item">
+          {products && products.map((product) => (
+            <div key={product.id || product.name} className="featured-item">
               <div className="featured-image">
                 <img src={product.image} alt={product.name} />
               </div>

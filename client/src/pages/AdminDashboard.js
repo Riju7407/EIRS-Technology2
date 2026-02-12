@@ -122,7 +122,10 @@ const AdminDashboard = () => {
           </button>
           <div className="topbar-right">
             <div className="admin-profile">
-              <img src="https://via.placeholder.com/40x40?text=Admin" alt="Admin" />
+              <img 
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(adminUser?.name || 'Admin')}&background=random&color=fff&size=40`} 
+                alt="Admin" 
+              />
               <span>{adminUser?.name || 'Admin User'}</span>
             </div>
           </div>

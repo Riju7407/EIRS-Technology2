@@ -38,11 +38,11 @@ const ServicesPage = () => {
   };
 
   const serviceImages = {
-    'Installation & Setup': 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop&crop=faces',
+    'Installation & Setup': '/install.jpeg',
     'Maintenance & Monitoring': 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400&h=300&fit=crop',
     'Emergency Response': 'https://images.unsplash.com/photo-1531746790731-6c087a29a605?w=400&h=300&fit=crop',
-    'AMC & Maintenance': '/AMC.png',
-    'Technical Expert Consultation': '/Technical.png'
+    'AMC & Maintenance': '/AMC.jpeg',
+    'Technical Support & Expert Consultation': '/Technical.jpeg'
   };
 
   const getServiceImage = (serviceTitle, index) => {

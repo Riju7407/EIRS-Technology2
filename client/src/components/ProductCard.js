@@ -180,7 +180,7 @@ const ProductCard = ({ product }) => {
         <div className="product-rating">
           <div className="stars">
             {[...Array(5)].map((_, i) => (
-              <FaStar key={i} className={i < Math.floor(Number(averageRating) || 0) ? 'filled' : 'empty'} />
+              <FaStar key={`star-${productId}-${i}`} className={i < Math.floor(Number(averageRating) || 0) ? 'filled' : 'empty'} />
             ))}
           </div>
           <span className="rating-count">({(Number(averageRating) || 0).toFixed(1)})</span>

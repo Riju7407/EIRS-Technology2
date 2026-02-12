@@ -5,9 +5,9 @@
   "main": "api/index.js",
   "scripts": {
     "build": "cd client && npm run build",
-    "start": "node server/server.js",
+    "start": "NODE_OPTIONS=--no-deprecation node server/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd server && npm start",
+    "server": "cd server && NODE_OPTIONS=--no-deprecation npm start",
     "client": "cd client && npm start",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install"
   },

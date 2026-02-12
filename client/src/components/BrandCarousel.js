@@ -61,8 +61,8 @@ const BrandCarousel = () => {
         </button>
 
         <div className="brands-wrapper animated-scroll">
-          {visibleBrands.map((brand, index) => (
-            <div key={index} className="brand-item">
+          {visibleBrands.map((brand) => (
+            <div key={brand.name} className="brand-item">
               <img src={brand.img} alt={brand.name} />
             </div>
           ))}

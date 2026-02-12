@@ -210,7 +210,7 @@ const HomePage = () => {
             {filteredProducts.slice(0, 8).length > 0 ? (
               filteredProducts.slice(0, 8).map((product) => (
                 <ProductCard 
-                  key={product.id} 
+                  key={product._id} 
                   product={product}
                 />
               ))
@@ -234,22 +234,22 @@ const HomePage = () => {
           <div className="services-text-container">
             {/* Installation & Setup */}
             <div className="service-text-item">
-              <img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=200&fit=crop" alt="Installation & Setup" className="service-image" />
+              <img src="/install.jpeg" alt="Installation & Setup" className="service-image" />
               <h3>Installation & Setup</h3>
               <p>Professional installation and configuration of security systems, cameras, and automation equipment at your premises with minimal downtime.</p>
             </div>
 
             {/* AMC & Maintenance */}
             <div className="service-text-item">
-              <img src="/AMC.png" alt="AMC & Maintenance" className="service-image" />
+              <img src="/AMC.jpeg" alt="AMC & Maintenance" className="service-image" />
               <h3>AMC & Maintenance</h3>
               <p>Annual Maintenance Contracts with regular inspections, preventive maintenance, and emergency support to ensure optimal system performance.</p>
             </div>
 
-            {/* Technical Expert Consultation */}
+            {/* Technical Support & Expert Consultation */}
             <div className="service-text-item">
-              <img src="/Technical.png" alt="Technical Expert Consultation" className="service-image" />
-              <h3>Technical Expert Consultation</h3>
+              <img src="/Technical.jpeg" alt="Technical Support & Expert Consultation" className="service-image" />
+              <h3>Technical Support & Expert Consultation</h3>
               <p>Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.</p>
             </div>
           </div>

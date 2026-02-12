@@ -126,7 +126,7 @@ const HeroSection = () => {
                 src={card.image} 
                 alt={card.title}
                 className="hero-card-image"
-                loading="lazy"
+                loading="eager"
               />
               <div className="hero-card-overlay"></div>
             </div>

@@ -247,7 +247,7 @@ const HomePage = () => {
               <div className="products-grid">
                 {filteredProducts.map((product) => (
                   <ProductCard 
-                    key={product.id} 
+                    key={product._id} 
                     product={product}
                   />
                 ))}

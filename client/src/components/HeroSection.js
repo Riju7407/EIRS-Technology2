@@ -41,7 +41,7 @@ const HeroSection = () => {
 
   const heroCards = [
     {
-      image: '/CCTVInstall.png',
+      image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771048058/CCTVInstall_royhdq.png',
       title: 'CCTV Installation',
       onClick: () => {
         console.log('🔗 Navigating to contact');
@@ -49,7 +49,7 @@ const HeroSection = () => {
       }
     },
     {
-      image: '/IntercomSystem.png',
+      image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771048770/IntercomSystem_pyyuzj.png',
       title: 'Intercom System',
       onClick: () => {
         console.log('🔗 Navigating to products with category: Intercom System');
@@ -57,7 +57,7 @@ const HeroSection = () => {
       }
     },
     {
-      image: '/cctv.png',
+      image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771048838/cctv_vivnwq.png',
       title: 'CCTV Cameras',
       onClick: () => {
         console.log('🔗 Navigating to products with category: CCTV Cameras');
@@ -65,7 +65,7 @@ const HeroSection = () => {
       }
     },
     {
-      image: '/Biometric.png',
+      image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771048916/Biometric_oswe6i.png',
       title: 'Biometric Devices',
       onClick: () => {
         console.log('🔗 Navigating to products with category: Biometric Devices');
@@ -73,7 +73,7 @@ const HeroSection = () => {
       }
     },
     {
-      image: '/Smoke.png',
+      image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771048981/Smoke_yswt34.png',
       title: 'Fire Alarm Systems',
       onClick: () => {
         console.log('🔗 Navigating to products with category: Fire Alarm Systems');
@@ -81,7 +81,7 @@ const HeroSection = () => {
       }
     },
     {
-      image: '/Router.png',
+      image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771049038/Router_vd7b2c.png',
       title: 'Networking Devices',
       onClick: () => {
         console.log('🔗 Navigating to products with category: CCTV Components');

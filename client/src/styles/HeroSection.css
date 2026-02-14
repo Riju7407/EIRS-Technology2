@@ -48,11 +48,18 @@
 
 /* Reduce top margin for specific cards - disabled on mobile */
 @media (min-width: 769px) {
-  .hero-card[data-card-image='/CCTVInstall.png'],
-  .hero-card[data-card-image='/IntercomSystem.png'],
-  .hero-card[data-card-image='/cctv.png'] {
+  .hero-card[data-card-image*='CCTVInstall'],
+  .hero-card[data-card-image*='IntercomSystem'],
+  .hero-card[data-card-image*='cctv_vivnwq'] {
     margin-top: -20px;
   }
+}
+
+/* Add bottom margin for specific cards */
+.hero-card[data-card-image*='CCTVInstall'],
+.hero-card[data-card-image*='IntercomSystem'],
+.hero-card[data-card-image*='cctv_vivnwq'] {
+  margin-bottom: 10px;
 }
 
 .hero-card-image-wrapper {

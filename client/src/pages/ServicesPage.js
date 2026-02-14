@@ -23,13 +23,13 @@ const ServicesPage = () => {
     },
     {
       icon: FaClipboardList,
-      title: 'Maintenance & Monitoring',
+      title: 'AMC & Maintenance',
       description: 'Regular maintenance checks and system monitoring to ensure optimal performance of your security systems.'
     },
     {
       icon: FaAmbulance,
-      title: 'Emergency Response',
-      description: 'Rapid emergency response team to handle urgent security issues and system failures.'
+      title: 'Technical Support & Expert Consultation',
+      description: 'Expert technical support and professional consultation to optimize your security systems and solve complex challenges.'
     }
   ];
 
@@ -39,8 +39,6 @@ const ServicesPage = () => {
 
   const serviceImages = {
     'Installation & Setup': '/install.jpeg',
-    'Maintenance & Monitoring': 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400&h=300&fit=crop',
-    'Emergency Response': 'https://images.unsplash.com/photo-1531746790731-6c087a29a605?w=400&h=300&fit=crop',
     'AMC & Maintenance': '/AMC.jpeg',
     'Technical Support & Expert Consultation': '/Technical.jpeg'
   };

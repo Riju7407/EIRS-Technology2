@@ -193,6 +193,14 @@ const AdminProducts = () => {
     }
   };
 
+  const handleImageUrlChange = (e) => {
+    const url = e.target.value.trim();
+    setFormData(prev => ({
+      ...prev,
+      image: url,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -565,26 +573,46 @@ const AdminProducts = () => {
                 <div className="form-group">
                   <label>Product Image</label>
                   <div className="image-upload-container">
-                    <input
-                      type="file"
-                      id="imageInput"
-                      name="image"
-                      onChange={handleImageUpload}
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                    />
-                    <label htmlFor="imageInput" className="image-upload-label">
-                      <FaImage /> Choose Image
-                    </label>
+                    {/* File Upload Option */}
+                    <div className="image-upload-option">
+                      <h4>Option 1: Upload Image File</h4>
+                      <input
+                        type="file"
+                        id="imageInput"
+                        name="image"
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                      />
+                      <label htmlFor="imageInput" className="image-upload-label">
+                        <FaImage /> Choose Image File
+                      </label>
+                    </div>
+
+                    {/* Image URL Option */}
+                    <div className="image-url-option">
+                      <h4>Option 2: Use Image URL</h4>
+                      <input
+                        type="text"
+                        placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                        value={formData.image?.startsWith('http') ? formData.image : ''}
+                        onChange={handleImageUrlChange}
+                        className="image-url-input"
+                      />
+                      <small>Paste the direct URL of your product image here</small>
+                    </div>
+
+                    {/* Image Preview */}
                     {formData.image && (
                       <div className="image-preview">
+                        <h4>Image Preview:</h4>
                         <img src={formData.image} alt="Preview" />
                         <button
                           type="button"
                           className="remove-image-btn"
                           onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
                         >
-                          Remove
+                          ✕ Remove Image
                         </button>
                       </div>
                     )}

@@ -16,14 +16,9 @@ const services = [
     price: 3000
   },
   {
-    name: 'Expert Consultation',
-    description: 'Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.',
-    price: 0
-  },
-  {
-    name: 'Training Programs',
-    description: 'Comprehensive training sessions for your staff on system operation, maintenance, troubleshooting, and best practices for security management.',
-    price: 10000
+    name: 'Technical Support & Expert Consultation',
+    description: 'Expert technical support and professional consultation to optimize your security systems and solve complex challenges.',
+    price: 2500
   }
 ];
 

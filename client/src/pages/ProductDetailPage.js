@@ -28,6 +28,9 @@ const ProductDetailPage = () => {
   const [editingReview, setEditingReview] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
+  // Multi-image carousel state
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
   useEffect(() => {
     // Fetch product from backend API
     const fetchProduct = async () => {
@@ -172,10 +175,66 @@ const ProductDetailPage = () => {
 
         {/* Product Details */}
         <div className="product-detail-wrapper">
-          {/* Image Section */}
+          {/* Image Section with Carousel */}
           <section className="product-image-section">
             <div className="product-image-container">
-              <img src={product.image} alt={product.productName} />
+              {/* Determine which images to display */}
+              {product.images && product.images.length > 0 ? (
+                <div className="image-carousel">
+                  {/* Main Image Display */}
+                  <div className="carousel-main">
+                    <img 
+                      src={product.images[selectedImageIndex]} 
+                      alt={`${product.productName} - Image ${selectedImageIndex + 1}`}
+                    />
+                  </div>
+
+                  {/* Navigation Buttons */}
+                  {product.images.length > 1 && (
+                    <>
+                      <button 
+                        className="carousel-nav-btn prev"
+                        onClick={() => setSelectedImageIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
+                        aria-label="Previous image"
+                      >
+                        ‹
+                      </button>
+                      <button 
+                        className="carousel-nav-btn next"
+                        onClick={() => setSelectedImageIndex((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
+                        aria-label="Next image"
+                      >
+                        ›
+                      </button>
+                    </>
+                  )}
+
+                  {/* Thumbnail Strip */}
+                  {product.images.length > 1 && (
+                    <div className="carousel-thumbnails">
+                      {product.images.map((img, index) => (
+                        <button
+                          key={index}
+                          className={`thumbnail ${selectedImageIndex === index ? 'active' : ''}`}
+                          onClick={() => setSelectedImageIndex(index)}
+                          title={`View image ${index + 1}`}
+                        >
+                          <img src={img} alt={`Thumbnail ${index + 1}`} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Image Counter */}
+                  {product.images.length > 1 && (
+                    <div className="image-counter">
+                      {selectedImageIndex + 1} / {product.images.length}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <img src={product.image} alt={product.productName} />
+              )}
             </div>
             <div className="product-badges">
               <span className="badge">In Stock</span>

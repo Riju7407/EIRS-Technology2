@@ -27,6 +27,7 @@ const AdminProducts = () => {
     description: '',
     modelNo: '',
     image: '',
+    images: ['', '', '', '', ''], // Support for 5 images
     price: '',
     stock: '',
     cameraResolution: '',
@@ -165,7 +166,7 @@ const AdminProducts = () => {
     }));
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e, index) => {
     const file = e.target.files[0];
     if (file) {
       // Validate file type
@@ -184,21 +185,33 @@ const AdminProducts = () => {
       reader.onload = (event) => {
         // Convert image to Base64 URL
         const base64String = event.target.result;
-        setFormData(prev => ({
-          ...prev,
-          image: base64String,
-        }));
+        setFormData(prev => {
+          const newImages = [...prev.images];
+          newImages[index] = base64String;
+          return {
+            ...prev,
+            images: newImages,
+            // Also set as primary image if it's the first image
+            image: index === 0 ? base64String : prev.image,
+          };
+        });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleImageUrlChange = (e) => {
+  const handleImageUrlChange = (e, index) => {
     const url = e.target.value.trim();
-    setFormData(prev => ({
-      ...prev,
-      image: url,
-    }));
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages[index] = url;
+      return {
+        ...prev,
+        images: newImages,
+        // Also set as primary image if it's the first image
+        image: index === 0 ? url : prev.image,
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -220,7 +233,8 @@ const AdminProducts = () => {
       brand: formData.brand || '',
       description: formData.description,
       modelNo: formData.modelNo || '',
-      image: formData.image || '',
+      image: formData.image || '', // Primary image
+      images: formData.images.filter(img => img !== ''), // Filter out empty images
       price: formData.price !== '' ? parseFloat(formData.price) : 0,
       stock: formData.stock !== '' ? parseInt(formData.stock, 10) : 0,
       cameraResolution: formData.cameraResolution || '',
@@ -253,6 +267,13 @@ const AdminProducts = () => {
 
   const handleEdit = (product) => {
     setEditingId(product._id);
+    // Prepare images array - pad with empty strings to reach 5 slots
+    const imagesList = product.images || [];
+    const paddedImages = [...imagesList];
+    while (paddedImages.length < 5) {
+      paddedImages.push('');
+    }
+    
     setFormData({
       productName: product.productName,
       category: product.category,
@@ -263,6 +284,7 @@ const AdminProducts = () => {
       description: product.description,
       modelNo: product.modelNo || '',
       image: product.image,
+      images: paddedImages,
       price: product.price !== null && product.price !== undefined ? product.price : '',
       stock: product.stock !== null && product.stock !== undefined ? product.stock : '',
       cameraResolution: product.cameraResolution || '',
@@ -308,6 +330,7 @@ const AdminProducts = () => {
       description: '',
       modelNo: '',
       image: '',
+      images: ['', '', '', '', ''], // Reset images array
       price: '',
       stock: '',
       cameraResolution: '',
@@ -570,52 +593,59 @@ const AdminProducts = () => {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Product Image</label>
-                  <div className="image-upload-container">
-                    {/* File Upload Option */}
-                    <div className="image-upload-option">
-                      <h4>Option 1: Upload Image File</h4>
-                      <input
-                        type="file"
-                        id="imageInput"
-                        name="image"
-                        onChange={handleImageUpload}
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                      />
-                      <label htmlFor="imageInput" className="image-upload-label">
-                        <FaImage /> Choose Image File
-                      </label>
-                    </div>
+                <div className="form-group full-width">
+                  <label>Product Images (Up to 5 images)</label>
+                  <div className="multiple-images-container">
+                    {formData.images && [0, 1, 2, 3, 4].map((index) => (
+                      <div key={index} className="image-upload-slot">
+                        <h4>Image {index + 1} {index === 0 ? '(Primary)' : ''}</h4>
+                        <div className="image-upload-option">
+                          <input
+                            type="file"
+                            id={`imageInput-${index}`}
+                            onChange={(e) => handleImageUpload(e, index)}
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                          />
+                          <label htmlFor={`imageInput-${index}`} className="image-upload-label">
+                            <FaImage /> Upload Image {index + 1}
+                          </label>
+                        </div>
 
-                    {/* Image URL Option */}
-                    <div className="image-url-option">
-                      <h4>Option 2: Use Image URL</h4>
-                      <input
-                        type="text"
-                        placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                        value={formData.image?.startsWith('http') ? formData.image : ''}
-                        onChange={handleImageUrlChange}
-                        className="image-url-input"
-                      />
-                      <small>Paste the direct URL of your product image here</small>
-                    </div>
+                        <div className="image-url-option">
+                          <input
+                            type="text"
+                            placeholder="Or paste image URL here"
+                            value={formData.images[index] || ''}
+                            onChange={(e) => handleImageUrlChange(e, index)}
+                            className="image-url-input"
+                          />
+                        </div>
 
-                    {/* Image Preview */}
-                    {formData.image && (
-                      <div className="image-preview">
-                        <h4>Image Preview:</h4>
-                        <img src={formData.image} alt="Preview" />
-                        <button
-                          type="button"
-                          className="remove-image-btn"
-                          onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
-                        >
-                          ✕ Remove Image
-                        </button>
+                        {formData.images[index] && (
+                          <div className="image-preview-small">
+                            <img src={formData.images[index]} alt={`Preview ${index + 1}`} />
+                            <button
+                              type="button"
+                              className="remove-image-btn"
+                              onClick={() => {
+                                setFormData(prev => {
+                                  const newImages = [...prev.images];
+                                  newImages[index] = '';
+                                  return {
+                                    ...prev,
+                                    images: newImages,
+                                    image: index === 0 ? '' : prev.image,
+                                  };
+                                });
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               </div>

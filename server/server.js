@@ -14,8 +14,18 @@ const bcrypt = require('bcrypt');
 
 databaseconnect();
 
-// Enable compression for all responses
-app.use(compression());
+// Enable compression for all responses with optimized settings
+app.use(compression({
+    level: 6, // Compression level (0-9, 6 is good balance)
+    threshold: 1024, // Only compress responses larger than 1KB
+    filter: (req, res) => {
+        // Compress all JSON and text responses
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
 
 // Auto-create admin user on server startup if it doesn't exist
 const createAdminOnStartup = async () => {

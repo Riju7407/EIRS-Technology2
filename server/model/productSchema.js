@@ -41,6 +41,10 @@ const productSchema = new Schema({
         type: String,
         trim: true
     },
+    images: [{
+        type: String,
+        trim: true
+    }],
     price: {
         type: Number,
         default: 0,
@@ -64,5 +68,11 @@ const productSchema = new Schema({
 }, {
     timestamps: true
 });
+
+// Create indexes for faster queries
+productSchema.index({ category: 1, subcategory: 1 });
+productSchema.index({ brand: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ productName: 'text' }); // Text search index
 
 module.exports = mongoose.model('Product', productSchema);

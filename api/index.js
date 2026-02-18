@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const path = require('path');
 
 // Initialize Express app
@@ -77,6 +78,18 @@ const corsOptions = {
 
 // Apply CORS middleware BEFORE routes
 app.use(cors(corsOptions));
+
+// Enable compression for production
+app.use(compression({
+    level: 6,
+    threshold: 1024,
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
 
 // Vercel rewrite handler - reconstruct the original path BEFORE body parsing
 app.use((req, res, next) => {

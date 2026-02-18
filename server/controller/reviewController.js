@@ -146,12 +146,24 @@ exports.getProductReviews = async (req, res) => {
         const { productId } = req.params;
         console.log('📖 Getting reviews for product:', productId);
 
-        // Check if product exists
+        // Validate productId format  
+        if (!productId || productId.length !== 24) {
+            console.warn('⚠️ Invalid product ID format:', productId);
+            return res.status(200).json({ 
+                success: false,
+                message: 'Invalid product ID',
+                reviews: [],
+                averageRating: 0,
+                totalReviews: 0
+            });
+        }
+
+        // Check if product exists (but don't fail if it doesn't - just return empty reviews)
         const product = await Product.findById(productId);
         if (!product) {
-            console.error('❌ Product not found:', productId);
-            return res.status(404).json({ 
-                success: false,
+            console.warn('⚠️ Product not found, returning empty reviews:', productId);
+            return res.status(200).json({ 
+                success: true,
                 message: 'Product not found',
                 reviews: [],
                 averageRating: 0,

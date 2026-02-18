@@ -11,9 +11,10 @@ exports.createProduct = async (req, res) => {
         console.log('✅ Product saved:', JSON.stringify(product, null, 2));
         console.log('📌 Saved ModelNo:', product.modelNo);
         
-        // Clear cache when new product is added
-        productsCache = null;
-        cacheTimestamp = null;
+        // Clear all caches when new product is added
+        productsCache.clear();
+        totalCountCache = null;
+        totalCountTimestamp = null;
         
         res.status(201).json({
             success: true,
@@ -29,35 +30,45 @@ exports.createProduct = async (req, res) => {
     }
 };
 
-// Cache for products (refresh every 5 minutes)
-let productsCache = null;
-let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// Multi-level cache for products (refresh every 10 minutes)
+let productsCache = new Map(); // Cache per page
+let totalCountCache = null;
+let totalCountTimestamp = null;
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const COUNT_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for count
 
 exports.getAllProducts = async (req, res) => {
     try {
         const now = Date.now();
-        
-        // Check if cache is still valid
-        if (productsCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
-            console.log('✅ Returning cached products');
-            return res.json(productsCache);
-        }
-        
-        // Get pagination params
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 50;
         const skip = (page - 1) * limit;
+        const cacheKey = `${page}_${limit}`;
         
-        // Get total count
-        const total = await Product.countDocuments();
+        // Check page-specific cache
+        const cachedPage = productsCache.get(cacheKey);
+        if (cachedPage && (now - cachedPage.timestamp) < CACHE_DURATION) {
+            console.log(`✅ Returning cached page ${page}`);
+            return res.json(cachedPage.data);
+        }
         
-        // Fetch products with optimized fields and pagination
+        // Use cached total count if available
+        let total;
+        if (totalCountCache !== null && totalCountTimestamp && (now - totalCountTimestamp) < COUNT_CACHE_DURATION) {
+            total = totalCountCache;
+        } else {
+            total = await Product.countDocuments();
+            totalCountCache = total;
+            totalCountTimestamp = now;
+        }
+        
+        // Fetch products with optimized fields - truncate description for list view
         const products = await Product.find()
-            .select('_id productName category subcategory submenu channels brand price image description stock modelNo')
+            .select('_id productName category subcategory submenu channels brand price image stock modelNo')
             .lean() // Returns plain JavaScript objects, not Mongoose documents
             .limit(limit)
             .skip(skip)
+            .sort({ createdAt: -1 }) // Most recent first
             .exec();
         
         const response = {
@@ -70,12 +81,20 @@ exports.getAllProducts = async (req, res) => {
             }
         };
         
-        // Cache the response (only for full list)
-        if (!req.query.page) {
-            productsCache = response;
-            cacheTimestamp = now;
+        // Cache this page
+        productsCache.set(cacheKey, {
+            data: response,
+            timestamp: now
+        });
+        
+        // Limit cache size to 10 pages
+        if (productsCache.size > 10) {
+            const firstKey = productsCache.keys().next().value;
+            productsCache.delete(firstKey);
         }
         
+        // Set cache headers for CDN/browser caching
+        res.set('Cache-Control', 'public, max-age=300'); // 5 minutes for browsers
         res.json(response);
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -98,6 +117,11 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         console.log('📝 Updating product', req.params.id, 'with data:', JSON.stringify(req.body, null, 2));
+        
+        // Clear caches on update
+        productsCache.clear();
+        totalCountCache = null;
+        totalCountTimestamp = null;
         console.log('📌 ModelNo value to update:', req.body.modelNo);
         
         const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
@@ -122,9 +146,10 @@ exports.deleteProduct = async (req, res) => {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
         
-        // Clear cache when product is deleted
-        productsCache = null;
-        cacheTimestamp = null;
+        // Clear all caches when product is deleted
+        productsCache.clear();
+        totalCountCache = null;
+        totalCountTimestamp = null;
         
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {

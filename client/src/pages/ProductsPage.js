@@ -189,11 +189,11 @@ const ProductsPage = () => {
   useEffect(() => {
     fetchProducts();
     
-    // Refresh products every 30 seconds to get dynamic stock updates
+    // Refresh products every 5 minutes to get dynamic stock updates (reduced frequency)
     const refreshInterval = setInterval(() => {
       console.log('🔄 Auto-refreshing products for latest stock...');
       fetchProductsFresh();
-    }, 30000); // 30 seconds
+    }, 5 * 60 * 1000); // 5 minutes instead of 30 seconds
     
     return () => clearInterval(refreshInterval);
   }, [fetchProducts, fetchProductsFresh]);

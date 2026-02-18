@@ -16,6 +16,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 second timeout for production
 });
 
 // Request interceptor to add token
@@ -40,8 +41,31 @@ api.interceptors.response.use(
     console.log('API Response successful:', response.status, response.config.url);
     return response;
   },
-  (error) => {
+  async (error) => {
+    const config = error.config;
+    
     console.error('API Response error:', error.response?.status, error.message, error.config?.url);
+    
+    // Retry logic for network errors (max 2 retries)
+    if (!config || !config.retry) {
+      config.retry = 0;
+    }
+    
+    // Retry on network errors or 5xx errors (but not 401)
+    if (
+      config.retry < 2 &&
+      (error.code === 'ECONNABORTED' || 
+       error.code === 'ERR_NETWORK' ||
+       (error.response && error.response.status >= 500))
+    ) {
+      config.retry += 1;
+      console.log(`🔄 Retrying request (${config.retry}/2)...`);
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * config.retry));
+      
+      return api(config);
+    }
     
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
@@ -183,28 +207,45 @@ export const authService = {
 // Products Services
 export const productService = {
   getAllProducts: async (page = 1, limit = 50, skipCache = false) => {
+    // Add caching to localStorage for faster subsequent loads
+    const cacheKey = `products_cache_${page}_${limit}`;
+    const cached = localStorage.getItem(cacheKey);
+    const cacheTime = localStorage.getItem(cacheKey + '_time');
+    
     try {
-      // Add caching to localStorage for faster subsequent loads
-      const cacheKey = `products_cache_${page}_${limit}`;
-      const cached = localStorage.getItem(cacheKey);
-      const cacheTime = localStorage.getItem(cacheKey + '_time');
-      
-      // Use cache if less than 2 minutes old and not skipped (for dynamic stock updates)
-      if (!skipCache && cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 2 * 60 * 1000) {
-        console.log('✅ Using cached products');
+      // Use cache if less than 5 minutes old and not skipped (increased from 2 minutes)
+      if (!skipCache && cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
+        console.log('✅ Using cached products (client-side)');
         return JSON.parse(cached);
       }
       
       console.log('🔄 Fetching products from server...');
-      const response = await api.get(`/auth/products?page=${page}&limit=${limit}`);
+      const response = await api.get(`/auth/products?page=${page}&limit=${limit}`, {
+        // Add timeout for slow connections
+        timeout: 15000, // 15 seconds
+      });
       
       // Cache the response
-      localStorage.setItem(cacheKey, JSON.stringify(response.data));
-      localStorage.setItem(cacheKey + '_time', Date.now().toString());
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(response.data));
+        localStorage.setItem(cacheKey + '_time', Date.now().toString());
+      } catch (storageError) {
+        // Handle quota exceeded
+        console.warn('LocalStorage quota exceeded, clearing old cache');
+        localStorage.removeItem(`products_cache_${page}_${limit}`);
+        localStorage.removeItem(`products_cache_${page}_${limit}_time`);
+      }
       
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
+      
+      // Return cached data even if expired when network fails
+      if (cached) {
+        console.log('⚠️ Using stale cache due to network error');
+        return JSON.parse(cached);
+      }
+      
       throw error.response?.data || error.message;
     }
   },

@@ -207,8 +207,8 @@ const HomePage = () => {
             <h2>Our Best Selling Products</h2>
           </div>
           <div className="admin-products-grid">
-            {filteredProducts.slice(0, 8).length > 0 ? (
-              filteredProducts.slice(0, 8).map((product) => (
+            {filteredProducts.slice(0, 10).length > 0 ? (
+              filteredProducts.slice(0, 10).map((product) => (
                 <ProductCard 
                   key={product._id} 
                   product={product}

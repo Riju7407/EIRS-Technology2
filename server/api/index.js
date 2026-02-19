@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const { authRouter } = require('../router/authRouter.js');
 const categoryRouter = require('../router/categoryRouter.js');
 const databaseconnect = require('../config/databaseConfig.js');
@@ -11,10 +12,28 @@ const bcrypt = require('bcrypt');
 // Create Express app for serverless function
 const app = express();
 
-// Connect to database
-databaseconnect();
+// Connect to database (non-blocking)
+let dbConnected = false;
+databaseconnect().then(() => {
+    dbConnected = true;
+    console.log('✅ Database connected successfully');
+}).catch(err => {
+    console.error('⚠️ Database connection will retry:', err.message);
+});
 
-// Auto-create admin user on first request
+// Enable compression with aggressive settings for Vercel
+app.use(compression({
+    level: 9, // Maximum compression
+    threshold: 512, // Compress responses larger than 512 bytes
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
+
+// Auto-create admin user on first request (non-blocking)
 let adminCreated = false;
 const ensureAdminExists = async () => {
     if (adminCreated) return;
@@ -37,7 +56,7 @@ const ensureAdminExists = async () => {
         }
         adminCreated = true;
     } catch (error) {
-        console.error('Error creating admin:', error.message);
+        console.error('⚠️ Error creating admin:', error.message);
     }
 };
 
@@ -55,17 +74,34 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
-// Request logging middleware
+// Request logging middleware (only log slow requests to reduce bandwidth)
 app.use((req, res, next) => {
-    console.log(`API Request - ${new Date().toISOString()} - ${req.method} ${req.path} - Query: ${JSON.stringify(req.query)}`);
+    const startTime = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - startTime;
+        if (duration > 100 || res.statusCode >= 400) {
+            console.log(`[${res.statusCode}] ${req.method} ${req.path} - ${duration}ms`);
+        }
+    });
     ensureAdminExists();
     next();
 });
 
+// Health check endpoints - Critical for keeping Render/Vercel awake
+app.get('/health', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.status(200).json({ 
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: dbConnected ? 'connected' : 'connecting'
+    });
+});
+
 // Health check endpoints
 app.get('/', (req, res) => {
-    res.json({ message: 'EIRS Technology API', status: 'running' });
-});
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ message: 'EIRS Technology API', status: 'running' });\n});
 
 // Handle the Vercel rewrite: /api/(.*) → /api/index.js?__path=/$1
 app.use((req, res, next) => {

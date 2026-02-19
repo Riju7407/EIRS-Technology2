@@ -12,12 +12,19 @@ const cors = require('cors');
 const User = require('./model/userSchema');
 const bcrypt = require('bcrypt');
 
-databaseconnect();
+// Start database connection immediately (non-blocking)
+let dbConnected = false;
+databaseconnect().then(() => {
+    dbConnected = true;
+    console.log('✅ Database connected successfully');
+}).catch(err => {
+    console.error('⚠️ Database connection will retry:', err.message);
+});
 
-// Enable compression for all responses with optimized settings
+// Enable compression for all responses with aggressive optimization for Render free plan
 app.use(compression({
-    level: 6, // Compression level (0-9, 6 is good balance)
-    threshold: 1024, // Only compress responses larger than 1KB
+    level: 9, // Maximum compression for Render free plan
+    threshold: 512, // Compress responses larger than 512 bytes
     filter: (req, res) => {
         // Compress all JSON and text responses
         if (req.headers['x-no-compression']) {
@@ -27,8 +34,10 @@ app.use(compression({
     }
 }));
 
-// Auto-create admin user on server startup if it doesn't exist
+// Auto-create admin user on server startup if it doesn't exist (non-blocking)
+let adminCreated = false;
 const createAdminOnStartup = async () => {
+    if (adminCreated) return;
     try {
         const adminEmail = 'admin@eirtech.com';
         const existingAdmin = await User.findOne({ email: adminEmail });
@@ -51,11 +60,13 @@ const createAdminOnStartup = async () => {
             console.log('✅ Admin user already exists');
         }
     } catch (error) {
-        console.error('Error creating admin on startup:', error.message);
+        console.error('⚠️ Error creating admin on startup:', error.message);
     }
+    adminCreated = true;
 };
 
-createAdminOnStartup();
+// Call admin creation after startup (non-blocking)
+setTimeout(createAdminOnStartup, 1000);
 
 // CORS configuration - Updated for production
 const corsOptions = {
@@ -90,9 +101,15 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
-// Request logging middleware
+// Request logging middleware with timing (only log slow requests)
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    const startTime = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - startTime;
+        if (duration > 100 || res.statusCode >= 400) {
+            console.log(`[${res.statusCode}] ${req.method} ${req.path} - ${duration}ms`);
+        }
+    });
     next();
 });
 
@@ -103,15 +120,33 @@ app.use('/api/payment', paymentRouter);
 
 app.use('/api', categoryRouter);
 
+// Health check endpoints - Critical for Render to keep server awake
+app.get('/health', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.status(200).json({ 
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: dbConnected ? 'connected' : 'connecting'
+    });
+});
+
 app.get('/', (req, res) => {
-    res.json({ message: 'EIRS Technology API Server', status: 'running' });
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ 
+        message: 'EIRS Technology API Server', 
+        status: 'running',
+        version: '2.0.0'
+    });
 });
 
 app.get('/api', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=300');
     res.json({ message: 'EIRS Technology API', version: '1.0.0' });
 });
 
 app.get('/about', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json({ message: 'About EIRS Technology' });
 });
 

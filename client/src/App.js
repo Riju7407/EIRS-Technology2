@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CategoryFilterProvider } from './context/CategoryFilterContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { useAuth } from './context/AuthContext';
+import useKeepServerAwake from './hooks/useKeepServerAwake';
 import Header from './components/Header';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import Footer from './components/Footer';
@@ -35,6 +36,9 @@ import './App.css';
 function AppContent() {
   const location = useLocation();
   const { isAdmin } = useAuth();
+  
+  // Keep Render server awake by pinging /health every 25 minutes
+  useKeepServerAwake();
 
   // Hide Footer on orders page, account page, phone signup page, and product detail pages
   const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup'];

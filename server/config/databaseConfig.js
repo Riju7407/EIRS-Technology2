@@ -5,13 +5,19 @@ const databaseconnect = () => {
     
     if (!MONGODB_URL) {
         console.error('❌ ERROR: MONGO_URL is not defined in environment variables!');
-        return;
+        return Promise.reject(new Error('MONGO_URL not defined'));
     }
     
-    mongoose
+    return mongoose
         .connect(MONGODB_URL)
-        .then((conn) => console.log(`✓ MongoDB connected: ${conn.connection.host}`))
-        .catch((err) => console.log(`❌ MongoDB connection error: ${err}`));
+        .then((conn) => {
+            console.log(`✓ MongoDB connected: ${conn.connection.host}`);
+            return conn;
+        })
+        .catch((err) => {
+            console.error(`❌ MongoDB connection error: ${err.message}`);
+            throw err;
+        });
 }
 
 module.exports = databaseconnect;

@@ -49,6 +49,8 @@ exports.getAllProducts = async (req, res) => {
         const cachedPage = productsCache.get(cacheKey);
         if (cachedPage && (now - cachedPage.timestamp) < CACHE_DURATION) {
             console.log(`✅ Returning cached page ${page}`);
+            res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+            res.set('X-Cache', 'HIT');
             return res.json(cachedPage.data);
         }
         
@@ -95,6 +97,7 @@ exports.getAllProducts = async (req, res) => {
         
         // Set cache headers for CDN/browser caching
         res.set('Cache-Control', 'public, max-age=300'); // 5 minutes for browsers
+        res.set('X-Cache', 'MISS');
         res.json(response);
     } catch (error) {
         console.error('Error fetching products:', error);

@@ -38,9 +38,9 @@ const ServicesPage = () => {
   };
 
   const serviceImages = {
-    'Installation & Setup': '/install.jpeg',
-    'AMC & Maintenance': '/AMC.jpeg',
-    'Technical Support & Expert Consultation': '/Technical.jpeg'
+    'Installation & Setup': `${process.env.PUBLIC_URL}/install.jpeg`,
+    'AMC & Maintenance': `${process.env.PUBLIC_URL}/AMC.jpeg`,
+    'Technical Support & Expert Consultation': `${process.env.PUBLIC_URL}/Technical.jpeg`
   };
 
   const getServiceImage = (serviceTitle, index) => {

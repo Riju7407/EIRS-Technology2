@@ -66,18 +66,18 @@ app.get('/', (req, res) => {
     res.json({ message: 'EIRS Technology API', status: 'running' });
 });
 
-// Handle the rewritten /api?path=auth/signin requests
-// The vercel.json rewrite sends /api/auth/signin as /api?path=auth/signin
+// Handle the Vercel rewrite: /api/(.*) → /api/index.js?__path=/$1
 app.use((req, res, next) => {
-    // If there's a path query parameter (from Vercel rewrite), reconstruct the original path
-    if (req.query.path) {
-        req.url = '/' + req.query.path;
+    // If there's a __path query parameter (from Vercel rewrite), reconstruct the original path
+    if (req.query.__path) {
+        req.url = req.query.__path;
+        console.log(`Vercel rewrite detected. URL reconstructed to: ${req.url}`);
     }
     next();
 });
 
-// Mount authRouter at root since we've reconstructed the path
-app.use('/', authRouter);
+// Mount authRouter at /auth path
+app.use('/auth', authRouter);
 
 // Fallback health check for /api endpoint
 app.get('/api', (req, res) => {

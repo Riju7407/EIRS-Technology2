@@ -234,21 +234,21 @@ const HomePage = () => {
           <div className="services-text-container">
             {/* Installation & Setup */}
             <div className="service-text-item">
-              <img src="/install.jpeg" alt="Installation & Setup" className="service-image" />
+              <img src={`${process.env.PUBLIC_URL}/install.jpeg`} alt="Installation & Setup" className="service-image" />
               <h3>Installation & Setup</h3>
               <p>Professional installation and configuration of security systems, cameras, and automation equipment at your premises with minimal downtime.</p>
             </div>
 
             {/* AMC & Maintenance */}
             <div className="service-text-item">
-              <img src="/AMC.jpeg" alt="AMC & Maintenance" className="service-image" />
+              <img src={`${process.env.PUBLIC_URL}/AMC.jpeg`} alt="AMC & Maintenance" className="service-image" />
               <h3>AMC & Maintenance</h3>
               <p>Annual Maintenance Contracts with regular inspections, preventive maintenance, and emergency support to ensure optimal system performance.</p>
             </div>
 
             {/* Technical Support & Expert Consultation */}
             <div className="service-text-item">
-              <img src="/Technical.jpeg" alt="Technical Support & Expert Consultation" className="service-image" />
+              <img src={`${process.env.PUBLIC_URL}/Technical.jpeg`} alt="Technical Support & Expert Consultation" className="service-image" />
               <h3>Technical Support & Expert Consultation</h3>
               <p>Free consultation with our security experts to assess your needs, recommend optimal solutions, and create a customized security plan.</p>
             </div>

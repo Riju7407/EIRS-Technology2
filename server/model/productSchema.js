@@ -73,6 +73,7 @@ const productSchema = new Schema({
 productSchema.index({ category: 1, subcategory: 1 });
 productSchema.index({ brand: 1 });
 productSchema.index({ price: 1 });
+productSchema.index({ createdAt: -1 }); // Index for sorting by creation date (most common query)
 productSchema.index({ productName: 'text' }); // Text search index
 
 module.exports = mongoose.model('Product', productSchema);

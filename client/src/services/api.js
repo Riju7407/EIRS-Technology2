@@ -221,8 +221,8 @@ export const productService = {
       
       console.log('🔄 Fetching products from server...');
       const response = await api.get(`/auth/products?page=${page}&limit=${limit}`, {
-        // Add timeout for slow connections
-        timeout: 15000, // 15 seconds
+        // Products endpoint may take longer on slow servers, especially first load
+        timeout: 45000, // 45 seconds (increased from 15 to handle slow servers/first load)
       });
       
       // Cache the response

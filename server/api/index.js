@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { authRouter } = require('../router/authRouter.js');
+const categoryRouter = require('../router/categoryRouter.js');
 const databaseconnect = require('../config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -78,6 +79,10 @@ app.use((req, res, next) => {
 
 // Mount authRouter at /auth path
 app.use('/auth', authRouter);
+
+// Mount categoryRouter at root path (for /categories and /subcategories endpoints)
+// The reconstructed path will be /categories or /subcategories, so mounting at / allows these routes to work
+app.use('/', categoryRouter);
 
 // Fallback health check for /api endpoint
 app.get('/api', (req, res) => {

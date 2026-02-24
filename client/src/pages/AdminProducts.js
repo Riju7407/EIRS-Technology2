@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaTrash, FaEdit, FaPlus, FaImage, FaBars, FaTimes, FaChartBar, FaUsers, FaPhone, FaBox, FaTools, FaSignOutAlt, FaTags, FaStar } from 'react-icons/fa';
 import { productService, authService, reviewService } from '../services/api';
+import api from '../services/api';
 import ProductReviewsSection from '../components/ProductReviewsSection';
 import '../styles/AdminPages.css';
 
@@ -50,6 +51,7 @@ const AdminProducts = () => {
 
   // Fetch subcategories when category changes
   useEffect(() => {
+    if (isLoadingEdit.current) return; // Don't interfere while loading edit data
     if (formData.category) {
       fetchSubcategoriesByCategory(formData.category);
       // Only clear subcategory if we're changing category (not on initial edit load)
@@ -72,6 +74,7 @@ const AdminProducts = () => {
 
   // Handle submenu options when HD Camera, IP Camera Solutions, or Camera subcategory is selected
   useEffect(() => {
+    if (isLoadingEdit.current) return; // Don't interfere while loading edit data
     if (formData.subcategory === 'HD Camera (Analog CCTV)') {
       setSubmenus(['Camera', 'SMPS', 'DVR']);
       // Only reset channels, not submenu
@@ -94,6 +97,7 @@ const AdminProducts = () => {
 
   // Handle channel options based on submenu selection
   useEffect(() => {
+    if (isLoadingEdit.current) return; // Don't interfere while loading edit data
     if (formData.submenu === 'Camera') {
       setChannels(['2MP', '4MP', '6MP']);
     } else if (formData.submenu === 'SMPS') {
@@ -166,37 +170,50 @@ const AdminProducts = () => {
     }));
   };
 
-  const handleImageUpload = (e, index) => {
+  const [uploadingIndex, setUploadingIndex] = useState(null);
+  const [editLoadingId, setEditLoadingId] = useState(null);
+  // Ref to block useEffects from resetting form fields while edit data is loading
+  const isLoadingEdit = useRef(false);
+
+  const handleImageUpload = async (e, index) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file');
-        return;
-      }
+    if (!file) return;
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
-        return;
-      }
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image size must be less than 10MB');
+      return;
+    }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        // Convert image to Base64 URL
-        const base64String = event.target.result;
-        setFormData(prev => {
-          const newImages = [...prev.images];
-          newImages[index] = base64String;
-          return {
-            ...prev,
-            images: newImages,
-            // Also set as primary image if it's the first image
-            image: index === 0 ? base64String : prev.image,
-          };
-        });
-      };
-      reader.readAsDataURL(file);
+    try {
+      setUploadingIndex(index);
+      const fd = new FormData();
+      fd.append('image', file);
+
+      const response = await api.post('/auth/upload-image', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const cloudinaryUrl = response.data.url;
+      setFormData(prev => {
+        const newImages = [...prev.images];
+        newImages[index] = cloudinaryUrl;
+        return {
+          ...prev,
+          images: newImages,
+          image: index === 0 ? cloudinaryUrl : prev.image,
+        };
+      });
+    } catch (err) {
+      console.error('Image upload error:', err);
+      alert('Image upload failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploadingIndex(null);
+      // Reset file input so the same file can be re-selected if needed
+      e.target.value = '';
     }
   };
 
@@ -265,37 +282,53 @@ const AdminProducts = () => {
     }
   };
 
-  const handleEdit = (product) => {
-    setEditingId(product._id);
-    // Prepare images array - pad with empty strings to reach 5 slots
-    const imagesList = product.images || [];
-    const paddedImages = [...imagesList];
-    while (paddedImages.length < 5) {
-      paddedImages.push('');
+  const handleEdit = async (product) => {
+    try {
+      setEditLoadingId(product._id);
+      isLoadingEdit.current = true; // Block cascade useEffects
+      // Fetch full product data — list query omits description & images
+      const p = await productService.getProductById(product._id);
+
+      setEditingId(p._id);
+
+      // Build images array:
+      // Prefer p.images (plural array). If empty/missing, fall back to p.image (singular).
+      let imagesList = Array.isArray(p.images) && p.images.length > 0
+        ? [...p.images]
+        : p.image ? [p.image] : [];
+
+      // Pad to 5 slots
+      while (imagesList.length < 5) imagesList.push('');
+
+      // Set ALL form fields in one atomic update
+      setFormData({
+        productName: p.productName || '',
+        category: p.category || '',
+        subcategory: p.subcategory || '',
+        submenu: p.submenu || '',
+        channels: p.channels || '',
+        brand: p.brand || '',
+        description: p.description || '',
+        modelNo: p.modelNo || '',
+        image: p.image || imagesList[0] || '',
+        images: imagesList,
+        price: p.price !== null && p.price !== undefined ? p.price : '',
+        stock: p.stock !== null && p.stock !== undefined ? p.stock : '',
+        cameraResolution: p.cameraResolution || '',
+        nvrChannels: p.nvrChannels || '',
+        poeSwitch: p.poeSwitch || '',
+      });
+
+      if (p.category) fetchSubcategoriesByCategory(p.category);
+      setShowForm(true);
+    } catch (error) {
+      console.error('Error loading product for edit:', error);
+      alert('Failed to load product details. Please try again.');
+    } finally {
+      setEditLoadingId(null);
+      // Allow a tick before unblocking, so React batches the formData setState first
+      setTimeout(() => { isLoadingEdit.current = false; }, 100);
     }
-    
-    setFormData({
-      productName: product.productName,
-      category: product.category,
-      subcategory: product.subcategory || '',
-      submenu: product.submenu || '',
-      channels: product.channels || '',
-      brand: product.brand,
-      description: product.description,
-      modelNo: product.modelNo || '',
-      image: product.image,
-      images: paddedImages,
-      price: product.price !== null && product.price !== undefined ? product.price : '',
-      stock: product.stock !== null && product.stock !== undefined ? product.stock : '',
-      cameraResolution: product.cameraResolution || '',
-      nvrChannels: product.nvrChannels || '',
-      poeSwitch: product.poeSwitch || '',
-    });
-    // Fetch subcategories for the product's category
-    if (product.category) {
-      fetchSubcategoriesByCategory(product.category);
-    }
-    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -607,8 +640,8 @@ const AdminProducts = () => {
                             accept="image/*"
                             style={{ display: 'none' }}
                           />
-                          <label htmlFor={`imageInput-${index}`} className="image-upload-label">
-                            <FaImage /> Upload Image {index + 1}
+                          <label htmlFor={`imageInput-${index}`} className={`image-upload-label ${uploadingIndex === index ? 'uploading' : ''}`}>
+                            <FaImage /> {uploadingIndex === index ? 'Uploading...' : `Upload Image ${index + 1}`}
                           </label>
                         </div>
 
@@ -733,8 +766,9 @@ const AdminProducts = () => {
                     <button
                       className="action-btn edit"
                       onClick={() => handleEdit(product)}
+                      disabled={editLoadingId === product._id}
                     >
-                      <FaEdit /> Edit
+                      <FaEdit /> {editLoadingId === product._id ? 'Loading...' : 'Edit'}
                     </button>
                     <button
                       className="action-btn delete"

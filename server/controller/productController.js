@@ -131,8 +131,9 @@ exports.updateProduct = async (req, res) => {
         if (!product) return res.status(404).json({ message: 'Product not found' });
         
         // Clear cache when product is updated
-        productsCache = null;
-        cacheTimestamp = null;
+        productsCache = new Map();
+        totalCountCache = null;
+        totalCountTimestamp = null;
         
         console.log('✅ Product updated:', JSON.stringify(product, null, 2));
         console.log('📌 Updated ModelNo:', product.modelNo);

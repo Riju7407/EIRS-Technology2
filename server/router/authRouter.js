@@ -9,7 +9,34 @@ const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getS
 const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
 const jwtAuth = require('../middleware/jwtAuth');
+const { upload, cloudinary } = require('../config/cloudinary');
 const authRouter = express.Router();
+
+// Cloudinary image upload (admin only)
+authRouter.post(
+  '/upload-image',
+  jwtAuth,
+  adminMiddleware,
+  (req, res, next) => {
+    upload.single('image')(req, res, (err) => {
+      if (err) {
+        console.error('Upload error:', err);
+        return res.status(400).json({ success: false, message: err.message });
+      }
+      next();
+    });
+  },
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file provided' });
+    }
+    res.json({
+      success: true,
+      url: req.file.path,          // Cloudinary secure URL
+      public_id: req.file.filename  // Cloudinary public_id
+    });
+  }
+);
 
 authRouter.post('/signup',signup);
 authRouter.post('/signin',signin);

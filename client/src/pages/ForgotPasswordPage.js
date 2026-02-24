@@ -1,218 +1,310 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaArrowLeft, FaCheckCircle, FaExclamationCircle, FaLock } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaLock, FaEnvelope, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
 import axios from 'axios';
 import '../styles/ForgotPasswordPage.css';
 
+const API_BASE = process.env.NODE_ENV === 'production'
+  ? 'https://eirs-technology2-2.onrender.com/auth'
+  : 'http://localhost:5000/auth';
+
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
-  const [step, setStep] = useState(1); // Step 1: Enter Email, Step 2: Reset Password
+  const [step, setStep] = useState(1); // 1=email, 2=otp, 3=new password, 4=success
   const [email, setEmail] = useState('');
-  const [resetToken, setResetToken] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [notification, setNotification] = useState(null);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState('');
+  const [timer, setTimer] = useState(0);
+  const otpRefs = useRef([]);
 
-  // Auto-close notification after 3 seconds
-  React.useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => setNotification(null), 3000);
-      return () => clearTimeout(timer);
+  // Countdown timer for resend OTP
+  useEffect(() => {
+    if (timer > 0) {
+      const t = setTimeout(() => setTimer(timer - 1), 1000);
+      return () => clearTimeout(t);
     }
-  }, [notification]);
+  }, [timer]);
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type });
-  };
-
-  const validateEmail = () => {
-    const newErrors = {};
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Please enter a valid email';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validatePasswordForm = () => {
-    const newErrors = {};
-    if (!newPassword.trim()) newErrors.newPassword = 'New password is required';
-    if (newPassword.length < 6) newErrors.newPassword = 'Password must be at least 6 characters';
-    if (!confirmPassword.trim()) newErrors.confirmPassword = 'Confirm password is required';
-    if (newPassword !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleRequestReset = async (e) => {
+  // Step 1: Send OTP
+  const handleSendOTP = async (e) => {
     e.preventDefault();
-    if (!validateEmail()) return;
+    if (!email.trim()) return setError('Email is required');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('Enter a valid email address');
 
+    setError('');
     setIsLoading(true);
     try {
-      const response = await axios.post('https://eirs-technology2-2.onrender.com/auth/forgot-password', { email });
-
-      if (response.data.success) {
-        setResetToken(response.data.resetToken);
+      const res = await axios.post(`${API_BASE}/request-otp`, { email, purpose: 'forgot-password' });
+      if (res.data.success) {
         setStep(2);
-        showNotification('Reset token sent! Enter your new password.', 'success');
+        setTimer(60);
       } else {
-        showNotification(response.data.message || 'Failed to send reset link', 'error');
+        setError(res.data.message || 'Failed to send OTP');
       }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to send reset link';
-      showNotification(errorMessage, 'error');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    if (!validatePasswordForm()) return;
+  // OTP input: change individual digit
+  const handleOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1);
+    setOtp(newOtp);
+    setError('');
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  };
 
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (paste.length === 6) {
+      setOtp(paste.split(''));
+      otpRefs.current[5]?.focus();
+    }
+    e.preventDefault();
+  };
+
+  // Step 2: Verify OTP
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    const otpValue = otp.join('');
+    if (otpValue.length !== 6) return setError('Please enter the complete 6-digit OTP');
+
+    setError('');
     setIsLoading(true);
     try {
-      const response = await axios.post('https://eirs-technology2-2.onrender.com/auth/reset-password', {
-        email,
-        resetToken,
-        newPassword
-      });
-
-      if (response.data.success) {
-        showNotification('Password reset successfully! Redirecting...', 'success');
-        setTimeout(() => {
-          if (isLoggedIn) {
-            navigate('/account');
-          } else {
-            navigate('/signin');
-          }
-        }, 2000);
+      const res = await axios.post(`${API_BASE}/verify-otp`, { email, otp: otpValue });
+      if (res.data.success) {
+        setStep(3);
       } else {
-        showNotification(response.data.message || 'Failed to reset password', 'error');
+        setError(res.data.message || 'Invalid OTP');
       }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to reset password';
-      showNotification(errorMessage, 'error');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid or expired OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Step 3: Reset Password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!newPassword) return setError('New password is required');
+    if (newPassword.length < 6) return setError('Password must be at least 6 characters');
+    if (newPassword !== confirmPassword) return setError('Passwords do not match');
+
+    setError('');
+    setIsLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE}/reset-password-otp`, {
+        email,
+        otp: otp.join(''),
+        newPassword,
+        confirmPassword
+      });
+      if (res.data.success) {
+        setStep(4);
+      } else {
+        setError(res.data.message || 'Failed to reset password');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOTP = async () => {
+    if (timer > 0 || isLoading) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await axios.post(`${API_BASE}/request-otp`, { email, purpose: 'forgot-password' });
+      if (res.data.success) {
+        setOtp(['', '', '', '', '', '']);
+        setTimer(60);
+        otpRefs.current[0]?.focus();
+      } else {
+        setError(res.data.message || 'Failed to resend OTP');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to resend OTP');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="forgot-password-page">
-      {/* Notification Toast */}
-      {notification && (
-        <div className={`notification notification-${notification.type}`}>
-          <div className="notification-content">
-            {notification.type === 'success' ? 
-              <FaCheckCircle className="notification-icon" /> : 
-              <FaExclamationCircle className="notification-icon" />
-            }
-            <span>{notification.message}</span>
-          </div>
+    <div className="fp-page">
+      <div className="fp-card">
+
+        {/* Lock Icon */}
+        <div className="fp-logo">
+          <FaLock />
         </div>
-      )}
 
-      <div className="forgot-password-container">
-        <div className="forgot-password-card">
-          <div className="card-icon">
-            <FaLock />
+        {/* Step Indicator */}
+        {step < 4 && (
+          <div className="fp-steps">
+            {[1, 2, 3].map(s => (
+              <React.Fragment key={s}>
+                <div className={`fp-step ${step >= s ? 'fp-step--active' : ''} ${step > s ? 'fp-step--done' : ''}`}>
+                  {step > s ? <FaCheckCircle /> : s}
+                </div>
+                {s < 3 && <div className={`fp-step-line ${step > s ? 'fp-step-line--done' : ''}`} />}
+              </React.Fragment>
+            ))}
           </div>
-          
-          <h1>Reset Your Password</h1>
-          <p className="card-subtitle">
-            {step === 1 
-              ? 'Enter your email address to receive a password reset link' 
-              : 'Enter your new password to complete the reset'}
-          </p>
+        )}
 
-          {step === 1 ? (
-            // Step 1: Email Entry
-            <form onSubmit={handleRequestReset} className="forgot-password-form">
-              <div className="form-group">
-                <label>Email Address <span className="required">*</span></label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errors.email) setErrors({ ...errors, email: '' });
-                  }}
-                  placeholder="Enter your registered email"
-                  className={errors.email ? 'error' : ''}
-                />
-                {errors.email && <span className="error-message">{errors.email}</span>}
+        {/* ── Step 1: Email ── */}
+        {step === 1 && (
+          <>
+            <h2 className="fp-title">Forgot Password?</h2>
+            <p className="fp-subtitle">Enter your email address and we'll send you a verification code</p>
+            <form onSubmit={handleSendOTP}>
+              <div className="fp-field">
+                <label>Email Address</label>
+                <div className="fp-input-wrap">
+                  <FaEnvelope className="fp-input-icon" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(''); }}
+                    placeholder="Enter your registered email"
+                    autoFocus
+                  />
+                </div>
+                {error && <span className="fp-error">{error}</span>}
               </div>
-
-              <button 
-                type="submit" 
-                className="submit-btn"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Sending...' : 'Send Reset Link'}
+              <button type="submit" className="fp-btn" disabled={isLoading}>
+                {isLoading ? <span className="fp-spinner" /> : 'Send OTP'}
               </button>
             </form>
-          ) : (
-            // Step 2: Password Reset
-            <form onSubmit={handleResetPassword} className="forgot-password-form">
-              <div className="form-group">
-                <label>New Password <span className="required">*</span></label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value);
-                    if (errors.newPassword) setErrors({ ...errors, newPassword: '' });
-                  }}
-                  placeholder="Enter your new password"
-                  className={errors.newPassword ? 'error' : ''}
-                />
-                {errors.newPassword && <span className="error-message">{errors.newPassword}</span>}
-                <span className="help-text">Minimum 6 characters</span>
+            <Link to="/signin" className="fp-signin-link">
+              <FaArrowLeft /> Back to Sign In
+            </Link>
+          </>
+        )}
+
+        {/* ── Step 2: OTP ── */}
+        {step === 2 && (
+          <>
+            <h2 className="fp-title">Enter Verification Code</h2>
+            <p className="fp-subtitle">
+              We sent a 6-digit OTP to<br /><strong>{email}</strong>
+            </p>
+            <form onSubmit={handleVerifyOTP}>
+              <div className="fp-otp-wrap" onPaste={handleOtpPaste}>
+                {otp.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={el => otpRefs.current[i] = el}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handleOtpChange(i, e.target.value)}
+                    onKeyDown={e => handleOtpKeyDown(i, e)}
+                    className={`fp-otp-box ${digit ? 'fp-otp-box--filled' : ''}`}
+                    autoFocus={i === 0}
+                  />
+                ))}
               </div>
-
-              <div className="form-group">
-                <label>Confirm Password <span className="required">*</span></label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
-                  }}
-                  placeholder="Confirm your new password"
-                  className={errors.confirmPassword ? 'error' : ''}
-                />
-                {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
-              </div>
-
-              <button 
-                type="submit" 
-                className="submit-btn"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Resetting...' : 'Reset Password'}
-              </button>
-
-              <button 
-                type="button"
-                className="back-btn"
-                onClick={() => {
-                  setStep(1);
-                  setNewPassword('');
-                  setConfirmPassword('');
-                  setErrors({});
-                }}
-              >
-                Back to Email
+              {error && <span className="fp-error fp-error--center">{error}</span>}
+              <button type="submit" className="fp-btn" disabled={isLoading || otp.join('').length !== 6}>
+                {isLoading ? <span className="fp-spinner" /> : 'Verify OTP'}
               </button>
             </form>
-          )}
-        </div>
+            <div className="fp-resend">
+              {timer > 0 ? (
+                <span>Resend OTP in <strong>{timer}s</strong></span>
+              ) : (
+                <button className="fp-resend-btn" onClick={handleResendOTP} disabled={isLoading}>
+                  Resend OTP
+                </button>
+              )}
+            </div>
+            <button className="fp-back-btn" onClick={() => { setStep(1); setOtp(['','','','','','']); setError(''); }}>
+              <FaArrowLeft /> Change Email
+            </button>
+          </>
+        )}
+
+        {/* ── Step 3: New Password ── */}
+        {step === 3 && (
+          <>
+            <h2 className="fp-title">Set New Password</h2>
+            <p className="fp-subtitle">Create a strong new password for your account</p>
+            <form onSubmit={handleResetPassword}>
+              <div className="fp-field">
+                <label>New Password</label>
+                <div className="fp-input-wrap">
+                  <FaLock className="fp-input-icon" />
+                  <input
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => { setNewPassword(e.target.value); setError(''); }}
+                    placeholder="Enter new password (min 6 chars)"
+                    autoFocus
+                  />
+                  <button type="button" className="fp-eye" onClick={() => setShowNew(!showNew)}>
+                    {showNew ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              <div className="fp-field">
+                <label>Confirm Password</label>
+                <div className="fp-input-wrap">
+                  <FaLock className="fp-input-icon" />
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={e => { setConfirmPassword(e.target.value); setError(''); }}
+                    placeholder="Re-enter new password"
+                  />
+                  <button type="button" className="fp-eye" onClick={() => setShowConfirm(!showConfirm)}>
+                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+                {error && <span className="fp-error">{error}</span>}
+              </div>
+              <button type="submit" className="fp-btn" disabled={isLoading}>
+                {isLoading ? <span className="fp-spinner" /> : 'Reset Password'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* ── Step 4: Success ── */}
+        {step === 4 && (
+          <div className="fp-success">
+            <div className="fp-success-icon">
+              <FaCheckCircle />
+            </div>
+            <h2 className="fp-title">Password Reset!</h2>
+            <p className="fp-subtitle">Your password has been updated successfully. Please sign in with your new password.</p>
+            <button className="fp-btn" onClick={() => navigate('/signin')}>
+              Go to Sign In
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );

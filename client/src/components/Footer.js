@@ -7,8 +7,8 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
 
-  // Hide footer on admin pages, product pages, cart page, and services page
-  if (location.pathname.startsWith('/admin/') || location.pathname === '/cart' || location.pathname.startsWith('/products') || location.pathname.startsWith('/services')) {
+  // Hide footer on admin pages, product pages, and cart page
+  if (location.pathname.startsWith('/admin/') || location.pathname === '/cart' || location.pathname.startsWith('/products')) {
     return null;
   }
 

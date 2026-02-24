@@ -21,6 +21,7 @@ import SignUpPage from './pages/SignUpPage';
 import SignInPage from './pages/SignInPage';
 import AccountPage from './pages/AccountPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 import OrdersPage from './pages/OrdersPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -40,8 +41,8 @@ function AppContent() {
   // Keep Render server awake by pinging /health every 25 minutes
   useKeepServerAwake();
 
-  // Hide Footer on orders page, account page, phone signup page, and product detail pages
-  const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup'];
+  // Hide Footer on orders page, account page, phone signup page, product detail pages, about page, contact page, and services page
+  const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup', '/about', '/contact', '/services'];
   const isProductDetailPage = location.pathname.startsWith('/products/') || location.pathname.startsWith('/product/');
   const isAdminPage = location.pathname.startsWith('/admin');
   const shouldShowFooter = !hideFooterPaths.includes(location.pathname) && !isProductDetailPage && !isAdminPage;
@@ -65,6 +66,7 @@ function AppContent() {
         <Route path="/phonesignup" element={<PhoneSignUp />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/account" element={<AccountPage />} />
 
         {/* Admin Routes */}

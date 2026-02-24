@@ -317,8 +317,9 @@ export const productService = {
       // Handle both direct array and nested data structure
       let allProducts = Array.isArray(response.data) ? response.data : (response.data.data || response.data || []);
       // Filter products by category on the client side
-      return allProducts.filter(product => product.category === category);
+      return allProducts.filter(product => product.category === category || product.mainCategory === category);
     } catch (error) {
+      console.error('Error in getProductsByCategory:', error);
       throw error.response?.data || error.message;
     }
   },

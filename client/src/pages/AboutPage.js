@@ -1,222 +1,233 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaLightbulb, FaRocket, FaAward, FaShieldAlt, FaUsers, FaLock, FaChartLine, FaTimes } from 'react-icons/fa';
+import {
+  FaLightbulb, FaRocket, FaAward, FaShieldAlt, FaUsers, FaLock,
+  FaChartLine, FaTimes, FaBriefcase, FaClock, FaCheckCircle,
+  FaArrowRight, FaChevronRight, FaCamera, FaFingerprint, FaWifi,
+  FaRobot, FaCogs, FaServer, FaPhone, FaEnvelope, FaMapMarkerAlt,
+  FaHandshake, FaLeaf, FaStar, FaThumbsUp
+} from 'react-icons/fa';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
 import CategorySidebar from '../components/CategorySidebar';
+import Footer from '../components/Footer';
 import '../styles/AboutPage.css';
+
+const STATS = [
+  { num: '15+', label: 'Years Experience' },
+  { num: '5000+', label: 'Happy Clients' },
+  { num: '500+', label: 'Projects Done' },
+  { num: '98%', label: 'Satisfaction Rate' },
+];
+
+const CORE_VALUES = [
+  { icon: <FaShieldAlt />, title: 'Security First', desc: 'Your safety and data protection are our top priorities in everything we design and deliver.', color: '#667eea' },
+  { icon: <FaLightbulb />, title: 'Innovation', desc: 'We constantly evolve with the latest technology to give you smarter, future-ready solutions.', color: '#43e97b' },
+  { icon: <FaUsers />, title: 'Customer Focused', desc: 'Your satisfaction is the measure of our excellence — we build relationships, not just systems.', color: '#f093fb' },
+  { icon: <FaAward />, title: 'Quality Excellence', desc: 'Premium solutions with meticulous attention to detail, backed by industry certifications.', color: '#f6d365' },
+];
+
+const TIMELINE = [
+  { year: '2019', title: 'Founded', desc: 'EIRS Technology was established with a vision to transform the security and automation landscape.' },
+  { year: '2023', title: 'First Milestone', desc: 'Completed 500+ installations across residential and commercial segments.' },
+  { year: '2024', title: 'Expansion', desc: 'Expanded to enterprise clients and launched AMC & annual maintenance services.' },
+  { year: '2025', title: 'Digital Leap', desc: 'Introduced IoT integration, cloud-based monitoring and AI-powered analytics.' },
+  { year: '2026', title: 'Industry Leader', desc: 'Recognized as a trusted leader in integrated security and automation solutions.' },
+];
+
+const EXPERTISE = [
+  { icon: <FaCamera />, label: 'CCTV & Surveillance', color: '#667eea' },
+  { icon: <FaFingerprint />, label: 'Biometric Systems', color: '#764ba2' },
+  { icon: <FaLock />, label: 'Access Control', color: '#f093fb' },
+  { icon: <FaWifi />, label: 'Network Security', color: '#4facfe' },
+  { icon: <FaRobot />, label: 'Smart Automation', color: '#43e97b' },
+  { icon: <FaServer />, label: 'CCTV Components', color: '#fa709a' },
+  { icon: <FaCogs />, label: 'System Integration', color: '#f6d365' },
+  { icon: <FaBriefcase />, label: 'AMC & Support', color: '#a18cd1' },
+];
+
+const WHY_US = [
+  { icon: <FaClock />, title: '15+ Years Experience', desc: 'Proven track record with thousands of successful deployments across industries.' },
+  { icon: <FaHandshake />, title: 'Trusted Partner', desc: 'Long-term relationships built on transparency, reliability and accountability.' },
+  { icon: <FaCheckCircle />, title: 'End-to-End Service', desc: 'From site survey to installation, maintenance and 24/7 after-sales support.' },
+  { icon: <FaStar />, title: 'Certified Professionals', desc: 'Our engineers hold industry certifications and undergo regular training.' },
+  { icon: <FaChartLine />, title: 'Scalable Solutions', desc: 'Designed to grow with your business — residential to enterprise-grade.' },
+  { icon: <FaThumbsUp />, title: 'After-Sales Care', desc: 'Dedicated support team with quick response times and AMC packages.' },
+];
 
 const AboutPage = () => {
   const { isSidebarOpen, closeSidebar } = useCategoryFilter();
-  const coreValues = [
-    {
-      icon: FaShieldAlt,
-      title: 'Security First',
-      description: 'Your safety and data protection are our top priorities in everything we do.'
-    },
-    {
-      icon: FaLightbulb,
-      title: 'Innovation',
-      description: 'We constantly evolve with latest technology to serve you better.'
-    },
-    {
-      icon: FaUsers,
-      title: 'Customer Focused',
-      description: 'Your satisfaction and success is the measure of our excellence.'
-    },
-    {
-      icon: FaAward,
-      title: 'Quality Excellence',
-      description: 'We deliver premium solutions with meticulous attention to detail.'
-    }
-  ];
-
-  const achievements = [
-    { number: '15+', label: 'Years of Experience', icon: '🏆' },
-    { number: '5000+', label: 'Satisfied Clients', icon: '😊' },
-    { number: '25000+', label: 'Projects Completed', icon: '✅' },
-    { number: '98%', label: 'Client Satisfaction', icon: '⭐' }
-  ];
-
-  const timeline = [
-    {
-      year: '2019',
-      title: 'Company Founded',
-      description: 'Started with a vision to revolutionize the security and automation industry.'
-    },
-    {
-      year: '2021',
-      title: 'Expansion Phase',
-      description: 'Expanded services to enterprise clients and introduced IoT solutions.'
-    },
-    {
-      year: '2022',
-      title: 'Digital Innovation',
-      description: 'Launched AI-powered analytics and cloud-based monitoring systems.'
-    },
-    {
-      year: '2024',
-      title: 'Industry Leadership',
-      description: 'Recognized as a trusted leader in integrated security solutions.'
-    }
-  ];
-
-  const services = [
-    { title: 'CCTV & Surveillance', emoji: '📹' },
-    { title: 'Biometric Systems', emoji: '👤' },
-    { title: 'Network Security', emoji: '🛡️' },
-    { title: 'IoT Solutions', emoji: '🌐' },
-    { title: 'Smart Automation', emoji: '🤖' },
-    { title: 'System Integration', emoji: '⚙️' }
-  ];
-
-  const whyChooseUs = [
-    {
-      icon: FaLock,
-      title: 'Secure & Reliable',
-      description: 'Enterprise-grade security with 99.9% uptime guarantee'
-    },
-    {
-      icon: FaChartLine,
-      title: 'Scalable Solutions',
-      description: 'Grow your business with solutions that scale with you'
-    },
-    {
-      icon: FaAward,
-      title: 'Certified Experts',
-      description: 'Team of certified professionals with industry expertise'
-    }
-  ];
 
   return (
-    <main className="about-page">
-      {/* Left Sidebar - Categories & Filters */}
+    <>
+      {/* Sidebar */}
       <div className={`left-sidebar-filters ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h3>Categories & Filters</h3>
-          <button 
-            className="close-sidebar-btn"
-            onClick={closeSidebar}
-          >
-            <FaTimes />
-          </button>
+          <button className="close-sidebar-btn" onClick={closeSidebar}><FaTimes /></button>
         </div>
         <CategorySidebar />
       </div>
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar} />}
 
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div 
-          className="sidebar-overlay"
-          onClick={closeSidebar}
-        ></div>
-      )}
+      <main className="ab-page">
 
-      {/* Company Overview */}
-      <section className="company-overview">
-        <div className="container">
-          <h2>Who We Are</h2>
-          <p className="overview-text">
-            With years of hands-on industry expertise, we have built a strong reputation as a reliable and technology-driven partner, offering end-to-end solutions tailored to modern security and connectivity needs. EIRS Technology is a leading provider of integrated security and automation solutions for businesses and individuals. With over 15 years of proven expertise, we deliver cutting-edge security systems tailored to meet unique challenges and opportunities in today's digital world.
-          </p>
-          <div className="overview-grid">
-            <div className="overview-card">
-              <h3>Our Mission</h3>
-              <p>To empower businesses with innovative security solutions that protect assets, enable growth, and provide peace of mind.</p>
-            </div>
-            <div className="overview-card">
-              <h3>Our Vision</h3>
-              <p>To be the most trusted and innovative security partner, recognized for excellence, reliability, and customer success.</p>
+        {/*  Hero  */}
+        <section className="ab-hero">
+          <div className="ab-hero-inner">
+            <span className="ab-hero-badge">About EIRS Technology</span>
+            <h1>Securing What Matters Most — Since 2019</h1>
+            <p>We are a leading provider of integrated security and automation solutions, trusted by thousands of homes and businesses across India for over 15 years.</p>
+            <div className="ab-hero-actions">
+              <Link to="/contact" className="ab-hero-btn ab-hero-btn--primary">Get in Touch <FaArrowRight /></Link>
+              <Link to="/services" className="ab-hero-btn ab-hero-btn--outline">Our Services <FaChevronRight /></Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Core Values */}
-      <section className="core-values">
-        <div className="container">
-          <h2>Our Core Values</h2>
-          <div className="values-grid">
-            {coreValues.map((value, index) => {
-              const IconComponent = value.icon;
-              return (
-                <div key={index} className="value-card">
-                  <div className="value-icon">
-                    <IconComponent size={45} />
+          <div className="ab-stats-bar">
+            <div className="ab-container">
+              <div className="ab-stats-grid">
+                {STATS.map((s, i) => (
+                  <div key={i} className="ab-stat">
+                    <span className="ab-stat-num">{s.num}</span>
+                    <span className="ab-stat-label">{s.label}</span>
                   </div>
-                  <h3>{value.title}</h3>
-                  <p>{value.description}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/*  Who We Are  */}
+        <section className="ab-story-section">
+          <div className="ab-container">
+            <div className="ab-story-grid">
+              <div className="ab-story-text">
+                <span className="ab-section-badge">Our Story</span>
+                <h2>Who We Are</h2>
+                <p>EIRS Technology is a premier provider of security and automation solutions, founded with the mission to protect people, property and data using cutting-edge technology.</p>
+                <p>With over <strong>15 years of hands-on experience</strong>, we have built a comprehensive ecosystem of CCTV, biometric, intercom, fire alarm, and IoT-based systems — all backed by a team of certified professionals.</p>
+                <div className="ab-story-pills">
+                  <span className="ab-pill"> Residential & Commercial</span>
+                  <span className="ab-pill"> Pan-India Coverage</span>
+                  <span className="ab-pill"> End-to-End Security</span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Timeline */}
-      <section className="timeline-section">
-        <div className="container">
-          <h2>Our Journey</h2>
-          <div className="timeline-grid">
-            {timeline.map((item, index) => (
-              <div key={index} className="timeline-card">
-                <div className="timeline-year">{item.year}</div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section className="services-overview">
-        <div className="container">
-          <h2>What We Offer</h2>
-          <p className="section-subtitle">Comprehensive security and automation solutions</p>
-          <div className="services-text-grid">
-            {services.map((service, index) => (
-              <div key={index} className="service-text-item">
-                <span className="service-emoji">{service.emoji}</span>
-                <span className="service-title">{service.title}</span>
+              <div className="ab-mission-vision">
+                <div className="ab-mv-card ab-mv-card--mission">
+                  <div className="ab-mv-icon"><FaRocket /></div>
+                  <h3>Our Mission</h3>
+                  <p>To empower homes and businesses with innovative security solutions that protect assets, enable growth and provide complete peace of mind.</p>
+                </div>
+                <div className="ab-mv-card ab-mv-card--vision">
+                  <div className="ab-mv-icon"><FaLeaf /></div>
+                  <h3>Our Vision</h3>
+                  <p>To be the most trusted and innovative security partner — recognized for excellence, reliability and measurable client success.</p>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Why Choose Us */}
-      <section className="why-choose-us">
-        <div className="container">
-          <h2>Why Choose EIRS?</h2>
-          <div className="why-grid">
-            {whyChooseUs.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <div key={index} className="why-text-item">
-                  <div className="why-icon">
-                    <IconComponent size={40} />
+        {/*  Core Values  */}
+        <section className="ab-values-section">
+          <div className="ab-container">
+            <div className="ab-section-head">
+              <span className="ab-section-badge">What We Stand For</span>
+              <h2>Our Core Values</h2>
+              <p>The principles that guide every decision, installation and client interaction we make.</p>
+            </div>
+            <div className="ab-values-grid">
+              {CORE_VALUES.map((v, i) => (
+                <div key={i} className="ab-value-card">
+                  <div className="ab-value-icon" style={{ background: `${v.color}18`, color: v.color }}>{v.icon}</div>
+                  <h3>{v.title}</h3>
+                  <p>{v.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/*  Journey / Timeline  */}
+        <section className="ab-timeline-section">
+          <div className="ab-container">
+            <div className="ab-section-head ab-section-head--light">
+              <span className="ab-section-badge ab-section-badge--light">Our Journey</span>
+              <h2>Milestones That Shaped Us</h2>
+              <p>From a small startup to an industry leader — here is how we grew.</p>
+            </div>
+            <div className="ab-timeline">
+              {TIMELINE.map((t, i) => (
+                <div key={i} className={`ab-tl-item ${i % 2 === 0 ? 'ab-tl-item--left' : 'ab-tl-item--right'}`}>
+                  <div className="ab-tl-dot" />
+                  <div className="ab-tl-card">
+                    <span className="ab-tl-year">{t.year}</span>
+                    <h3>{t.title}</h3>
+                    <p>{t.desc}</p>
                   </div>
-                  <h3>{item.title}</h3>
-                  <p>{item.description}</p>
                 </div>
-              );
-            })}
+              ))}
+              <div className="ab-tl-line" />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Final CTA */}
-      <section className="final-cta">
-        <div className="container">
-          <h2>Ready to Secure Your Future?</h2>
-          <p>Let our experts create a custom solution for your security needs</p>
-          <div className="cta-buttons">
-            <Link to="/contact" className="btn btn-primary btn-large">Schedule Consultation</Link>
-            <Link to="/services" className="btn btn-secondary btn-large">Explore Services</Link>
+        {/*  Expertise  */}
+        <section className="ab-expertise-section">
+          <div className="ab-container">
+            <div className="ab-section-head">
+              <span className="ab-section-badge">What We Do</span>
+              <h2>Areas of Expertise</h2>
+              <p>Comprehensive coverage across every segment of modern security and automation.</p>
+            </div>
+            <div className="ab-expertise-grid">
+              {EXPERTISE.map((e, i) => (
+                <div key={i} className="ab-expertise-card">
+                  <div className="ab-expertise-icon" style={{ background: `${e.color}18`, color: e.color }}>{e.icon}</div>
+                  <span>{e.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        {/*  Why Choose Us  */}
+        <section className="ab-why-section">
+          <div className="ab-container">
+            <div className="ab-section-head ab-section-head--light">
+              <h2>Why Choose EIRS Technology</h2>
+              <p>What sets us apart from the rest — consistency, expertise and genuine care.</p>
+            </div>
+            <div className="ab-why-grid">
+              {WHY_US.map((w, i) => (
+                <div key={i} className="ab-why-card">
+                  <div className="ab-why-icon">{w.icon}</div>
+                  <h3>{w.title}</h3>
+                  <p>{w.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/*  CTA Banner  */}
+        <section className="ab-cta-section">
+          <div className="ab-container">
+            <div className="ab-cta-inner">
+              <div className="ab-cta-text">
+                <h2>Ready to Secure Your Future?</h2>
+                <p>Let our certified experts design a custom security plan tailored to your needs — completely free of charge.</p>
+              </div>
+              <div className="ab-cta-actions">
+                <Link to="/contact" className="ab-cta-btn ab-cta-btn--primary">Schedule Free Consultation <FaArrowRight /></Link>
+                <Link to="/services" className="ab-cta-btn ab-cta-btn--outline">Explore Services</Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </main>
+    </>
   );
 };
 

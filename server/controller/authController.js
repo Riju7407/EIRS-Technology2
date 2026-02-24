@@ -1,7 +1,7 @@
 const userSchema = require("../model/userSchema");
 const emailvalidator = require("email-validation");
 const bcrypt = require("bcrypt");
-const { generateOTP, sendOTPEmail } = require("../services/emailService");
+const { generateOTP, sendOTPEmail, sendPasswordResetEmail } = require("../services/emailService");
 
 // Signup logic
 
@@ -337,7 +337,8 @@ const forgotPassword = async (req, res, next) => {
         }
 
         // Generate reset token
-        const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const crypto = require('crypto');
+        const resetToken = crypto.randomBytes(32).toString('hex');
         const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
         // Store reset token in user document
@@ -345,10 +346,14 @@ const forgotPassword = async (req, res, next) => {
         user.resetPasswordExpiry = resetTokenExpiry;
         await user.save();
 
+        // Send reset link email
+        const frontendUrl = process.env.FRONTEND_URL || 
+            (process.env.NODE_ENV === 'production' ? 'https://eirs.vercel.app' : 'http://localhost:3000');
+        await sendPasswordResetEmail(user.email, resetToken, frontendUrl);
+
         res.status(200).json({
             success: true,
-            message: "Password reset link has been sent to your email",
-            resetToken: resetToken
+            message: "Password reset link has been sent to your email. Please check your inbox."
         });
     } catch (error) {
         console.error('Forgot password error:', error);

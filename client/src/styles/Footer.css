@@ -248,10 +248,20 @@
 }
 
 .contact-value {
-  color: #ffffff;
+  color: #10b981;
   font-size: 14px;
   margin: 0;
   font-weight: 500;
+}
+
+.contact-value a {
+  color: #10b981;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.contact-value a:hover {
+  color: #6ee7b7;
 }
 
 /* Newsletter Section */

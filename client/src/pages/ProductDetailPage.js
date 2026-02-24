@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { FaShoppingCart, FaBolt, FaStar, FaStarHalfAlt, FaRegStar, FaShieldAlt, FaTruck, FaUndo, FaTag, FaChevronRight, FaHome, FaDownload, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { productService, reviewService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -11,12 +11,15 @@ import '../styles/ProductDetailPage.css';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
+  const [addedToCart, setAddedToCart] = useState(false);
   const { user } = useAuth();
   const { addToCart } = useCart();
 
@@ -24,350 +27,414 @@ const ProductDetailPage = () => {
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
-  const [userReview, setUserReview] = useState(null);
   const [editingReview, setEditingReview] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Multi-image carousel state
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [imageZoom, setImageZoom] = useState(false);
 
   useEffect(() => {
-    // Fetch product from backend API
+    window.scrollTo(0, 0);
     const fetchProduct = async () => {
       try {
         const response = await productService.getProductById(id);
-        console.log('Product API Response:', response);
-        // Handle both direct response and response.data structure
         const productData = response.data ? response.data : response;
-        console.log('Product Data:', productData);
         setProduct(productData);
         setError('');
       } catch (err) {
-        console.error('Error fetching product:', err);
         setError('Failed to load product details. Please refresh the page.');
       } finally {
         setLoading(false);
       }
     };
-
-    if (id) {
-      fetchProduct();
-    }
+    if (id) fetchProduct();
   }, [id]);
 
   useEffect(() => {
-    // Fetch related products from the same category
     const fetchRelatedProducts = async () => {
-      if (product && product.category) {
-        try {
-          const response = await productService.getProductsByCategory(product.category);
-          console.log('Related Products Response:', response);
-          // Handle both array response and nested data
-          let products = Array.isArray(response) ? response : (response.data || []);
-          console.log('All Category Products:', products);
-          // Filter out current product and limit to 6 related products
-          const related = products
-            .filter(p => p._id !== product._id)
-            .slice(0, 6);
-          console.log('Filtered Related Products:', related);
-          setRelatedProducts(related);
-        } catch (err) {
-          console.error('Error fetching related products:', err);
+      if (product) {
+        const categoryToSearch = product.category || product.mainCategory;
+        if (categoryToSearch) {
+          try {
+            const response = await productService.getProductsByCategory(categoryToSearch);
+            let products = Array.isArray(response) ? response : (response.data || []);
+            const related = products.filter(p => p._id !== product._id).slice(0, 5);
+            setRelatedProducts(related);
+          } catch (err) {
+            console.error('Error fetching related products:', err);
+            setRelatedProducts([]);
+          }
+        } else {
           setRelatedProducts([]);
         }
       }
     };
-
-    if (product) {
-      fetchRelatedProducts();
-    }
+    if (product) fetchRelatedProducts();
   }, [product]);
 
-  // Fetch reviews
   const fetchReviews = async () => {
     try {
-      console.log('📚 Fetching reviews for product:', id);
       setReviewsLoading(true);
       const reviewsData = await reviewService.getProductReviews(id);
-      console.log('📚 Reviews data received:', reviewsData);
       setReviews(reviewsData.reviews || []);
-      setAverageRating(reviewsData.averageRating || 0);
+      setAverageRating(Number(reviewsData.averageRating) || 0);
       setTotalReviews(reviewsData.totalReviews || 0);
-
-      // Fetch user's review if logged in
       if (user) {
         try {
-          console.log('👤 Fetching user review for product:', id);
           const userReviewData = await reviewService.getUserProductReview(id);
-          console.log('👤 User review data:', userReviewData);
-          setUserReview(userReviewData.review);
           setEditingReview(userReviewData.review);
-        } catch (err) {
-          console.error('⚠️ Error fetching user review:', err);
-        }
+        } catch (err) {}
       }
-    } catch (err) {
-      console.error('❌ Error fetching reviews:', err);
-    } finally {
-      setReviewsLoading(false);
-    }
+    } catch (err) {}
+    finally { setReviewsLoading(false); }
   };
 
   useEffect(() => {
-    if (id) {
-      fetchReviews();
-    }
+    if (id) fetchReviews();
   }, [id, user]);
 
   const handleAddToCart = () => {
     if (product && product.stock > 0) {
       addToCart(product, quantity);
-      alert(`${quantity} item(s) added to cart!`);
-      setQuantity(1);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2500);
     }
   };
 
   const handleBuyNow = () => {
-    if (!user) {
-      alert('Please login first to proceed with purchase');
-      return;
-    }
+    if (!user) { navigate('/signin'); return; }
     if (product && product.stock > 0) {
       addToCart(product, quantity);
       setShowCheckout(true);
     }
   };
 
+  const renderStars = (rating) => {
+    const stars = [];
+    const full = Math.floor(rating);
+    const half = rating % 1 >= 0.5;
+    for (let i = 1; i <= 5; i++) {
+      if (i <= full) stars.push(<FaStar key={i} className="star filled" />);
+      else if (i === full + 1 && half) stars.push(<FaStarHalfAlt key={i} className="star half" />);
+      else stars.push(<FaRegStar key={i} className="star empty" />);
+    }
+    return stars;
+  };
+
+  const getImageList = () => {
+    if (product?.images && product.images.length > 0) return product.images;
+    if (product?.image) return [product.image];
+    return [];
+  };
+
   if (loading) {
     return (
-      <main className="product-detail-page">
-        <div className="loading-container">
-          <p>Loading product details...</p>
+      <div className="pdp-page">
+        <div className="pdp-loading">
+          <div className="pdp-spinner"></div>
+          <p>Loading product...</p>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (error || !product) {
     return (
-      <main className="product-detail-page">
-        <div className="container">
-          <div className="error-container">
-            <p>{error || 'Product not found'}</p>
-            <Link to="/products" className="btn btn-primary">Back to Products</Link>
-          </div>
+      <div className="pdp-page">
+        <div className="pdp-error">
+          <FaTimesCircle size={48} color="#ef4444" />
+          <h2>Product Not Found</h2>
+          <p>{error || 'The product you are looking for does not exist.'}</p>
+          <Link to="/products" className="pdp-btn-primary">Browse Products</Link>
         </div>
-      </main>
+      </div>
     );
   }
 
+  const images = getImageList();
+  const inStock = product.stock > 0;
+  const totalPrice = parseFloat(product.price || 0) * quantity;
+
   return (
-    <main className="product-detail-page">
-      <div className="container">
-        {/* Breadcrumb */}
-        <div className="breadcrumb">
-          <Link to="/products" className="breadcrumb-link">
-            <FaArrowLeft /> Products
-          </Link>
-          <span className="breadcrumb-separator">›</span>
-          <span className="breadcrumb-current">{product.productName}</span>
+    <div className="pdp-page">
+
+      {/* Breadcrumb */}
+      <div className="pdp-breadcrumb">
+        <div className="pdp-container">
+          <Link to="/" className="pdp-bc-link"><FaHome /> Home</Link>
+          <FaChevronRight className="pdp-bc-sep" />
+          <Link to="/products" className="pdp-bc-link">Products</Link>
+          <FaChevronRight className="pdp-bc-sep" />
+          {product.category && (
+            <>
+              <Link to="/products" className="pdp-bc-link">{product.category}</Link>
+              <FaChevronRight className="pdp-bc-sep" />
+            </>
+          )}
+          <span className="pdp-bc-current">{product.productName || product.name}</span>
         </div>
+      </div>
 
-        {/* Product Details */}
-        <div className="product-detail-wrapper">
-          {/* Image Section with Carousel */}
-          <section className="product-image-section">
-            <div className="product-image-container">
-              {/* Determine which images to display */}
-              {product.images && product.images.length > 0 ? (
-                <div className="image-carousel">
-                  {/* Main Image Display */}
-                  <div className="carousel-main">
-                    <img 
-                      src={product.images[selectedImageIndex]} 
-                      alt={`${product.productName} - Image ${selectedImageIndex + 1}`}
-                    />
-                  </div>
+      {/* Main Product Section */}
+      <div className="pdp-container">
+        <div className="pdp-main">
 
-                  {/* Navigation Buttons */}
-                  {product.images.length > 1 && (
-                    <>
-                      <button 
-                        className="carousel-nav-btn prev"
-                        onClick={() => setSelectedImageIndex((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
-                        aria-label="Previous image"
-                      >
-                        ‹
-                      </button>
-                      <button 
-                        className="carousel-nav-btn next"
-                        onClick={() => setSelectedImageIndex((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
-                        aria-label="Next image"
-                      >
-                        ›
-                      </button>
-                    </>
-                  )}
-
-                  {/* Thumbnail Strip */}
-                  {product.images.length > 1 && (
-                    <div className="carousel-thumbnails">
-                      {product.images.map((img, index) => (
-                        <button
-                          key={index}
-                          className={`thumbnail ${selectedImageIndex === index ? 'active' : ''}`}
-                          onClick={() => setSelectedImageIndex(index)}
-                          title={`View image ${index + 1}`}
-                        >
-                          <img src={img} alt={`Thumbnail ${index + 1}`} />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Image Counter */}
-                  {product.images.length > 1 && (
-                    <div className="image-counter">
-                      {selectedImageIndex + 1} / {product.images.length}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <img src={product.image} alt={product.productName} />
-              )}
-            </div>
-            <div className="product-badges">
-              <span className="badge">In Stock</span>
-            </div>
-          </section>
-
-          {/* Info Section */}
-          <section className="product-info-section">
-            <h1 className="product-name">{product.productName || product.name}</h1>
-            
-            <div className="product-meta">
-              <span className="category-badge">{product.category}</span>
-              {product.brand && <span className="brand-info">Brand: {product.brand}</span>}
-            </div>
-
-            {product.modelNo && (
-              <div style={{ marginBottom: '15px' }}>
-                <span className="model-info">Model No: {product.modelNo}</span>
+          {/* LEFT: Image Gallery */}
+          <div className="pdp-gallery">
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div className="pdp-thumbs">
+                {images.map((img, i) => (
+                  <button
+                    key={i}
+                    className={`pdp-thumb ${selectedImageIndex === i ? 'active' : ''}`}
+                    onClick={() => setSelectedImageIndex(i)}
+                  >
+                    <img src={img} alt={`View ${i + 1}`} />
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Price and Stock Section */}
-            <div className="price-stock-section">
-              <div className="price-info">
-                <span className="price-label">Price:</span>
-                <span className="price-value">₹{parseFloat(product.price || 0).toLocaleString()}</span>
+            {/* Main Image */}
+            <div className="pdp-main-image-wrap">
+              <div
+                className={`pdp-main-image ${imageZoom ? 'zoomed' : ''}`}
+                onClick={() => setImageZoom(!imageZoom)}
+                title="Click to zoom"
+              >
+                {images.length > 0 ? (
+                  <img
+                    src={images[selectedImageIndex]}
+                    alt={product.productName || product.name}
+                  />
+                ) : (
+                  <div className="pdp-no-image">No Image</div>
+                )}
+                {inStock && <span className="pdp-in-stock-badge">In Stock</span>}
+                {!inStock && <span className="pdp-out-stock-badge">Out of Stock</span>}
               </div>
-              <div className="stock-info">
-                <span className="stock-label">Stock:</span>
-                <span className={`stock-value ${product.stock > 0 ? 'in-stock' : 'out-stock'}`}>
-                  {product.stock > 0 ? `${product.stock} Available` : 'Out of Stock'}
-                </span>
-              </div>
+
+              {images.length > 1 && (
+                <div className="pdp-img-nav">
+                  <button
+                    className="pdp-img-btn"
+                    onClick={() => setSelectedImageIndex(p => p === 0 ? images.length - 1 : p - 1)}
+                  >&#8592;</button>
+                  <span className="pdp-img-count">{selectedImageIndex + 1} / {images.length}</span>
+                  <button
+                    className="pdp-img-btn"
+                    onClick={() => setSelectedImageIndex(p => p === images.length - 1 ? 0 : p + 1)}
+                  >&#8594;</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* CENTER: Product Info */}
+          <div className="pdp-info">
+            {/* Category & Brand */}
+            <div className="pdp-tags">
+              {product.category && <span className="pdp-cat-tag">{product.category}</span>}
+              {product.brand && <span className="pdp-brand-tag">By {product.brand}</span>}
             </div>
 
-            <p className="product-description">{product.description || 'No description available'}</p>
+            {/* Product Name */}
+            <h1 className="pdp-title">{product.productName || product.name}</h1>
+
+            {/* Model No */}
+            {product.modelNo && (
+              <p className="pdp-model">Model: <strong>{product.modelNo}</strong></p>
+            )}
+
+            {/* Star Rating Row */}
+            <div className="pdp-rating-row">
+              <div className="pdp-stars">{renderStars(averageRating)}</div>
+              <span className="pdp-rating-val">{averageRating > 0 ? averageRating.toFixed(1) : 'No ratings'}</span>
+              {totalReviews > 0 && <span className="pdp-rating-count">({totalReviews} reviews)</span>}
+            </div>
+
+            <div className="pdp-divider"></div>
+
+            {/* Price Block */}
+            <div className="pdp-price-block">
+              <div className="pdp-price-row">
+                <span className="pdp-price-label">Price</span>
+                <div className="pdp-price-value">
+                  <span className="pdp-currency">₹</span>
+                  <span className="pdp-amount">{parseFloat(product.price || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+              <p className="pdp-tax-note">Inclusive of all taxes</p>
+            </div>
+
+            {/* Stock Status */}
+            <div className={`pdp-stock-row ${inStock ? 'in' : 'out'}`}>
+              {inStock ? (
+                <>
+                  <FaCheckCircle className="pdp-stock-icon" />
+                  <span className="pdp-stock-text">
+                    Only <strong>{product.stock}</strong> Left In Stock – Order Soon!
+                  </span>
+                </>
+              ) : (
+                <>
+                  <FaTimesCircle className="pdp-stock-icon" />
+                  <span className="pdp-stock-text">Out of Stock</span>
+                </>
+              )}
+            </div>
+
+            <div className="pdp-divider"></div>
 
             {/* Quantity Selector */}
-            <div className="quantity-selector">
-              <label htmlFor="quantity">Quantity:</label>
-              <div className="quantity-control">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                  className="qty-btn"
-                >
-                  −
-                </button>
-                <input 
-                  type="number" 
-                  id="quantity"
-                  min="1" 
-                  max={product.stock}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Math.min(parseInt(e.target.value) || 1, product.stock)))}
-                />
-                <button 
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  disabled={quantity >= product.stock}
-                  className="qty-btn"
-                >
-                  +
-                </button>
+            {inStock && (
+              <div className="pdp-qty-row">
+                <span className="pdp-qty-label">Quantity</span>
+                <div className="pdp-qty-control">
+                  <button
+                    className="pdp-qty-btn"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                  >−</button>
+                  <span className="pdp-qty-val">{quantity}</span>
+                  <button
+                    className="pdp-qty-btn"
+                    onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                    disabled={quantity >= product.stock}
+                  >+</button>
+                </div>
+                {quantity > 1 && (
+                  <span className="pdp-qty-total">Total: ₹{totalPrice.toLocaleString('en-IN')}</span>
+                )}
               </div>
-              <span className="stock-info">({product.stock} available)</span>
-            </div>
+            )}
 
-            {/* Specifications */}
-            <div className="specifications">
-              <h3>Specifications</h3>
-              <div className="specs-grid">
-                {Object.entries(product.specifications || {}).map(([key, value]) => (
-                  <div key={key} className="spec-item">
-                    <dt>{key.replace(/([A-Z])/g, ' $1').trim()}</dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="product-actions">
+            {/* Action Buttons */}
+            <div className="pdp-actions">
               {user ? (
                 <>
-                  <button 
-                    className="btn btn-primary btn-large"
-                    onClick={handleBuyNow}
-                    disabled={product.stock <= 0}
-                  >
-                    Buy Now
-                  </button>
-                  <button 
-                    className="btn btn-secondary btn-large"
+                  <button
+                    className={`pdp-btn-cart ${addedToCart ? 'added' : ''}`}
                     onClick={handleAddToCart}
-                    disabled={product.stock <= 0}
+                    disabled={!inStock}
                   >
-                    <FaShoppingCart /> Add to Cart
+                    <FaShoppingCart />
+                    {addedToCart ? 'Added to Cart!' : 'Add to Cart'}
+                  </button>
+                  <button
+                    className="pdp-btn-buy"
+                    onClick={handleBuyNow}
+                    disabled={!inStock}
+                  >
+                    <FaBolt />
+                    Buy Now
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/signin" className="btn btn-primary btn-large">
-                    Login to Buy
+                  <Link to="/signin" className="pdp-btn-cart">
+                    <FaShoppingCart /> Login to Buy
                   </Link>
-                  <Link to="/contact" className="btn btn-secondary btn-large">
+                  <Link to="/contact" className="pdp-btn-buy">
                     Enquire Now
                   </Link>
                 </>
               )}
             </div>
 
-            {/* Download Datasheet */}
+            {/* Datasheet */}
             {product.datasheet && (
-              <div className="datasheet-section">
-                <a href={product.datasheet} target="_blank" rel="noopener noreferrer" className="datasheet-link">
-                  📥 Download Datasheet
-                </a>
+              <a href={product.datasheet} target="_blank" rel="noopener noreferrer" className="pdp-datasheet">
+                <FaDownload /> Download Datasheet
+              </a>
+            )}
+
+            {/* Trust Badges */}
+            <div className="pdp-trust">
+              <div className="pdp-trust-item">
+                <FaTruck className="pdp-trust-icon" />
+                <span>Free Delivery</span>
+              </div>
+              <div className="pdp-trust-item">
+                <FaShieldAlt className="pdp-trust-icon" />
+                <span>Secure Payment</span>
+              </div>
+              <div className="pdp-trust-item">
+                <FaUndo className="pdp-trust-icon" />
+                <span>Easy Returns</span>
+              </div>
+              <div className="pdp-trust-item">
+                <FaTag className="pdp-trust-icon" />
+                <span>Best Price</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs: Description / Specifications */}
+        <div className="pdp-tabs-section">
+          <div className="pdp-tabs-header">
+            <button
+              className={`pdp-tab ${activeTab === 'description' ? 'active' : ''}`}
+              onClick={() => setActiveTab('description')}
+            >Description</button>
+            {product.specifications && Object.keys(product.specifications).length > 0 && (
+              <button
+                className={`pdp-tab ${activeTab === 'specs' ? 'active' : ''}`}
+                onClick={() => setActiveTab('specs')}
+              >Specifications</button>
+            )}
+          </div>
+
+          <div className="pdp-tabs-body">
+            {activeTab === 'description' && (
+              <div className="pdp-description">
+                <p>{product.description || 'No description available for this product.'}</p>
               </div>
             )}
-          </section>
+            {activeTab === 'specs' && (
+              <div className="pdp-specs">
+                <table className="pdp-specs-table">
+                  <tbody>
+                    {Object.entries(product.specifications || {}).map(([key, value]) => (
+                      <tr key={key}>
+                        <td className="pdp-spec-key">{key.replace(/([A-Z])/g, ' $1').trim()}</td>
+                        <td className="pdp-spec-val">{value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Reviews Section */}
-        <section className="reviews-section">
+        <div className="pdp-reviews-section">
+          <h2 className="pdp-section-title">Customer Reviews</h2>
+
+          {/* Rating Summary */}
+          {totalReviews > 0 && (
+            <div className="pdp-rating-summary">
+              <div className="pdp-rating-big">
+                <span className="pdp-rating-number">{averageRating.toFixed(1)}</span>
+                <div className="pdp-stars pdp-stars-lg">{renderStars(averageRating)}</div>
+                <span className="pdp-rating-total">{totalReviews} Reviews</span>
+              </div>
+            </div>
+          )}
+
           {user ? (
             <>
-              <ReviewForm 
+              <ReviewForm
                 productId={id}
                 onReviewAdded={fetchReviews}
                 existingReview={editingReview}
               />
               {!reviewsLoading && (
-                <ReviewList 
+                <ReviewList
                   reviews={reviews}
                   averageRating={averageRating}
                   totalReviews={totalReviews}
@@ -378,59 +445,43 @@ const ProductDetailPage = () => {
               )}
             </>
           ) : (
-            <div className="login-to-review">
-              <p>Please <Link to="/signin">login</Link> to write a review</p>
+            <div className="pdp-login-review">
+              <FaStar size={32} color="#fbbf24" />
+              <p>Share your experience with this product</p>
+              <Link to="/signin" className="pdp-btn-primary">Login to Write a Review</Link>
             </div>
           )}
-        </section>
+        </div>
 
         {/* Related Products */}
-        {relatedProducts && relatedProducts.length > 0 && (
-          <section className="related-products">
-            <h2>Related Products</h2>
-            <div className="related-grid">
-              {relatedProducts.map((relProduct) => (
-                <div key={relProduct._id} className="related-card">
-                  <div className="related-card-image">
-                    <img src={relProduct.image} alt={relProduct.productName || relProduct.name} />
+        {relatedProducts.length > 0 && (
+          <div className="pdp-related-section">
+            <h2 className="pdp-section-title">Similar Products</h2>
+            <div className="pdp-related-grid">
+              {relatedProducts.map((p) => (
+                <Link to={`/product/${p._id}`} key={p._id} className="pdp-related-card">
+                  <div className="pdp-related-img">
+                    <img src={p.image || (p.images && p.images[0])} alt={p.productName || p.name} />
                   </div>
-                  <div className="related-card-info">
-                    <h3 className="related-card-name">{relProduct.productName || relProduct.name}</h3>
-                    <p className="related-card-brand">{relProduct.brand || 'EIRS Technology'}</p>
-                    <div className="related-card-price">
-                      <span className="price">₹{parseFloat(relProduct.price || 0).toLocaleString()}</span>
-                      {relProduct.originalPrice && (
-                        <span className="original-price">₹{parseFloat(relProduct.originalPrice || 0).toLocaleString()}</span>
-                      )}
-                    </div>
-                    <div className="related-card-stock">
-                      {relProduct.stock > 0 ? (
-                        <span className="in-stock">✓ In Stock</span>
-                      ) : (
-                        <span className="out-of-stock">Out of Stock</span>
-                      )}
-                    </div>
-                    <Link to={`/product/${relProduct._id}`} className="view-link">
-                      View Details →
-                    </Link>
+                  <div className="pdp-related-info">
+                    <p className="pdp-related-name">{p.productName || p.name}</p>
+                    {p.brand && <p className="pdp-related-brand">{p.brand}</p>}
+                    <p className="pdp-related-price">₹{parseFloat(p.price || 0).toLocaleString('en-IN')}</p>
+                    <span className={`pdp-related-stock ${p.stock > 0 ? 'in' : 'out'}`}>
+                      {p.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
+                    </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-          </section>
+          </div>
         )}
 
-        {/* Back Button */}
-        <div className="back-button-container">
-          <Link to="/products" className="btn btn-outline">
-            ← Back to Products
-          </Link>
-        </div>
       </div>
 
       {/* Checkout Modal */}
       {user && (
-        <CheckoutModal 
+        <CheckoutModal
           isOpen={showCheckout}
           onClose={() => setShowCheckout(false)}
           cartItems={[{ ...product, quantity }]}
@@ -440,7 +491,7 @@ const ProductDetailPage = () => {
           userEmail={user.email}
         />
       )}
-    </main>
+    </div>
   );
 };
 

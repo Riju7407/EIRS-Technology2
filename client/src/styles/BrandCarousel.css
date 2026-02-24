@@ -17,15 +17,8 @@
 }
 
 .brand-carousel-section::before {
-  content: 'Trusted by Industry Leaders';
-  display: block;
-  text-align: center;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 40px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  content: '';
+  display: none;
 }
 
 .brand-carousel {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaBox, FaTruck, FaCheckCircle, FaClock, FaTimesCircle, FaTrash, FaEdit, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { orderService } from '../services/api';
+import AdminLayout from '../components/AdminLayout';
 import '../styles/AdminOrders.css';
 
 const AdminOrders = () => {
@@ -140,6 +141,7 @@ const AdminOrders = () => {
   const stats = getOrderStats();
 
   return (
+    <AdminLayout pageTitle="Orders" breadcrumbs={[{ label: 'Orders' }]}>
     <div className="admin-orders-page">
       {/* Header Section */}
       <div className="admin-orders-header">
@@ -396,6 +398,7 @@ const AdminOrders = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

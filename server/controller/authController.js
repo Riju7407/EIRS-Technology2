@@ -454,20 +454,36 @@ const requestPasswordChangeOTP = async (req, res, next) => {
         user.otpPurpose = purpose;
         await user.save();
 
-        // Send OTP email
+        // Send OTP email — fall back to console log in dev if email fails
+        let emailSent = false;
         try {
             await sendOTPEmail(email, otp, purpose);
+            emailSent = true;
         } catch (emailError) {
-            console.error('Email sending failed:', emailError);
-            return res.status(500).json({
-                success: false,
-                message: "Failed to send OTP. Please check your email configuration."
-            });
+            console.error('Email sending failed:', emailError.message);
+            if (process.env.NODE_ENV === 'production') {
+                return res.status(500).json({
+                    success: false,
+                    message: `Failed to send OTP: ${emailError.message || 'Email server error'}. Check EMAIL_USER/EMAIL_PASSWORD in .env and ensure a valid Gmail App Password is set.`
+                });
+            }
+            // In development — log OTP to console so it can be used even without working email
+            console.log('');
+            console.log('╔══════════════════════════════════════════════════╗');
+            console.log('║            ⚠️  DEV MODE: EMAIL BYPASSED           ║');
+            console.log(`║  OTP for ${email.padEnd(38)}║`);
+            console.log(`║  OTP CODE: ${otp.padEnd(38)}║`);
+            console.log('║  (Email not sent — Gmail credentials invalid)    ║');
+            console.log('╚══════════════════════════════════════════════════╝');
+            console.log('');
         }
 
         res.status(200).json({
             success: true,
-            message: `OTP has been sent to ${email}. Valid for 10 minutes.`
+            emailSent,
+            message: emailSent
+                ? `OTP has been sent to ${email}. Valid for 10 minutes.`
+                : `OTP generated (dev mode — email failed). Check the server console for your OTP code. Valid for 10 minutes.`
         });
     } catch (error) {
         console.error('Request OTP error:', error);

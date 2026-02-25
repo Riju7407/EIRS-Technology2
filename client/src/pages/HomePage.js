@@ -99,6 +99,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [selectedPrice, setSelectedPrice] = useState('all');
@@ -110,7 +111,33 @@ const HomePage = () => {
   const [newsletterMsg, setNewsletterMsg] = useState('');
   const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
-  useEffect(() => { fetchAdminProducts(); }, []);
+  useEffect(() => {
+    fetchAdminProducts();
+    fetchFeaturedProducts();
+
+    // Refresh when the tab becomes visible after an admin update
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' &&
+          localStorage.getItem('products_dirty') === 'true') {
+        fetchAdminProducts();
+        fetchFeaturedProducts();
+      }
+    };
+    // Refresh when another tab sets the dirty flag
+    const handleStorage = (e) => {
+      if (e.key === 'products_dirty' && e.newValue === 'true') {
+        fetchAdminProducts();
+        fetchFeaturedProducts();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('storage', handleStorage);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     filterAndSortProducts();
@@ -124,6 +151,15 @@ const HomePage = () => {
       setProducts(arr);
     } catch { setProducts([]); }
     finally { setLoading(false); }
+  };
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const data = await productService.getFeaturedProducts();
+      setFeaturedProducts(Array.isArray(data) ? data : []);
+    } catch {
+      setFeaturedProducts([]);
+    }
   };
 
   const filterAndSortProducts = useCallback(() => {
@@ -255,6 +291,12 @@ const HomePage = () => {
             <div className="hp-loading">
               <div className="hp-spinner" />
               <p>Loading products</p>
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="hp-products-grid">
+              {featuredProducts.map(product => (
+                <ProductCard key={product._id} product={product} />
+              ))}
             </div>
           ) : filteredProducts.slice(0, 15).length > 0 ? (
             <div className="hp-products-grid">

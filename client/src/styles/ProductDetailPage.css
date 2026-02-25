@@ -330,6 +330,31 @@
   color: #10b981;
   margin: 4px 0 0 0;
 }
+.pdp-discount-badge {
+  display: inline-block;
+  background: #388e3c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.pdp-mrp {
+  font-size: 16px;
+  color: #878787;
+  font-weight: 500;
+  margin-left: 10px;
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+.pdp-saving-note {
+  font-size: 13px;
+  color: #388e3c;
+  font-weight: 600;
+  margin: 4px 0 0 0;
+}
 
 /* Stock Row */
 .pdp-stock-row {
@@ -695,11 +720,30 @@
   min-height: 33px;
 }
 .pdp-related-brand { font-size: 11px; color: #878787; margin: 0; }
+.pdp-related-price-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 4px 0;
+}
 .pdp-related-price {
   font-size: 15px;
   font-weight: 700;
   color: #212121;
-  margin: 4px 0;
+  margin: 0;
+}
+.pdp-related-mrp {
+  font-size: 12px;
+  color: #878787;
+}
+.pdp-related-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #388e3c;
+  background: #f0fdf4;
+  padding: 1px 5px;
+  border-radius: 3px;
 }
 .pdp-related-stock {
   font-size: 11px;

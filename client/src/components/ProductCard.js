@@ -38,6 +38,16 @@ const ProductCard = ({ product }) => {
     () => discount || (originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0),
     [discount, originalPrice, price]
   );
+
+  // If a discount % is set, compute the selling price; otherwise use price as-is
+  const sellingPrice = useMemo(
+    () => discount > 0 ? Math.round(price * (1 - discount / 100)) : price,
+    [price, discount]
+  );
+  const mrpPrice = useMemo(
+    () => discount > 0 ? price : originalPrice,
+    [price, discount, originalPrice]
+  );
   const isOutOfStock = useMemo(
     () => stock === 0, // Only show out of stock if explicitly set to 0
     [stock]
@@ -89,7 +99,7 @@ const ProductCard = ({ product }) => {
       addToCart({
         _id: productId,
         productName: displayName,
-        price: price,
+        price: sellingPrice,
         image: image,
         quantity: 1,
         stock: stockQuantity,
@@ -109,7 +119,7 @@ const ProductCard = ({ product }) => {
       addToCart({
         _id: productId,
         productName: displayName,
-        price: price,
+        price: sellingPrice,
         image: image,
         quantity: 1,
         stock: stockQuantity,
@@ -117,7 +127,7 @@ const ProductCard = ({ product }) => {
       });
       alert('Product added to cart!');
     }
-  }, [isLoggedIn, productId, isOutOfStock, displayName, price, image, stockQuantity, brand, navigate, addToCart]);
+  }, [isLoggedIn, productId, isOutOfStock, displayName, sellingPrice, image, stockQuantity, brand, navigate, addToCart]);
 
   const handleViewDetails = useCallback(() => {
     if (productId) {
@@ -183,9 +193,9 @@ const ProductCard = ({ product }) => {
 
         {/* Pricing */}
         <div className="product-pricing">
-          <div className="current-price">₹{price?.toLocaleString() || 0}</div>
-          {originalPrice && (
-            <div className="original-price">₹{originalPrice.toLocaleString()}</div>
+          <div className="current-price">₹{sellingPrice?.toLocaleString() || 0}</div>
+          {mrpPrice > 0 && mrpPrice !== sellingPrice && (
+            <div className="original-price">₹{mrpPrice.toLocaleString()}</div>
           )}
         </div>
 

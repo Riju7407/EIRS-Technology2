@@ -96,7 +96,9 @@ const ProductDetailPage = () => {
 
   const handleAddToCart = () => {
     if (product && product.stock > 0) {
-      addToCart(product, quantity);
+      const disc = product.discount > 0 ? product.discount : 0;
+      const sp = disc > 0 ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100)) : parseFloat(product.price || 0);
+      addToCart({ ...product, price: sp }, quantity);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2500);
     }
@@ -105,7 +107,9 @@ const ProductDetailPage = () => {
   const handleBuyNow = () => {
     if (!user) { navigate('/signin'); return; }
     if (product && product.stock > 0) {
-      addToCart(product, quantity);
+      const disc = product.discount > 0 ? product.discount : 0;
+      const sp = disc > 0 ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100)) : parseFloat(product.price || 0);
+      addToCart({ ...product, price: sp }, quantity);
       setShowCheckout(true);
     }
   };
@@ -154,7 +158,12 @@ const ProductDetailPage = () => {
 
   const images = getImageList();
   const inStock = product.stock > 0;
-  const totalPrice = parseFloat(product.price || 0) * quantity;
+  const discountPct = product.discount > 0 ? product.discount : 0;
+  const sellingPrice = discountPct > 0
+    ? Math.round(parseFloat(product.price || 0) * (1 - discountPct / 100))
+    : parseFloat(product.price || 0);
+  const mrpPrice = discountPct > 0 ? parseFloat(product.price || 0) : null;
+  const totalPrice = sellingPrice * quantity;
 
   return (
     <div className="pdp-page">
@@ -259,13 +268,22 @@ const ProductDetailPage = () => {
 
             {/* Price Block */}
             <div className="pdp-price-block">
+              {discountPct > 0 && (
+                <div className="pdp-discount-badge">{discountPct}% OFF</div>
+              )}
               <div className="pdp-price-row">
                 <span className="pdp-price-label">Price</span>
                 <div className="pdp-price-value">
                   <span className="pdp-currency">₹</span>
-                  <span className="pdp-amount">{parseFloat(product.price || 0).toLocaleString('en-IN')}</span>
+                  <span className="pdp-amount">{sellingPrice.toLocaleString('en-IN')}</span>
+                  {mrpPrice && (
+                    <span className="pdp-mrp">MRP <s>₹{mrpPrice.toLocaleString('en-IN')}</s></span>
+                  )}
                 </div>
               </div>
+              {discountPct > 0 && (
+                <p className="pdp-saving-note">You save ₹{(mrpPrice - sellingPrice).toLocaleString('en-IN')} ({discountPct}%)</p>
+              )}
               <p className="pdp-tax-note">Inclusive of all taxes</p>
             </div>
 
@@ -466,7 +484,17 @@ const ProductDetailPage = () => {
                   <div className="pdp-related-info">
                     <p className="pdp-related-name">{p.productName || p.name}</p>
                     {p.brand && <p className="pdp-related-brand">{p.brand}</p>}
-                    <p className="pdp-related-price">₹{parseFloat(p.price || 0).toLocaleString('en-IN')}</p>
+                    <div className="pdp-related-price-row">
+                      <p className="pdp-related-price">
+                        ₹{(p.discount > 0 ? Math.round(parseFloat(p.price || 0) * (1 - p.discount / 100)) : parseFloat(p.price || 0)).toLocaleString('en-IN')}
+                      </p>
+                      {p.discount > 0 && (
+                        <>
+                          <span className="pdp-related-mrp"><s>₹{parseFloat(p.price || 0).toLocaleString('en-IN')}</s></span>
+                          <span className="pdp-related-badge">{p.discount}% OFF</span>
+                        </>
+                      )}
+                    </div>
                     <span className={`pdp-related-stock ${p.stock > 0 ? 'in' : 'out'}`}>
                       {p.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
                     </span>
@@ -485,7 +513,7 @@ const ProductDetailPage = () => {
           isOpen={showCheckout}
           onClose={() => setShowCheckout(false)}
           cartItems={[{ ...product, quantity }]}
-          totalAmount={parseFloat(product.price || 0) * quantity}
+          totalAmount={sellingPrice * quantity}
           userId={user._id}
           userName={user.name}
           userEmail={user.email}

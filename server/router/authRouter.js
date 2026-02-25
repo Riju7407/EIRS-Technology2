@@ -3,7 +3,7 @@ const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, c
 const { services, getAllServices, deleteService, addService, updateService } = require('../controller/serviceController');
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
-const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } = require('../controller/productController');
+const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getFeaturedProducts, toggleFeatured } = require('../controller/productController');
 const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder, cancelOrder, requestRefund, approveRefund, rejectRefund, processRefund } = require('../controller/orderController');
 const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
 const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
@@ -66,9 +66,11 @@ authRouter.get('/services/admin', adminMiddleware, getAllServices);
 authRouter.post('/services/add', jwtAuth, adminMiddleware, addService);
 authRouter.put('/services/update/:id', jwtAuth, adminMiddleware, updateService);
 authRouter.delete('/services/delete/:id', jwtAuth, adminMiddleware, deleteService);
+authRouter.get('/products/featured', getFeaturedProducts);
 authRouter.get('/products', getAllProducts);
 authRouter.get('/products/:id', getProductById);
 authRouter.post('/products/add',jwtAuth, adminMiddleware, createProduct);
+authRouter.put('/products/:id/featured', jwtAuth, adminMiddleware, toggleFeatured);
 authRouter.put('/products/:id', jwtAuth, adminMiddleware, updateProduct);
 authRouter.delete('/products/:id', jwtAuth, adminMiddleware, deleteProduct);
 

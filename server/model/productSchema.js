@@ -65,6 +65,16 @@ const productSchema = new Schema({
             return parseInt(value, 10);
         }
     },
+    isFeatured: {
+        type: Boolean,
+        default: false
+    },
+    discount: {
+        type: Number,
+        default: 0,
+        min: [0, 'Discount cannot be negative'],
+        max: [100, 'Discount cannot exceed 100%']
+    },
 }, {
     timestamps: true
 });

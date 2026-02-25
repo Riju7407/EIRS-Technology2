@@ -96,7 +96,28 @@ const ProductsPage = () => {
   useEffect(() => {
     fetchProducts();
     const interval = setInterval(fetchProductsFresh, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+
+    // Refresh when the tab becomes visible and an admin update dirtied the cache
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' &&
+          localStorage.getItem('products_dirty') === 'true') {
+        fetchProductsFresh();
+      }
+    };
+    // Refresh when another tab sets the dirty flag
+    const handleStorage = (e) => {
+      if (e.key === 'products_dirty' && e.newValue === 'true') {
+        fetchProductsFresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, [fetchProducts, fetchProductsFresh]);
 
   useEffect(() => {

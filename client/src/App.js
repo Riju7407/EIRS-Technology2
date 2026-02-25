@@ -49,7 +49,7 @@ function AppContent() {
 
   return (
     <div className="App">
-      <Header />
+      {!isAdminPage && <Header />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

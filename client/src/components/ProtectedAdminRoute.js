@@ -1,23 +1,22 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const ProtectedAdminRoute = ({ element }) => {
-  const user = localStorage.getItem('user');
+  const { isLoggedIn, isAdmin, loading } = useAuth();
 
-  if (!user) {
-    return <Navigate to="/admin/login" replace />;
+  // Wait for auth state to initialise before deciding
+  if (loading) return null;
+
+  if (!isLoggedIn) {
+    return <Navigate to="/" replace />;
   }
 
-  try {
-    const userData = JSON.parse(user);
-    if (!userData.isAdmin) {
-      return <Navigate to="/signin" replace />;
-    }
-    return element;
-  } catch (error) {
-    console.error('Error parsing user data:', error);
-    return <Navigate to="/admin/login" replace />;
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
+
+  return element;
 };
 
 export default ProtectedAdminRoute;

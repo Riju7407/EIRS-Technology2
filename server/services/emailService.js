@@ -1,20 +1,37 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter for sending emails
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
+// Build a fresh transporter each time so it always picks up the current env vars.
+// Uses explicit Gmail SMTP settings (more reliable than service:'gmail') and strips
+// spaces from the App Password (Google accepts them, but some SMTP wrappers don't).
+const createTransporter = () => {
+    const user = (process.env.EMAIL_USER || '').trim();
+    const pass = (process.env.EMAIL_PASSWORD || '').replace(/\s+/g, ''); // strip spaces from App Password
+    if (!user || !pass) {
+        throw new Error('EMAIL_USER or EMAIL_PASSWORD is not set in environment variables');
     }
-});
+    return nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // STARTTLS
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false }
+    });
+};
 
-// Verify transporter configuration on startup
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('❌ Email transporter error:', error.message);
-    } else {
-        console.log('✅ Email server is ready to send emails');
+// Verify on startup (non-blocking — only logs, never crashes the server)
+setImmediate(() => {
+    try {
+        const t = createTransporter();
+        t.verify((error) => {
+            if (error) {
+                console.error('❌ Email transporter error:', error.message);
+                console.error('   Check EMAIL_USER / EMAIL_PASSWORD in .env and that a Gmail App Password is used (requires 2-Step Verification).');
+            } else {
+                console.log('✅ Email server is ready to send emails');
+            }
+        });
+    } catch (e) {
+        console.error('❌ Email transporter setup failed:', e.message);
     }
 });
 
@@ -86,12 +103,14 @@ const sendOTPEmail = async (email, otp, purpose) => {
             html: htmlContent
         };
 
-        await transporter.sendMail(mailOptions);
-        console.log(`OTP sent successfully to ${email}`);
+        await createTransporter().sendMail(mailOptions);
+        console.log(`✅ OTP sent successfully to ${email}`);
         return true;
     } catch (error) {
-        console.error('Error sending OTP email:', error);
-        throw error;
+        console.error('❌ Error sending OTP email:', error.message);
+        const e = new Error(error.message || 'Unknown email error');
+        e.gmailError = error.message;
+        throw e;
     }
 };
 
@@ -161,13 +180,15 @@ const sendPasswordResetEmail = async (email, resetToken, frontendUrl) => {
             html: htmlContent
         };
 
-        await transporter.sendMail(mailOptions);
-        console.log(`Password reset email sent successfully to ${email}`);
+        await createTransporter().sendMail(mailOptions);
+        console.log(`✅ Password reset email sent successfully to ${email}`);
         console.log(`Reset link: ${resetLink}`);
         return true;
     } catch (error) {
-        console.error('Error sending password reset email:', error);
-        throw error;
+        console.error('❌ Error sending password reset email:', error.message);
+        const e = new Error(error.message || 'Unknown email error');
+        e.gmailError = error.message;
+        throw e;
     }
 };
 

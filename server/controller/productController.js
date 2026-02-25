@@ -66,7 +66,7 @@ exports.getAllProducts = async (req, res) => {
         
         // Fetch products with optimized fields - truncate description for list view
         const products = await Product.find()
-            .select('_id productName category subcategory submenu channels brand price image stock modelNo')
+            .select('_id productName category subcategory submenu channels brand price image stock modelNo isFeatured discount')
             .lean() // Returns plain JavaScript objects, not Mongoose documents
             .limit(limit)
             .skip(skip)
@@ -158,6 +158,40 @@ exports.deleteProduct = async (req, res) => {
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// Get only featured products (for Homepage Top Products)
+exports.getFeaturedProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ isFeatured: true })
+            .select('_id productName category subcategory brand price image stock modelNo isFeatured discount')
+            .lean()
+            .sort({ updatedAt: -1 })
+            .exec();
+        res.json({ success: true, data: products });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Toggle isFeatured on a product (admin only)
+exports.toggleFeatured = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+        product.isFeatured = !product.isFeatured;
+        await product.save();
+
+        // Clear server-side cache
+        productsCache.clear();
+        totalCountCache = null;
+        totalCountTimestamp = null;
+
+        res.json({ success: true, isFeatured: product.isFeatured });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 

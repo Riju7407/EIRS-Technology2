@@ -18,6 +18,7 @@ const ForgotPasswordPage = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [otpInfoMsg, setOtpInfoMsg] = useState('');
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(0);
   const otpRefs = useRef([]);
@@ -41,6 +42,7 @@ const ForgotPasswordPage = () => {
     try {
       const res = await axios.post(`${API_BASE}/request-otp`, { email, purpose: 'forgot-password' });
       if (res.data.success) {
+        setOtpInfoMsg(res.data.emailSent === false ? res.data.message : '');
         setStep(2);
         setTimer(60);
       } else {
@@ -136,6 +138,7 @@ const ForgotPasswordPage = () => {
     try {
       const res = await axios.post(`${API_BASE}/request-otp`, { email, purpose: 'forgot-password' });
       if (res.data.success) {
+        setOtpInfoMsg(res.data.emailSent === false ? res.data.message : '');
         setOtp(['', '', '', '', '', '']);
         setTimer(60);
         otpRefs.current[0]?.focus();
@@ -206,9 +209,15 @@ const ForgotPasswordPage = () => {
         {step === 2 && (
           <>
             <h2 className="fp-title">Enter Verification Code</h2>
-            <p className="fp-subtitle">
-              We sent a 6-digit OTP to<br /><strong>{email}</strong>
-            </p>
+            {otpInfoMsg ? (
+              <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 13, color: '#92400e' }}>
+                ⚠️ {otpInfoMsg}
+              </div>
+            ) : (
+              <p className="fp-subtitle">
+                We sent a 6-digit OTP to<br /><strong>{email}</strong>
+              </p>
+            )}
             <form onSubmit={handleVerifyOTP}>
               <div className="fp-otp-wrap" onPaste={handleOtpPaste}>
                 {otp.map((digit, i) => (

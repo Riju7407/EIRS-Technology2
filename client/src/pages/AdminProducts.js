@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaTrash, FaEdit, FaPlus, FaImage, FaBars, FaTimes, FaChartBar, FaUsers, FaPhone, FaBox, FaTools, FaSignOutAlt, FaTags, FaStar } from 'react-icons/fa';
-import { productService, authService, reviewService } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { FaTrash, FaEdit, FaPlus, FaImage, FaStar, FaSearch, FaBoxOpen } from 'react-icons/fa';
+import { productService } from '../services/api';
 import api from '../services/api';
 import ProductReviewsSection from '../components/ProductReviewsSection';
+import AdminLayout from '../components/AdminLayout';
 import '../styles/AdminPages.css';
 
 const AdminProducts = () => {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [adminUser, setAdminUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -34,17 +33,10 @@ const AdminProducts = () => {
     cameraResolution: '',
     nvrChannels: '',
     poeSwitch: '',
+    discount: 0,
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setAdminUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -148,16 +140,28 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await productService.getAllProducts();
+      // Fetch up to 1000 products so all products are always visible to admin
+      const response = await productService.getAllProducts(1, 1000, true);
       setProducts(Array.isArray(response) ? response : response.data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      // If 401 Unauthorized, redirect to signin
       if (error.status === 401 || error.response?.status === 401) {
         navigate('/signin');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleFeatured = async (product) => {
+    try {
+      const result = await productService.toggleFeatured(product._id);
+      setProducts(prev =>
+        prev.map(p => p._id === product._id ? { ...p, isFeatured: result.isFeatured } : p)
+      );
+      productService.clearProductCache();
+    } catch (error) {
+      alert('Failed to update featured status: ' + (error.message || error));
     }
   };
 
@@ -254,6 +258,7 @@ const AdminProducts = () => {
       images: formData.images.filter(img => img !== ''), // Filter out empty images
       price: formData.price !== '' ? parseFloat(formData.price) : 0,
       stock: formData.stock !== '' ? parseInt(formData.stock, 10) : 0,
+      discount: formData.discount !== '' ? parseInt(formData.discount, 10) : 0,
       cameraResolution: formData.cameraResolution || '',
       nvrChannels: formData.nvrChannels || '',
       poeSwitch: formData.poeSwitch || '',
@@ -317,6 +322,7 @@ const AdminProducts = () => {
         cameraResolution: p.cameraResolution || '',
         nvrChannels: p.nvrChannels || '',
         poeSwitch: p.poeSwitch || '',
+        discount: p.discount !== null && p.discount !== undefined ? p.discount : 0,
       });
 
       if (p.category) fetchSubcategoriesByCategory(p.category);
@@ -369,20 +375,12 @@ const AdminProducts = () => {
       cameraResolution: '',
       nvrChannels: '',
       poeSwitch: '',
+      discount: 0,
     });
     setSubmenus([]);
     setChannels([]);
     setEditingId(null);
     setShowForm(false);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
   };
 
   const categories = [
@@ -464,98 +462,73 @@ const AdminProducts = () => {
     }
   ];
 
-  return (
-    <div className="admin-dashboard">
-      {/* Sidebar */}
-      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-header">
-          <h2>Admin Panel</h2>
-          <button className="sidebar-close" onClick={() => setSidebarOpen(false)}>
-            <FaTimes />
-          </button>
-        </div>
-        <nav className="sidebar-nav">
-          <Link to="/admin/dashboard" className="nav-item">
-            <FaChartBar /> Dashboard
-          </Link>
-          <Link to="/admin/users" className="nav-item">
-            <FaUsers /> Users
-          </Link>
-          <Link to="/admin/enquiries" className="nav-item">
-            <FaPhone /> Enquiries
-          </Link>
-          <Link to="/admin/products" className="nav-item active">
-            <FaBox /> Products
-          </Link>
-          <Link to="/admin/subcategories" className="nav-item">
-            <FaTags /> Subcategories
-          </Link>
-          <Link to="/admin/services" className="nav-item">
-            <FaTools /> Services
-          </Link>
-          <button className="nav-item logout-btn" onClick={handleLogout}>
-            <FaSignOutAlt /> Logout
-          </button>
-        </nav>
-      </aside>
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
 
-      {/* Main Content */}
-      <main className="admin-main">
-        {/* Top Bar */}
-        <div className="admin-topbar">
-          <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <FaBars />
-          </button>
-          <div className="topbar-right">
-            <div className="admin-profile">
-              <span>{adminUser?.email || 'Admin'}</span>
-              <button onClick={handleLogout} className="logout-icon">
-                <FaSignOutAlt />
+  const filteredProducts = products.filter(p => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery ||
+      p.productName?.toLowerCase().includes(q) ||
+      p.brand?.toLowerCase().includes(q) ||
+      p.modelNo?.toLowerCase().includes(q);
+    const matchesCategory = !filterCategory || p.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  return (
+    <AdminLayout pageTitle="Products" breadcrumbs={[{ label: 'Products' }]}>
+      <div className="ap-page">
+
+        {/* ── PAGE HEADER ── */}
+        <div className="ap-header">
+          <div className="ap-header-text">
+            <h1>Products Management</h1>
+            <p>{products.length} product{products.length !== 1 ? 's' : ''} in catalog</p>
+          </div>
+          <div className="ap-header-actions">
+            {!showForm ? (
+              <button
+                className="ap-btn ap-btn-primary"
+                onClick={() => { resetForm(); setShowForm(true); }}
+              >
+                <FaPlus /> Add Product
+              </button>
+            ) : (
+              <button className="ap-btn ap-btn-secondary" onClick={resetForm}>
+                ✕ Cancel
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── ADD / EDIT FORM PANEL ── */}
+        {showForm && (
+          <form onSubmit={handleSubmit} className="ap-form-panel">
+            <div className="ap-form-panel-header">
+              <h2>{editingId ? '✏️ Edit Product' : '➕ Add New Product'}</h2>
+              <button type="button" className="ap-btn ap-btn-secondary ap-btn-sm" onClick={resetForm}>
+                Cancel
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* Page Content */}
-        <div className="admin-content">
-          <div className="page-header">
-            <h1>Products Management</h1>
-            <p>Manage your product catalog</p>
-          </div>
+            <div className="ap-form-body">
 
-          <button className="btn btn-primary" onClick={() => {
-            if (!showForm) {
-              resetForm(); // Clear form data when opening the form
-            }
-            setShowForm(!showForm);
-          }}>
-            <FaPlus /> {showForm ? 'Cancel' : 'Add New Product'}
-          </button>
-
-          {showForm && (
-            <form onSubmit={handleSubmit} className="admin-form">
-              <h2>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Product Name</label>
+              {/* Row 1 — Name + Category */}
+              <div className="ap-form-row">
+                <div className="ap-form-group">
+                  <label>Product Name *</label>
                   <input
                     type="text"
                     name="productName"
                     value={formData.productName}
                     onChange={handleInputChange}
+                    placeholder="e.g. Hikvision 2MP IP Camera"
                     required
                   />
                 </div>
-
-                <div className="form-group">
-                  <label>Category</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    required
-                  >
+                <div className="ap-form-group">
+                  <label>Category *</label>
+                  <select name="category" value={formData.category} onChange={handleInputChange} required>
                     <option value="">Select a category</option>
                     {categories.map(cat => (
                       <option key={cat.name} value={cat.name}>{cat.name}</option>
@@ -564,16 +537,12 @@ const AdminProducts = () => {
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              {/* Row 2 — Subcategory + Submenu or Channels */}
+              <div className="ap-form-row">
+                <div className="ap-form-group">
                   <label>Subcategory</label>
-                  <select
-                    name="subcategory"
-                    value={formData.subcategory}
-                    onChange={handleInputChange}
-                    disabled={!formData.category}
-                  >
-                    <option value="">Select a subcategory</option>
+                  <select name="subcategory" value={formData.subcategory} onChange={handleInputChange} disabled={!formData.category}>
+                    <option value="">Select subcategory</option>
                     {subcategories.map((subcat, idx) => (
                       <option key={subcat._id || idx} value={typeof subcat === 'string' ? subcat : subcat.name}>
                         {typeof subcat === 'string' ? subcat : subcat.name}
@@ -581,101 +550,131 @@ const AdminProducts = () => {
                     ))}
                   </select>
                 </div>
-
-                {submenus.length > 0 && (
-                  <div className="form-group">
+                {submenus.length > 0 ? (
+                  <div className="ap-form-group">
                     <label>Submenu (Type)</label>
-                    <select
-                      name="submenu"
-                      value={formData.submenu}
-                      onChange={handleInputChange}
-                    >
-                      <option value="">Select a submenu</option>
-                      {submenus.map((submenu, idx) => (
-                        <option key={idx} value={submenu}>{submenu}</option>
-                      ))}
+                    <select name="submenu" value={formData.submenu} onChange={handleInputChange}>
+                      <option value="">Select submenu</option>
+                      {submenus.map((sm, idx) => <option key={idx} value={sm}>{sm}</option>)}
                     </select>
                   </div>
-                )}
-
-                {channels.length > 0 && (
-                  <div className="form-group">
+                ) : channels.length > 0 ? (
+                  <div className="ap-form-group">
                     <label>Channels</label>
-                    <select
-                      name="channels"
-                      value={formData.channels}
-                      onChange={handleInputChange}
-                    >
+                    <select name="channels" value={formData.channels} onChange={handleInputChange}>
                       <option value="">Select channels</option>
-                      {channels.map((channel, idx) => (
-                        <option key={idx} value={channel}>{channel}</option>
-                      ))}
+                      {channels.map((ch, idx) => <option key={idx} value={ch}>{ch}</option>)}
                     </select>
+                  </div>
+                ) : (
+                  <div className="ap-form-group">
+                    <label>Brand</label>
+                    <input type="text" name="brand" value={formData.brand} onChange={handleInputChange} placeholder="e.g. Hikvision, Dahua" />
                   </div>
                 )}
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Brand</label>
-                  <input
-                    type="text"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleInputChange}
-                  />
+              {/* Row 3 — Brand + Model (only when submenu/channels row is shown above) */}
+              {(submenus.length > 0 || channels.length > 0) && (
+                <div className="ap-form-row">
+                  <div className="ap-form-group">
+                    <label>Brand</label>
+                    <input type="text" name="brand" value={formData.brand} onChange={handleInputChange} placeholder="e.g. Hikvision, Dahua" />
+                  </div>
+                  <div className="ap-form-group">
+                    <label>Model No</label>
+                    <input type="text" name="modelNo" value={formData.modelNo} onChange={handleInputChange} placeholder="e.g. DS-2CD2121G1-I" />
+                  </div>
                 </div>
+              )}
 
-                <div className="form-group full-width">
-                  <label>Product Images (Up to 5 images)</label>
-                  <div className="multiple-images-container">
-                    {formData.images && [0, 1, 2, 3, 4].map((index) => (
-                      <div key={index} className="image-upload-slot">
-                        <h4>Image {index + 1} {index === 0 ? '(Primary)' : ''}</h4>
-                        <div className="image-upload-option">
-                          <input
-                            type="file"
-                            id={`imageInput-${index}`}
-                            onChange={(e) => handleImageUpload(e, index)}
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                          />
-                          <label htmlFor={`imageInput-${index}`} className={`image-upload-label ${uploadingIndex === index ? 'uploading' : ''}`}>
-                            <FaImage /> {uploadingIndex === index ? 'Uploading...' : `Upload Image ${index + 1}`}
-                          </label>
-                        </div>
+              {/* Row — Price + Stock */}
+              <div className="ap-form-row">
+                <div className="ap-form-group">
+                  <label>Price / MRP (₹) *</label>
+                  <input type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="0.00" step="0.01" min="0" required />
+                </div>
+                <div className="ap-form-group">
+                  <label>Stock Quantity *</label>
+                  <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} placeholder="0" min="0" required />
+                  <small className="ap-form-hint">Enter 0 to mark as out of stock</small>
+                </div>
+              </div>
 
-                        <div className="image-url-option">
-                          <input
-                            type="text"
-                            placeholder="Or paste image URL here"
-                            value={formData.images[index] || ''}
-                            onChange={(e) => handleImageUrlChange(e, index)}
-                            className="image-url-input"
-                          />
-                        </div>
+              {/* Row — Discount */}
+              <div className="ap-form-row">
+                <div className="ap-form-group">
+                  <label>Discount %</label>
+                  <select name="discount" value={formData.discount} onChange={handleInputChange}>
+                    <option value={0}>No Discount</option>
+                    {[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80].map(d => (
+                      <option key={d} value={d}>{d}% OFF</option>
+                    ))}
+                  </select>
+                  <small className="ap-form-hint">
+                    {formData.discount > 0 && formData.price > 0
+                      ? `Selling price: ₹${Math.round(formData.price * (1 - formData.discount / 100)).toLocaleString('en-IN')}`
+                      : 'Select a discount to apply'}
+                  </small>
+                </div>
+                <div className="ap-form-group" />
+              </div>
 
-                        {formData.images[index] && (
-                          <div className="image-preview-small">
-                            <img src={formData.images[index]} alt={`Preview ${index + 1}`} />
+              {/* Row — Model No (when brand already shown in row 2) */}
+              {!(submenus.length > 0 || channels.length > 0) && (
+                <div className="ap-form-row">
+                  <div className="ap-form-group">
+                    <label>Model No</label>
+                    <input type="text" name="modelNo" value={formData.modelNo} onChange={handleInputChange} placeholder="e.g. DS-2CD2121G1-I" />
+                  </div>
+                  <div className="ap-form-group" />
+                </div>
+              )}
+
+              {/* Row — Description */}
+              <div className="ap-form-row">
+                <div className="ap-form-group full-width">
+                  <label>Description</label>
+                  <textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" placeholder="Enter product description…" />
+                </div>
+              </div>
+
+              {/* Row — Images */}
+              <div className="ap-form-row">
+                <div className="ap-form-group full-width">
+                  <label>Product Images (up to 5) — first image is the primary display image</label>
+                  <div className="ap-img-grid">
+                    {[0, 1, 2, 3, 4].map(index => (
+                      <div key={index} className={`ap-img-slot${formData.images[index] ? ' has-image' : ''}`}>
+                        <div className="ap-img-slot-label">{index === 0 ? 'Primary' : `Image ${index + 1}`}</div>
+                        {formData.images[index] ? (
+                          <div className="ap-img-slot-preview">
+                            <img src={formData.images[index]} alt={`Preview ${index + 1}`} className="ap-img-preview" />
                             <button
                               type="button"
-                              className="remove-image-btn"
-                              onClick={() => {
-                                setFormData(prev => {
-                                  const newImages = [...prev.images];
-                                  newImages[index] = '';
-                                  return {
-                                    ...prev,
-                                    images: newImages,
-                                    image: index === 0 ? '' : prev.image,
-                                  };
-                                });
-                              }}
-                            >
-                              ✕
-                            </button>
+                              className="ap-img-remove"
+                              onClick={() => setFormData(prev => {
+                                const imgs = [...prev.images];
+                                imgs[index] = '';
+                                return { ...prev, images: imgs, image: index === 0 ? '' : prev.image };
+                              })}
+                            >&#x2715;</button>
                           </div>
+                        ) : (
+                          <>
+                            <input type="file" id={`img-${index}`} onChange={e => handleImageUpload(e, index)} accept="image/*" style={{ display: 'none' }} />
+                            <label htmlFor={`img-${index}`} className={`ap-img-upload-label${uploadingIndex === index ? ' uploading' : ''}`}>
+                              <FaImage size={18} />
+                              <span>{uploadingIndex === index ? 'Uploading…' : 'Upload'}</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="ap-img-url-input"
+                              placeholder="or paste URL"
+                              value={formData.images[index] || ''}
+                              onChange={e => handleImageUrlChange(e, index)}
+                            />
+                          </>
                         )}
                       </div>
                     ))}
@@ -683,126 +682,164 @@ const AdminProducts = () => {
                 </div>
               </div>
 
-              <div className="form-group full-width">
-                <label>Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows="4"
-                ></textarea>
-              </div>
-
-              <div className="form-group full-width">
-                <label>Model No</label>
-                <input
-                  type="text"
-                  name="modelNo"
-                  value={formData.modelNo}
-                  onChange={handleInputChange}
-                  placeholder="Enter Model Number (e.g., XYZ-2024-01)"
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Price (₹)</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="Enter product price"
-                    step="0.01"
-                    min="0"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label><strong>Stock Quantity *</strong></label>
-                  <input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleInputChange}
-                    placeholder="Enter stock quantity"
-                    min="0"
-                    required
-                    style={{ borderColor: '#ff6b6b', borderWidth: '2px' }}
-                  />
-                  <small style={{ color: '#666', fontSize: '12px' }}>Required: Enter 0 to mark as out of stock</small>
-                </div>
-              </div>
-
-
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  {editingId ? 'Update Product' : 'Add Product'}
+              {/* Form Actions */}
+              <div className="ap-form-actions">
+                <button type="submit" className="ap-btn ap-btn-primary">
+                  <FaPlus /> {editingId ? 'Update Product' : 'Add Product'}
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <button type="button" className="ap-btn ap-btn-secondary" onClick={resetForm}>
                   Cancel
                 </button>
               </div>
-            </form>
-          )}
 
-          {loading ? (
-            <div className="loading">Loading products...</div>
-          ) : products.length > 0 ? (
-            <div className="products-admin-grid">
-              {products.map(product => (
-                <div key={product._id} className="product-admin-card">
-                  {product.image && <img src={product.image} alt={product.productName} />}
-                  <h3>{product.productName}</h3>
-                  <p className="category">{product.category}</p>
-                  {product.brand && <p className="brand">{product.brand}</p>}
-                  <p className="description">{product.description?.substring(0, 100)}...</p>
-                  <div className="price-stock-display">
-                    <span className="price">₹{product.price || 0}</span>
-                    <span className="stock">{product.stock !== undefined && product.stock !== null ? `📦 Stock: ${product.stock}` : '📦 Stock: 0'}</span>
-                  </div>
-                  <div className="admin-actions">
-                    <button
-                      className="action-btn edit"
-                      onClick={() => handleEdit(product)}
-                      disabled={editLoadingId === product._id}
-                    >
-                      <FaEdit /> {editLoadingId === product._id ? 'Loading...' : 'Edit'}
-                    </button>
-                    <button
-                      className="action-btn delete"
-                      onClick={() => handleDelete(product._id)}
-                    >
-                      <FaTrash /> Delete
-                    </button>
-                    <button
-                      className="action-btn reviews"
-                      onClick={() => setSelectedProductForReviews(product._id)}
-                      title="View customer reviews"
-                    >
-                      <FaStar /> Reviews
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
-          ) : (
-            <div className="no-data">
-              <p>No products found. Create your first product!</p>
-            </div>
-          )}
-        </div>
-      </main>
+          </form>
+        )}
 
-      {/* Product Reviews Modal */}
+        {/* ── SEARCH / FILTER TOOLBAR ── */}
+        {!showForm && (
+          <div className="ap-toolbar">
+            <div className="ap-search">
+              <FaSearch className="ap-search-icon" />
+              <input
+                type="text"
+                placeholder="Search by name, brand or model…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select className="ap-filter-select" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
+              <option value="">All Categories</option>
+              {categories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
+            </select>
+            <span className="ap-results-count">{filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''}</span>
+          </div>
+        )}
+
+        {/* ── PRODUCT TABLE ── */}
+        {loading ? (
+          <div className="ap-loading">
+            <div className="ap-spinner" />
+            <p>Loading products…</p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
+          <div className="ap-table-wrap">
+            <table className="ap-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category / Brand</th>
+                  <th>Model No</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Featured</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map(product => (
+                  <tr key={product._id}>
+                    {/* Product cell */}
+                    <td>
+                      <div className="ap-product-cell">
+                        {product.image
+                          ? <img src={product.image} alt={product.productName} className="ap-product-img" />
+                          : <div className="ap-product-img placeholder"><FaImage /></div>
+                        }
+                        <div className="ap-product-info">
+                          <span className="ap-product-name">{product.productName}</span>
+                          {product.subcategory && <span className="ap-product-cat">{product.subcategory}</span>}
+                        </div>
+                      </div>
+                    </td>
+                    {/* Category / Brand */}
+                    <td>
+                      <div style={{ fontWeight: 500, color: '#374151', fontSize: '0.875rem' }}>{product.category}</div>
+                      {product.brand && <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2 }}>{product.brand}</div>}
+                    </td>
+                    {/* Model No */}
+                    <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{product.modelNo || '—'}</td>
+                    {/* Price */}
+                    <td>
+                      {product.discount > 0 ? (
+                        <div>
+                          <span className="ap-price" style={{ color: '#16a34a' }}>{Math.round(product.price * (1 - product.discount / 100)).toLocaleString('en-IN')}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', textDecoration: 'line-through', marginLeft: 4 }}>
+                            ₹{product.price != null ? Number(product.price).toLocaleString('en-IN') : '—'}
+                          </span>
+                          <span className="ap-badge ap-badge-yellow" style={{ marginLeft: 4 }}>{product.discount}% OFF</span>
+                        </div>
+                      ) : (
+                        <span className="ap-price">{product.price != null ? Number(product.price).toLocaleString('en-IN') : '—'}</span>
+                      )}
+                    </td>
+                    {/* Stock */}
+                    <td>
+                      <span className={product.stock > 0 ? 'ap-stock-ok' : 'ap-stock-low'}>
+                        {product.stock != null ? product.stock : 0}
+                      </span>
+                    </td>
+                    {/* Featured toggle */}
+                    <td>
+                      <button
+                        className={`ap-btn ap-btn-sm${product.isFeatured ? ' ap-btn-featured-on' : ' ap-btn-featured-off'}`}
+                        onClick={() => handleToggleFeatured(product)}
+                        title={product.isFeatured ? 'Remove from Top Products' : 'Add to Top Products'}
+                        style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+                      >
+                        <FaStar style={{ color: product.isFeatured ? '#f59e0b' : '#cbd5e1' }} />
+                        {product.isFeatured ? 'Featured' : 'Feature'}
+                      </button>
+                    </td>
+                    {/* Actions */}
+                    <td>
+                      <div className="ap-actions">
+                        <button
+                          className="ap-btn ap-btn-secondary ap-btn-sm"
+                          onClick={() => { setShowForm(false); handleEdit(product); }}
+                          disabled={editLoadingId === product._id}
+                        >
+                          <FaEdit /> {editLoadingId === product._id ? 'Loading…' : 'Edit'}
+                        </button>
+                        <button
+                          className="ap-btn ap-btn-danger ap-btn-sm"
+                          onClick={() => handleDelete(product._id)}
+                          title="Delete product"
+                        >
+                          <FaTrash />
+                        </button>
+                        <button
+                          className="ap-btn ap-btn-warning ap-btn-sm"
+                          onClick={() => setSelectedProductForReviews(product._id)}
+                          title="View reviews"
+                        >
+                          <FaStar />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="ap-empty">
+            <FaBoxOpen className="ap-empty-icon" />
+            <h3>{searchQuery || filterCategory ? 'No products match your filters' : 'No products yet'}</h3>
+            <p>{searchQuery || filterCategory ? 'Try clearing the search or changing the category filter.' : 'Click "Add Product" to create your first product.'}</p>
+          </div>
+        )}
+
+      </div>
+
+      {/* ── Product Reviews Modal ── */}
       {selectedProductForReviews && (
-        <ProductReviewsSection 
+        <ProductReviewsSection
           productId={selectedProductForReviews}
           onClose={() => setSelectedProductForReviews(null)}
         />
       )}
-    </div>
+    </AdminLayout>
   );
 };
 

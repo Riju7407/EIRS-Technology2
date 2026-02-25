@@ -207,28 +207,42 @@ export const authService = {
 // Products Services
 export const productService = {
   getAllProducts: async (page = 1, limit = 50, skipCache = false) => {
-    // Add caching to localStorage for faster subsequent loads
     const cacheKey = `products_cache_${page}_${limit}`;
     const cached = localStorage.getItem(cacheKey);
     const cacheTime = localStorage.getItem(cacheKey + '_time');
+    const isDirty = localStorage.getItem('products_dirty') === 'true';
     
     try {
-      // Use cache if less than 5 minutes old and not skipped (increased from 2 minutes)
-      if (!skipCache && cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
-        console.log('✅ Using cached products (client-side)');
-        return JSON.parse(cached);
+      // Use cache only if fresh, not forced-skip, and not marked dirty by a recent admin update
+      if (!skipCache && !isDirty && cached && cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
+        const parsed = JSON.parse(cached);
+        const firstProduct = Array.isArray(parsed) ? parsed[0] : (parsed?.data?.[0]);
+        if (firstProduct && !('discount' in firstProduct)) {
+          console.log('🔄 Cache busted — discount field missing, fetching fresh data');
+        } else {
+          console.log('✅ Using cached products (client-side)');
+          return parsed;
+        }
       }
       
       console.log('🔄 Fetching products from server...');
-      const response = await api.get(`/auth/products?page=${page}&limit=${limit}`, {
+      // Append a cache-buster when forcing fresh data so the browser's HTTP cache
+      // does not return a stale response (browser caches by URL).
+      const bustParam = (skipCache || isDirty) ? `&_t=${Date.now()}` : '';
+      const response = await api.get(`/auth/products?page=${page}&limit=${limit}${bustParam}`, {
         // Products endpoint may take longer on slow servers, especially first load
         timeout: 45000, // 45 seconds (increased from 15 to handle slow servers/first load)
       });
       
-      // Cache the response
+      // Cache the response; only clear the dirty flag on normal (non-forced) fetches.
+      // Admin's skipCache=true fetches must NOT clear dirty — the user-facing page
+      // must still see isDirty=true so it bypasses any stale cache on its next load.
       try {
         localStorage.setItem(cacheKey, JSON.stringify(response.data));
         localStorage.setItem(cacheKey + '_time', Date.now().toString());
+        if (!skipCache) {
+          localStorage.removeItem('products_dirty'); // only a normal fetch marks data as fresh
+        }
       } catch (storageError) {
         // Handle quota exceeded
         console.warn('LocalStorage quota exceeded, clearing old cache');
@@ -253,9 +267,18 @@ export const productService = {
   // New method to clear product cache for fresh data
   clearProductCache: () => {
     try {
-      localStorage.removeItem('products_cache_1_50');
-      localStorage.removeItem('products_cache_1_50_time');
-      console.log('✅ Product cache cleared');
+      // Clear all product cache keys regardless of page/limit
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('products_cache_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      // Mark dirty so every page bypasses client cache on the very next fetch
+      localStorage.setItem('products_dirty', 'true');
+      console.log('✅ All product caches cleared and marked dirty');
     } catch (error) {
       console.error('Error clearing cache:', error);
     }
@@ -296,6 +319,24 @@ export const productService = {
   deleteProduct: async (id) => {
     try {
       const response = await api.delete(`/auth/products/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getFeaturedProducts: async () => {
+    try {
+      const response = await api.get('/auth/products/featured');
+      return Array.isArray(response.data) ? response.data : response.data.data || [];
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  toggleFeatured: async (id) => {
+    try {
+      const response = await api.put(`/auth/products/${id}/featured`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

@@ -120,9 +120,6 @@ app.use((req, res, next) => {
 const clientBuildPath = path.resolve(__dirname, '..', 'client', 'build');
 console.log(`📁 Serving static files from: ${clientBuildPath}`);
 
-// Serve static files from React build folder
-app.use(express.static(clientBuildPath));
-
 // Health check route (NO auth required)
 app.get('/health', (req, res) => {
     res.status(200).json({ message: 'EIRS API', status: 'running' });
@@ -146,6 +143,10 @@ app.use('/api', locationRouter);
 // Payment routes  →  /payment and /api/payment
 app.use('/payment', paymentRouter);
 app.use('/api/payment', paymentRouter);
+
+// Serve static files from React build AFTER all API routes
+// (express.static only handles GET/HEAD — placing it before routes causes 405 on POST API calls)
+app.use(express.static(clientBuildPath));
 
 // Serve React index.html for all non-API routes (React Router) - BEFORE 404 handler
 app.use((req, res, next) => {

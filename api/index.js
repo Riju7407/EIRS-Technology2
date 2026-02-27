@@ -11,6 +11,9 @@ const app = express();
 // Import routes and middleware
 const databaseconnect = require('../server/config/databaseConfig');
 const { authRouter } = require('../server/router/authRouter');
+const categoryRouter = require('../server/router/categoryRouter');
+const locationRouter = require('../server/router/locationRouter');
+const paymentRouter  = require('../server/router/paymentRouter');
 const User = require('../server/model/userSchema');
 const bcrypt = require('bcrypt');
 
@@ -134,10 +137,20 @@ app.get('/', (req, res) => {
 // Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
 app.use('/auth', authRouter);
 
+// Category, subcategory and filter routes  →  /api/categories, /api/subcategories, /api/filters
+app.use('/api', categoryRouter);
+
+// Location routes  →  /api/location
+app.use('/api', locationRouter);
+
+// Payment routes  →  /payment and /api/payment
+app.use('/payment', paymentRouter);
+app.use('/api/payment', paymentRouter);
+
 // Serve React index.html for all non-API routes (React Router) - BEFORE 404 handler
 app.use((req, res, next) => {
     // Only serve index.html for non-API requests
-    if (!req.path.startsWith('/auth') && !req.path.startsWith('/health')) {
+    if (!req.path.startsWith('/auth') && !req.path.startsWith('/health') && !req.path.startsWith('/api') && !req.path.startsWith('/payment')) {
         res.sendFile(path.join(clientBuildPath, 'index.html'), (err) => {
             if (err) {
                 console.error('Error serving index.html:', err);

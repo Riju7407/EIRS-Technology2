@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaCreditCard, FaWallet, FaMobile, FaMapMarkerAlt, FaBuilding, FaMoneyBillWave } from 'react-icons/fa';
+import { FaTimes, FaCreditCard, FaWallet, FaMobile, FaMapMarkerAlt, FaBuilding, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
 import paymentService from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import '../styles/CheckoutModal.css';
@@ -10,6 +10,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
   const [paymentSubMethod, setPaymentSubMethod] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successOrder, setSuccessOrder] = useState(null); // holds confirmed order
   
   // Address state
   const [shippingAddress, setShippingAddress] = useState({
@@ -156,10 +157,10 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
 
           console.log('COD Verification response:', verifyResponse);
           if (verifyResponse.success) {
-            alert('✓ Order placed successfully! You will pay when the order is delivered.');
             localStorage.removeItem('cart');
+            setSuccessOrder({ type: 'cod', order: verifyResponse.order });
             onClose();
-            window.location.href = '/orders';
+            window.location.href = `/order-success?orderId=${verifyResponse.order?._id}&type=cod`;
           } else {
             setError(verifyResponse.message || 'Failed to place order. Please try again.');
           }
@@ -186,11 +187,14 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
 
       // Razorpay options
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
         amount: Math.round(totalAmount * 100),
         currency: 'INR',
-        name: 'EIRS',
+        name: 'EIRS Technology',
         description: `Purchase of ${cartItems.length} product(s)`,
+        image: 'https://eirstechnology.com/logo192.png',
+        companyLogo: 'EIRS Technology',
+        business_info: { gstin: '29AANCR6717K1ZN' },
         order_id: orderId,
         handler: async (response) => {
           try {
@@ -205,10 +209,10 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
 
             console.log('Verification response:', verifyResponse);
             if (verifyResponse.success) {
-              alert('✓ Payment successful! Your order has been placed.');
-              localStorage.removeItem('cart'); // Clear cart after successful payment
+              localStorage.removeItem('cart');
+              setSuccessOrder({ type: 'online', order: verifyResponse.order, paymentId: response.razorpay_payment_id });
               onClose();
-              window.location.href = '/orders'; // Redirect to orders page
+              window.location.href = `/order-success?orderId=${verifyResponse.order?._id}&paymentId=${response.razorpay_payment_id}`;
             } else {
               setError('Payment verification failed. Please contact support.');
             }
@@ -225,7 +229,9 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
           contact: shippingAddress.phone,
         },
         theme: {
-          color: '#667eea',
+          color: '#1a73e8',
+          backdrop_color: 'rgba(0, 0, 0, 0.6)',
+          hide_topbar: false,
         },
         method: {
           upi: true,
@@ -251,11 +257,46 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
     }
   };
 
+  /* ── Success screen ── */
+  if (successOrder) {
+    const isCod = successOrder.type === 'cod';
+    return (
+      <div className="checkout-modal-overlay">
+        <div className="checkout-modal checkout-success-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="success-inner">
+            <FaCheckCircle className="success-icon" />
+            <h2>{isCod ? 'Order Placed!' : 'Payment Successful!'}</h2>
+            <p className="success-sub">
+              {isCod
+                ? 'Your order is confirmed. Pay when it arrives.'
+                : `Payment ID: ${successOrder.paymentId}`}
+            </p>
+            <p className="success-brand">Thank you for shopping with <strong>EIRS Technology</strong></p>
+            <div className="success-actions">
+              <button
+                className="btn btn-pay"
+                onClick={() => { onClose(); window.location.href = '/orders'; }}
+              >
+                View My Orders
+              </button>
+              <button
+                className="btn btn-cancel"
+                onClick={() => { onClose(); window.location.href = '/products'; }}
+              >
+                Continue Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="checkout-modal-overlay" onClick={onClose}>
       <div className="checkout-modal" onClick={(e) => e.stopPropagation()}>
         <div className="checkout-header">
-          <h2>Checkout</h2>
+          <h2>Checkout — EIRS Technology</h2>
           <button className="close-btn" onClick={onClose}>
             <FaTimes />
           </button>

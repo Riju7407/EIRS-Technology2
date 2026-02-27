@@ -6,6 +6,7 @@ const port = process.env.PORT || 5000;
 const {authRouter} = require('./router/authRouter.js');
 const paymentRouter = require('./router/paymentRouter.js');
 const categoryRouter = require('./router/categoryRouter.js');
+const locationRouter = require('./router/locationRouter.js');
 const databaseconnect = require('./config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -97,7 +98,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '50mb' }));
+// Capture raw body for Razorpay webhook signature verification
+app.use(express.json({
+    limit: '50mb',
+    verify: (req, _res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
@@ -119,6 +126,9 @@ app.use('/payment', paymentRouter);
 app.use('/api/payment', paymentRouter);
 
 app.use('/api', categoryRouter);
+
+// Geospatial location routes – POST /api/location, GET /api/location/nearby
+app.use('/api', locationRouter);
 
 // Health check endpoints - Critical for Render to keep server awake
 app.get('/health', (req, res) => {

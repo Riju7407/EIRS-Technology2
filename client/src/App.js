@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { CategoryFilterProvider } from './context/CategoryFilterContext';
 import { WishlistProvider } from './context/WishlistContext';
-import { useAuth } from './context/AuthContext';
 import useKeepServerAwake from './hooks/useKeepServerAwake';
 import Header from './components/Header';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
@@ -32,37 +31,13 @@ import AdminProducts from './pages/AdminProducts';
 import AdminServices from './pages/AdminServices';
 import AdminOrders from './pages/AdminOrders';
 import PhoneSignUp from './pages/PhoneSignUp';
-import PhoneOTPLoginPopup from './components/PhoneOTPLoginPopup';
 import './App.css';
 
 
 function AppContent() {
   const location = useLocation();
-  const { isAdmin, isLoggedIn, loading } = useAuth();
-  const [showOTPPopup, setShowOTPPopup] = useState(false);
-
   // Keep Render server awake by pinging /health every 25 minutes
   useKeepServerAwake();
-
-  // Auto-show popup once per session for non-logged-in users
-  useEffect(() => {
-    // Skip on auth/admin pages and while auth is still loading
-    const skipPaths = ['/signin', '/signup', '/phonesignup', '/forgot-password', '/reset-password'];
-    const isAuthPage  = skipPaths.includes(location.pathname);
-    const isAdminPath = location.pathname.startsWith('/admin');
-
-    if (loading || isLoggedIn || isAuthPage || isAdminPath) return;
-
-    // Only flash once per browser session
-    if (sessionStorage.getItem('otp_popup_shown')) return;
-
-    const timer = setTimeout(() => {
-      setShowOTPPopup(true);
-      sessionStorage.setItem('otp_popup_shown', '1');
-    }, 1500); // 1.5 s delay so the page paints first
-
-    return () => clearTimeout(timer);
-  }, [loading, isLoggedIn, location.pathname]);
 
   // Hide Footer on orders page, account page, phone signup page, product detail pages, about page, contact page, and services page
   const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup', '/about', '/contact', '/services'];
@@ -103,10 +78,6 @@ function AppContent() {
       </Routes>
       {shouldShowFooter && <Footer />}
 
-      {/* Auto-popup: shows once per session for guest users */}
-      {showOTPPopup && (
-        <PhoneOTPLoginPopup onClose={() => setShowOTPPopup(false)} />
-      )}
     </div>
   );
 }

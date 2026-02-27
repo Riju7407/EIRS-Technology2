@@ -1,0 +1,250 @@
+/* ================================================================
+   LocationPicker.css  —  lp-* prefix design system
+   Matches the ContactPage cp-* design tokens
+   ================================================================ */
+
+/* ── Wrapper ──────────────────────────────────────────────────── */
+.lp-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Toolbar (detect button + badges) ─────────────────────────── */
+.lp-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Detect button – base style */
+.lp-detect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+/* idle / default */
+.lp-detect-btn--idle,
+.lp-detect-btn--error,
+.lp-detect-btn--denied {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+}
+.lp-detect-btn--idle:hover,
+.lp-detect-btn--error:hover,
+.lp-detect-btn--denied:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(102, 126, 234, 0.45);
+}
+
+/* loading */
+.lp-detect-btn--loading {
+  background: linear-gradient(135deg, #a0aec0, #718096);
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* success */
+.lp-detect-btn--success {
+  background: linear-gradient(135deg, #38a169, #2f855a);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(56, 161, 105, 0.35);
+}
+.lp-detect-btn--success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(56, 161, 105, 0.45);
+}
+
+/* Spinning icon for loading state */
+.lp-spin {
+  animation: lp-rotate 0.9s linear infinite;
+}
+@keyframes lp-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Saved badge */
+.lp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.lp-badge--saved {
+  background: #f0fff4;
+  color: #38a169;
+  border: 1px solid #c6f6d5;
+}
+
+/* Manual toggle link */
+.lp-manual-toggle {
+  background: transparent;
+  border: none;
+  color: #667eea;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-left: auto;
+  transition: color 0.2s;
+}
+.lp-manual-toggle:hover { color: #764ba2; }
+
+/* ── Error / notice box ────────────────────────────────────────── */
+.lp-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.lp-notice--error {
+  background: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
+.lp-notice--error svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ── Map container ─────────────────────────────────────────────── */
+.lp-map-container {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid #e5e9f0;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+  animation: lp-slideDown 0.35s ease;
+}
+@keyframes lp-slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lp-map {
+  width: 100%;
+  height: 280px;
+  z-index: 0;
+}
+
+/* ── Address strip below the map ───────────────────────────────── */
+.lp-address-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f7f9ff, #eef1ff);
+  border-top: 1px solid #e5e9f0;
+}
+.lp-addr-icon {
+  color: #667eea;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.lp-addr-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.4;
+}
+
+/* ── Coordinates line ──────────────────────────────────────────── */
+.lp-coords {
+  padding: 6px 16px 10px;
+  font-size: 0.72rem;
+  color: #a0aec0;
+  font-family: monospace;
+  background: #f7f9ff;
+  letter-spacing: 0.4px;
+}
+
+/* ── Manual text input ─────────────────────────────────────────── */
+.lp-manual-input {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.lp-text-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e5e9f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1a1a2e;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.lp-text-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+.lp-hint {
+  font-size: 0.78rem;
+  color: #a0aec0;
+  margin: 0;
+  padding-left: 2px;
+}
+
+/* ── Pulsing marker icon ─────────────────────────────────────────
+   Used as a custom Leaflet DivIcon
+   ─────────────────────────────────────────────────────────────── */
+.lp-pulsing-marker {
+  background: transparent !important;
+  border: none !important;
+}
+.lp-marker-outer {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: lp-pulse 2s ease-out infinite;
+}
+.lp-marker-inner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+}
+@keyframes lp-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.5); }
+  70%  { box-shadow: 0 0 0 20px rgba(102, 126, 234, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+}
+
+/* ── Leaflet popup override ────────────────────────────────────── */
+.lp-popup .leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  font-size: 0.85rem;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .lp-detect-btn { padding: 9px 16px; font-size: 0.82rem; }
+  .lp-map        { height: 220px; }
+  .lp-manual-toggle { margin-left: 0; }
+}

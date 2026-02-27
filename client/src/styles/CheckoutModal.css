@@ -454,3 +454,65 @@
     grid-template-columns: 1fr;
   }
 }
+/* ── Order Success Screen ───────────────────────────────── */
+.checkout-success-modal {
+  max-width: 460px;
+  padding: 0;
+}
+
+.success-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 32px;
+  gap: 12px;
+}
+
+.success-icon {
+  font-size: 4rem;
+  color: #16a34a;
+  animation: popIn 0.5s ease-out;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.success-inner h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #111827;
+}
+
+.success-sub {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.success-brand {
+  margin: 4px 0 16px;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.success-brand strong {
+  color: #1a73e8;
+}
+
+.success-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.success-actions .btn {
+  flex: 1;
+  min-width: 140px;
+}

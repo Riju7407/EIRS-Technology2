@@ -8,6 +8,7 @@ import {
 import { contactService } from '../services/api';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
 import CategorySidebar from '../components/CategorySidebar';
+import LocationPicker from '../components/LocationPicker';
 import Footer from '../components/Footer';
 import '../styles/ContactPage.css';
 
@@ -66,6 +67,14 @@ const ContactPage = () => {
     setLoading(true);
     setError('');
     setSuccess(false);
+
+    // Validate location field (LocationPicker is a custom component, so check manually)
+    if (!formData.location || formData.location.trim().length < 3) {
+      setError('Please provide your location (use Auto-Detect or type it manually).');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await contactService.submitContact(formData);
       if (response.success) {
@@ -221,11 +230,13 @@ const ContactPage = () => {
 
                     <div className="cp-form-group">
                       <label htmlFor="location">Your Location <span>*</span></label>
-                      <input
-                        type="text" id="location" name="location"
-                        value={formData.location} onChange={handleInputChange}
-                        required placeholder="City, state or full address"
-                        maxLength="200"
+                      {/* LocationPicker: auto-detects GPS, shows OpenStreetMap,
+                          reverse-geocodes via Nominatim, and saves coords to backend */}
+                      <LocationPicker
+                        value={formData.location}
+                        onChange={(resolvedAddress) =>
+                          setFormData(prev => ({ ...prev, location: resolvedAddress }))
+                        }
                       />
                     </div>
 

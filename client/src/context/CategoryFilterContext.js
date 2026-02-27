@@ -21,7 +21,7 @@ export const CategoryFilterProvider = ({ children }) => {
 
   // Use environment-specific API base URL
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? (process.env.REACT_APP_API_URL || 'https://eirs-technology2-2.onrender.com')
+    ? (process.env.REACT_APP_API_URL || 'https://eirs-technology-1.onrender.com')
     : (process.env.REACT_APP_API_URL || 'http://localhost:5000');
   
   const API_BASE = `${API_BASE_URL}/api`;

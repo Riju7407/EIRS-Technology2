@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 const PING_INTERVAL = 25 * 60 * 1000; // 25 minutes (Render sleeps after 30 min)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 
                      (process.env.NODE_ENV === 'production' 
-                        ? 'https://eirs-technology2-2.onrender.com'
+                        ? 'https://eirs-technology-1.onrender.com'
                         : 'http://localhost:5000');
 
 /**

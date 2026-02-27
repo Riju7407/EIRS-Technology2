@@ -4,7 +4,7 @@ import axios from 'axios';
 // For production (Vercel frontend + Render backend): Use Render backend URL
 // For development: use localhost backend
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? (process.env.REACT_APP_API_URL || 'https://eirs-technology2-2.onrender.com')
+  ? (process.env.REACT_APP_API_URL || 'https://eirs-technology-1.onrender.com')
   : (process.env.REACT_APP_API_URL || 'http://localhost:5000');
 
 console.log('🔗 API_BASE_URL:', API_BASE_URL);

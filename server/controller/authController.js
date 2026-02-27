@@ -656,6 +656,300 @@ const changePasswordWithOTP = async (req, res, next) => {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Phone OTP – Twilio Verify  (send / verify / register-or-login)
+// ─────────────────────────────────────────────────────────────────────────────
+const { sendPhoneOTP, verifyPhoneOTP } = require('../services/twilioService');
+const jwt = require('jsonwebtoken');
+
+/**
+ * POST /auth/phone-otp/send
+ * Body: { phone }   e.g. "9876543210" or "+919876543210"
+ * Normalises to E.164 (+91 prefix) before calling Twilio.
+ */
+const sendPhoneLoginOTP = async (req, res) => {
+    try {
+        let { phone } = req.body;
+        if (!phone) return res.status(400).json({ success: false, message: 'Phone number is required' });
+
+        // Normalise: keep digits only, then prefix +91 if not already E.164
+        const digits = phone.replace(/\D/g, '');
+        let e164;
+        if (phone.startsWith('+')) {
+            e164 = '+' + digits;
+        } else if (digits.length === 10) {
+            e164 = '+91' + digits;
+        } else if (digits.length === 12 && digits.startsWith('91')) {
+            e164 = '+' + digits;
+        } else {
+            return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number' });
+        }
+
+        await sendPhoneOTP(e164);
+
+        // Tell the client whether this phone is already registered
+        const rawDigits = e164.replace(/\D/g, '').slice(-10);
+        const existing = await userSchema.findOne({
+            phoneNumber: { $in: [rawDigits, '91' + rawDigits, e164] }
+        });
+
+        return res.status(200).json({
+            success:      true,
+            isNewUser:    !existing,
+            phone:        e164,
+            message:      `OTP sent to ${e164}`
+        });
+    } catch (err) {
+        console.error('[sendPhoneLoginOTP]', err.message);
+        return res.status(err.httpStatus || 500).json({ success: false, message: err.message || 'Failed to send OTP' });
+    }
+};
+
+/**
+ * POST /auth/phone-otp/verify
+ * Body: { phone, code }
+ * Returns a short-lived JWT (phoneVerified token) if valid.
+ */
+const verifyPhoneLoginOTP = async (req, res) => {
+    try {
+        const { phone, code } = req.body;
+        if (!phone || !code) return res.status(400).json({ success: false, message: 'Phone and OTP code are required' });
+
+        const result = await verifyPhoneOTP(phone, code);
+        if (!result.valid) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
+        }
+
+        // Check if user already exists with this phone number
+        const rawDigits = phone.replace(/\D/g, '').slice(-10);
+        const user = await userSchema.findOne({
+            phoneNumber: { $in: [rawDigits, '91' + rawDigits, phone] }
+        });
+
+        if (user) {
+            // Returning user – issue full auth token, log them in
+            const token = user.jwtToken();
+            res.cookie('token', token, {
+                maxAge:   24 * 60 * 60 * 1000,
+                httpOnly: true,
+                secure:   process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
+            });
+            return res.status(200).json({
+                success:   true,
+                isNewUser: false,
+                token,
+                data: {
+                    _id:     user._id,
+                    id:      user._id,
+                    name:    user.name,
+                    email:   user.email,
+                    isAdmin: user.isAdmin
+                },
+                message: `Welcome back, ${user.name}!`
+            });
+        }
+
+        // New user – issue a short-lived phone-verified token for the registration step
+        const phoneToken = jwt.sign(
+            { phone, verified: true },
+            process.env.PHONE_JWT_SECRET || 'phone_otp_secret',
+            { expiresIn: '15m' }
+        );
+
+        return res.status(200).json({
+            success:    true,
+            isNewUser:  true,
+            phoneToken,
+            message:    'Phone verified. Complete your profile to continue.'
+        });
+    } catch (err) {
+        console.error('[verifyPhoneLoginOTP]', err.message);
+        return res.status(500).json({ success: false, message: err.message || 'OTP verification failed' });
+    }
+};
+
+/**
+ * POST /auth/phone-otp/register
+ * Body: { phoneToken, name, email, address }
+ * The phoneToken proves the phone was verified by Twilio.
+ */
+const registerWithPhoneOTP = async (req, res) => {
+    try {
+        const { phoneToken, name, email, address } = req.body;
+        if (!phoneToken || !name || !email || !address) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(phoneToken, process.env.PHONE_JWT_SECRET || 'phone_otp_secret');
+        } catch {
+            return res.status(401).json({ success: false, message: 'Phone verification token expired. Please restart the login process.' });
+        }
+
+        if (!decoded.verified) {
+            return res.status(401).json({ success: false, message: 'Phone not verified' });
+        }
+
+        const rawDigits = decoded.phone.replace(/\D/g, '').slice(-10);
+
+        // Double-check no duplicate
+        const already = await userSchema.findOne({ email: email.toLowerCase().trim() });
+        if (already) {
+            return res.status(400).json({ success: false, message: 'An account with this email already exists. Please sign in.' });
+        }
+
+        // Create the user (no password needed – phone OTP is the credential)
+        const randomPwd = require('crypto').randomBytes(16).toString('hex');
+        const newUser = new userSchema({
+            name:        name.trim(),
+            email:       email.toLowerCase().trim(),
+            phoneNumber: rawDigits,
+            address:     address.trim(),
+            password:    randomPwd   // will be hashed by pre-save hook
+        });
+        const saved = await newUser.save();
+
+        const token = saved.jwtToken();
+        res.cookie('token', token, {
+            maxAge:   24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure:   process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+        });
+
+        return res.status(201).json({
+            success: true,
+            token,
+            data: {
+                _id:     saved._id,
+                id:      saved._id,
+                name:    saved.name,
+                email:   saved.email,
+                isAdmin: saved.isAdmin
+            },
+            message: `Welcome to EIRS Technology, ${saved.name}!`
+        });
+    } catch (err) {
+        console.error('[registerWithPhoneOTP]', err.message);
+        if (err.code === 11000) {
+            return res.status(400).json({ success: false, message: 'Email already registered. Please sign in.' });
+        }
+        return res.status(500).json({ success: false, message: err.message || 'Registration failed' });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Popup OTP – send & verify
+// Used by the login/registration popup that initiates a session via OTP.
+// Accepts { email } in the request body, generates a 6-digit OTP, stores it
+// on the user document, and sends it via email (same flow as password-change OTP).
+// ─────────────────────────────────────────────────────────────────────────────
+const sendPopupOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+        }
+
+        const user = await userSchema.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'No account found with this email'
+            });
+        }
+
+        const otp        = generateOTP();
+        const otpExpiry  = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+        user.otp        = otp;
+        user.otpExpiry  = otpExpiry;
+        user.otpPurpose = 'popup-otp';
+        await user.save();
+
+        let emailSent = false;
+        try {
+            await sendOTPEmail(email, otp, 'popup-otp');
+            emailSent = true;
+        } catch (emailErr) {
+            console.error('[sendPopupOTP] Email send failed:', emailErr.message);
+            if (process.env.NODE_ENV === 'production') {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to send OTP email. Please try again later.'
+                });
+            }
+            console.log(`\n[DEV] Popup OTP for ${email}: ${otp}\n`);
+        }
+
+        return res.status(200).json({
+            success: true,
+            emailSent,
+            message: emailSent
+                ? `OTP sent to ${email}. Valid for 10 minutes.`
+                : `OTP generated (dev mode – check server console). Valid for 10 minutes.`
+        });
+    } catch (error) {
+        console.error('[sendPopupOTP] error:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Server error while sending OTP'
+        });
+    }
+};
+
+const verifyPopupOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and OTP are required'
+            });
+        }
+
+        const user = await userSchema.findOne({
+            email:     email.toLowerCase().trim(),
+            otp:       otp,
+            otpExpiry: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired OTP'
+            });
+        }
+
+        // Clear OTP after successful verification
+        user.otp        = undefined;
+        user.otpExpiry  = undefined;
+        user.otpPurpose = undefined;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            verified: true,
+            message:  'OTP verified successfully'
+        });
+    } catch (error) {
+        console.error('[verifyPopupOTP] error:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Server error while verifying OTP'
+        });
+    }
+};
+
 module.exports = {
     signup,
     signin,
@@ -669,5 +963,10 @@ module.exports = {
     requestPasswordChangeOTP,
     verifyOTP,
     resetPasswordWithOTP,
-    changePasswordWithOTP
+    changePasswordWithOTP,
+    sendPopupOTP,
+    verifyPopupOTP,
+    sendPhoneLoginOTP,
+    verifyPhoneLoginOTP,
+    registerWithPhoneOTP
 };

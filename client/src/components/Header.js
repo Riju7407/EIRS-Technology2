@@ -4,6 +4,7 @@ import { FaBars, FaTimes, FaUser, FaShoppingCart, FaBox, FaSearch, FaHome, FaSer
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
+import PhoneOTPLoginPopup from './PhoneOTPLoginPopup';
 import '../styles/Header_Flipkart.css';
 
 // Header component with auth context integration
@@ -11,6 +12,7 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [showOTPPopup, setShowOTPPopup] = useState(false);
   const { isLoggedIn, isAdmin, logout, user } = useAuth();
   const navigate = useNavigate();
   const { getTotalItems, clearCart } = useCart();
@@ -104,12 +106,13 @@ const Header = () => {
                 <div className="user-dropdown-menu">
                   {!isLoggedIn ? (
                     <div className="auth-buttons-container">
-                      <Link to="/signin" className="dropdown-link signin-link" onClick={() => setIsUserMenuOpen(false)}>
-                        Sign In
-                      </Link>
-                      <Link to="/signup" className="dropdown-link signup-link" onClick={() => setIsUserMenuOpen(false)}>
-                        Sign Up
-                      </Link>
+                      <button
+                        className="dropdown-link signin-link"
+                        onClick={() => { setIsUserMenuOpen(false); setShowOTPPopup(true); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', padding: 0 }}
+                      >
+                        Sign In / Sign Up
+                      </button>
                     </div>
                   ) : (
                     <>
@@ -231,6 +234,11 @@ const Header = () => {
           </div>
         )}
       </header>
+
+      {/* Phone OTP Login / Register Popup */}
+      {showOTPPopup && (
+        <PhoneOTPLoginPopup onClose={() => setShowOTPPopup(false)} />
+      )}
     </>
   );
 };

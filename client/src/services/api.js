@@ -202,6 +202,62 @@ export const authService = {
       throw error.response?.data || error.message;
     }
   },
+
+  // ── Phone OTP Popup ────────────────────────────────────────────
+  sendPhoneOTP: async (phone) => {
+    try {
+      const response = await api.post('/auth/otp/send', { phone });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to send OTP');
+    }
+  },
+
+  verifyPhoneOTP: async (phone, otp) => {
+    try {
+      const response = await api.post('/auth/otp/verify', { phone, otp });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to verify OTP');
+    }
+  },
+
+  completePhoneRegistration: async (tempToken, name, email, address) => {
+    try {
+      const response = await api.post('/auth/otp/register', { tempToken, name, email, address });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'Registration failed');
+    }
+  },
+
+  // ── Twilio Phone OTP Login / Registration ─────────────────────────────────
+  sendTwilioPhoneOTP: async (phone) => {
+    try {
+      const response = await api.post('/auth/phone-otp/send', { phone });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to send OTP');
+    }
+  },
+
+  verifyTwilioPhoneOTP: async (phone, code) => {
+    try {
+      const response = await api.post('/auth/phone-otp/verify', { phone, code });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'OTP verification failed');
+    }
+  },
+
+  registerWithTwilioPhoneOTP: async ({ phoneToken, name, email, address }) => {
+    try {
+      const response = await api.post('/auth/phone-otp/register', { phoneToken, name, email, address });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || error.message || 'Registration failed');
+    }
+  },
 };
 
 // Products Services
@@ -419,6 +475,39 @@ export const contactService = {
   submitContact: async (formData) => {
     try {
       const response = await api.post('/auth/contact', formData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+};
+
+// Location Service – save detected coordinates + address to MongoDB
+export const locationService = {
+  /**
+   * Save the user's detected location to the backend.
+   * @param {{ latitude: number, longitude: number, address: string }} payload
+   */
+  saveLocation: async (payload) => {
+    try {
+      const response = await api.post('/api/location', payload);
+      return response.data;
+    } catch (error) {
+      // Non-critical – don't block the form; just propagate so LocationPicker
+      // can show a subtle indicator
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * Find locations within `radius` metres of the given coordinates.
+   * @param {{ lat: number, lng: number, radius?: number }} params
+   */
+  getNearby: async ({ lat, lng, radius = 5000 }) => {
+    try {
+      const response = await api.get('/api/location/nearby', {
+        params: { lat, lng, radius },
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, changePassword, forgotPassword, resetPassword, requestPasswordChangeOTP, verifyOTP, resetPasswordWithOTP, changePasswordWithOTP } = require('../controller/authController');
+const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, changePassword, forgotPassword, resetPassword, requestPasswordChangeOTP, verifyOTP, resetPasswordWithOTP, changePasswordWithOTP, sendPopupOTP, verifyPopupOTP, sendPhoneLoginOTP, verifyPhoneLoginOTP, registerWithPhoneOTP } = require('../controller/authController');
 const { services, getAllServices, deleteService, addService, updateService } = require('../controller/serviceController');
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
@@ -53,6 +53,15 @@ authRouter.post('/request-otp', requestPasswordChangeOTP);
 authRouter.post('/verify-otp', verifyOTP);
 authRouter.post('/reset-password-otp', resetPasswordWithOTP);
 authRouter.post('/change-password-otp', jwtAuth, changePasswordWithOTP);
+
+// ── OTP Popup Registration / Login routes ──────────────────────
+authRouter.post('/otp/send', sendPopupOTP);
+authRouter.post('/otp/verify', verifyPopupOTP);
+
+// ── Phone Number OTP Login / Registration (Twilio Verify) ──────
+authRouter.post('/phone-otp/send',     sendPhoneLoginOTP);
+authRouter.post('/phone-otp/verify',   verifyPhoneLoginOTP);
+authRouter.post('/phone-otp/register', registerWithPhoneOTP);
 
 authRouter.get('/services', services);
 authRouter.get('/users', adminMiddleware, getAllUsers);

@@ -134,13 +134,16 @@ app.get('/', (req, res) => {
 // Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
 app.use('/auth', authRouter);
 
-// Category, subcategory and filter routes  →  /api/categories, /api/subcategories, /api/filters
-app.use('/api', categoryRouter);
+// Category, subcategory and filter routes
+// Mount at BOTH '/' and '/api' so routes work whether Vercel rewrites strip /api or not
+app.use('/', categoryRouter);      // Vercel: /categories (after rewrite strips /api)
+app.use('/api', categoryRouter);   // Direct/Render: /api/categories
 
-// Location routes  →  /api/location
-app.use('/api', locationRouter);
+// Location routes
+app.use('/', locationRouter);      // Vercel: /location (after rewrite strips /api)
+app.use('/api', locationRouter);   // Direct/Render: /api/location
 
-// Payment routes  →  /payment and /api/payment
+// Payment routes
 app.use('/payment', paymentRouter);
 app.use('/api/payment', paymentRouter);
 
@@ -151,7 +154,9 @@ app.use(express.static(clientBuildPath));
 // Serve React index.html for all non-API routes (React Router) - BEFORE 404 handler
 app.use((req, res, next) => {
     // Only serve index.html for non-API requests
-    if (!req.path.startsWith('/auth') && !req.path.startsWith('/health') && !req.path.startsWith('/api') && !req.path.startsWith('/payment')) {
+    const apiPrefixes = ['/auth', '/health', '/api', '/payment', '/categories', '/subcategories', '/filters', '/location'];
+    const isApiRoute = apiPrefixes.some(p => req.path.startsWith(p));
+    if (!isApiRoute) {
         res.sendFile(path.join(clientBuildPath, 'index.html'), (err) => {
             if (err) {
                 console.error('Error serving index.html:', err);

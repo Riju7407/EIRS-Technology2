@@ -12,13 +12,24 @@ const jwtAuth = (req, res, next) => {
     }
     
     if (!token) {
+        console.warn(`[jwtAuth] No token provided for ${req.method} ${req.path}`);
         return res.status(401).json({
             success: false,
             message: "Unauthorized: No token provided"
         });
     }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        console.error('[jwtAuth] JWT_SECRET is not set in environment!');
+        return res.status(500).json({
+            success: false,
+            message: "Server configuration error"
+        });
+    }
+
     try {
-        const payload = JWT.verify(token, process.env.JWT_SECRET);
+        const payload = JWT.verify(token, secret);
         req.user = { 
             _id: payload.id, 
             id: payload.id,
@@ -27,9 +38,10 @@ const jwtAuth = (req, res, next) => {
             name: payload.name
         };
     } catch (error) {
+        console.warn(`[jwtAuth] Token verification failed for ${req.method} ${req.path}: ${error.message}`);
         return res.status(401).json({
             success: false, 
-            message: "Unauthorized: Invalid token"
+            message: "Unauthorized: " + (error.name === 'TokenExpiredError' ? 'Token expired, please sign in again' : 'Invalid token')
         });
     }
     next();

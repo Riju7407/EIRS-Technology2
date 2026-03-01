@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? (process.env.REACT_APP_API_URL || 'https://eirs-technology-1.onrender.com')
+  ? (process.env.REACT_APP_API_URL || 'https://eirs-technology2-2.onrender.com')
   : (process.env.REACT_APP_API_URL || 'http://localhost:5000');
 
 const paymentApi = axios.create({
@@ -31,7 +31,9 @@ export const paymentService = {
       const response = await paymentApi.post('/payment/orders', orderData);
       return response.data;
     } catch (error) {
-      throw error.response?.data || error.message;
+      const err = error.response?.data || { message: error.message };
+      err.status = error.response?.status;
+      throw err;
     }
   },
 

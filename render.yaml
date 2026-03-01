@@ -12,6 +12,7 @@ services:
         scope: build,runtime
         value: mongodb+srv://rijusarkar9640:hgtWfu3E5SqFxZXh@cluster0.6bdcvde.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       - key: JWT_SECRET
+        scope: build,runtime
         value: Secret
       - key: NODE_ENV
         value: production

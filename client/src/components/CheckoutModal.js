@@ -132,7 +132,13 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
         orderResponse = await paymentService.createOrder(orderData);
       } catch (orderError) {
         console.error('❌ Order creation error:', orderError);
-        setError('Failed to create order: ' + (orderError.message || JSON.stringify(orderError)));
+        // Check if it's a 401 auth error - prompt re-login
+        const statusCode = orderError?.status || orderError?.response?.status;
+        if (statusCode === 401) {
+          setError('Your session has expired. Please sign in again and retry.');
+        } else {
+          setError('Failed to create order: ' + (orderError.message || JSON.stringify(orderError)));
+        }
         setLoading(false);
         return;
       }

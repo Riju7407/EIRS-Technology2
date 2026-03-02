@@ -454,20 +454,21 @@ const requestPasswordChangeOTP = async (req, res, next) => {
         user.otpPurpose = purpose;
         await user.save();
 
-        // Send OTP email — fall back to console log in dev if email fails
+        // Send OTP email — fall back to console log only in local development
         let emailSent = false;
         try {
             await sendOTPEmail(email, otp, purpose);
             emailSent = true;
         } catch (emailError) {
             console.error('Email sending failed:', emailError.message);
-            if (process.env.NODE_ENV === 'production') {
+            if (process.env.NODE_ENV !== 'development') {
+                // In staging / production (or when NODE_ENV is not set) always return an error
                 return res.status(500).json({
                     success: false,
-                    message: `Failed to send OTP: ${emailError.message || 'Email server error'}. Check EMAIL_USER/EMAIL_PASSWORD in .env and ensure a valid Gmail App Password is set.`
+                    message: `Failed to send OTP email. Please check your email address and try again. If the problem persists, contact support.`
                 });
             }
-            // In development — log OTP to console so it can be used even without working email
+            // In local development — log OTP to console so it can be used without working email
             console.log('');
             console.log('╔══════════════════════════════════════════════════╗');
             console.log('║            ⚠️  DEV MODE: EMAIL BYPASSED           ║');
@@ -911,10 +912,10 @@ const sendPopupOTP = async (req, res) => {
             emailSent = true;
         } catch (emailErr) {
             console.error('[sendPopupOTP] Email send failed:', emailErr.message);
-            if (process.env.NODE_ENV === 'production') {
+            if (process.env.NODE_ENV !== 'development') {
                 return res.status(500).json({
                     success: false,
-                    message: 'Failed to send OTP email. Please try again later.'
+                    message: 'Failed to send OTP email. Please check your email address and try again.'
                 });
             }
             console.log(`\n[DEV] Popup OTP for ${email}: ${otp}\n`);

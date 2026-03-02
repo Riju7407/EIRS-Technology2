@@ -658,73 +658,103 @@ const changePasswordWithOTP = async (req, res, next) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
-// Phone OTP – Twilio Verify  (send / verify / register-or-login)
+// Phone OTP – Fast2SMS  (send / verify / register-or-login)
 // ─────────────────────────────────────────────────────────────────────────────
-const { sendPhoneOTP, verifyPhoneOTP } = require('../services/twilioService');
+const { generateOTP: generatePhoneOTP, sendOTPviaSMS } = require('../services/fast2smsService');
 const jwt = require('jsonwebtoken');
+
+// In-memory OTP store  { "9876543210": { otp, expiresAt } }
+// For production you should use Redis / DB; this works fine for single-instance.
+const phoneOTPStore = new Map();
 
 /**
  * POST /auth/phone-otp/send
  * Body: { phone }   e.g. "9876543210" or "+919876543210"
- * Normalises to E.164 (+91 prefix) before calling Twilio.
+ * Sends a 6-digit OTP via Fast2SMS Quick SMS.
  */
 const sendPhoneLoginOTP = async (req, res) => {
     try {
         let { phone } = req.body;
         if (!phone) return res.status(400).json({ success: false, message: 'Phone number is required' });
 
-        // Normalise: keep digits only, then prefix +91 if not already E.164
+        // Normalise to 10 digits
         const digits = phone.replace(/\D/g, '');
-        let e164;
-        if (phone.startsWith('+')) {
-            e164 = '+' + digits;
-        } else if (digits.length === 10) {
-            e164 = '+91' + digits;
+        let rawDigits;
+        if (digits.length === 10) {
+            rawDigits = digits;
         } else if (digits.length === 12 && digits.startsWith('91')) {
-            e164 = '+' + digits;
+            rawDigits = digits.slice(2);
+        } else if (digits.length === 13 && digits.startsWith('91')) {
+            rawDigits = digits.slice(3);
         } else {
             return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number' });
         }
 
-        await sendPhoneOTP(e164);
+        // Rate-limit: allow resend only after 30 seconds
+        const existing = phoneOTPStore.get(rawDigits);
+        if (existing && existing.expiresAt > Date.now() && (Date.now() - existing.createdAt < 30000)) {
+            return res.status(429).json({ success: false, message: 'Please wait 30 seconds before requesting another OTP' });
+        }
+
+        const otp = generatePhoneOTP();
+
+        // Send via Fast2SMS
+        await sendOTPviaSMS(rawDigits, otp);
+
+        // Store OTP (valid for 5 minutes)
+        phoneOTPStore.set(rawDigits, {
+            otp,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + 5 * 60 * 1000
+        });
 
         // Tell the client whether this phone is already registered
-        const rawDigits = e164.replace(/\D/g, '').slice(-10);
-        const existing = await userSchema.findOne({
-            phoneNumber: { $in: [rawDigits, '91' + rawDigits, e164] }
+        const existingUser = await userSchema.findOne({
+            phoneNumber: { $in: [rawDigits, '91' + rawDigits, '+91' + rawDigits] }
         });
 
         return res.status(200).json({
-            success:      true,
-            isNewUser:    !existing,
-            phone:        e164,
-            message:      `OTP sent to ${e164}`
+            success:   true,
+            isNewUser: !existingUser,
+            phone:     rawDigits,
+            message:   `OTP sent to ${rawDigits}`
         });
     } catch (err) {
         console.error('[sendPhoneLoginOTP]', err.message);
-        return res.status(err.httpStatus || 500).json({ success: false, message: err.message || 'Failed to send OTP' });
+        return res.status(500).json({ success: false, message: err.message || 'Failed to send OTP' });
     }
 };
 
 /**
  * POST /auth/phone-otp/verify
  * Body: { phone, code }
- * Returns a short-lived JWT (phoneVerified token) if valid.
+ * Validates OTP from in-memory store. Returns JWT on success.
  */
 const verifyPhoneLoginOTP = async (req, res) => {
     try {
         const { phone, code } = req.body;
         if (!phone || !code) return res.status(400).json({ success: false, message: 'Phone and OTP code are required' });
 
-        const result = await verifyPhoneOTP(phone, code);
-        if (!result.valid) {
-            return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
+        const rawDigits = phone.replace(/\D/g, '').slice(-10);
+        const stored = phoneOTPStore.get(rawDigits);
+
+        if (!stored) {
+            return res.status(400).json({ success: false, message: 'No OTP was sent to this number. Please request a new one.' });
+        }
+        if (Date.now() > stored.expiresAt) {
+            phoneOTPStore.delete(rawDigits);
+            return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+        }
+        if (stored.otp !== code.trim()) {
+            return res.status(400).json({ success: false, message: 'Invalid OTP. Please try again.' });
         }
 
+        // OTP valid – remove it so it can't be reused
+        phoneOTPStore.delete(rawDigits);
+
         // Check if user already exists with this phone number
-        const rawDigits = phone.replace(/\D/g, '').slice(-10);
         const user = await userSchema.findOne({
-            phoneNumber: { $in: [rawDigits, '91' + rawDigits, phone] }
+            phoneNumber: { $in: [rawDigits, '91' + rawDigits, '+91' + rawDigits] }
         });
 
         if (user) {
@@ -753,7 +783,7 @@ const verifyPhoneLoginOTP = async (req, res) => {
 
         // New user – issue a short-lived phone-verified token for the registration step
         const phoneToken = jwt.sign(
-            { phone, verified: true },
+            { phone: rawDigits, verified: true },
             process.env.PHONE_JWT_SECRET || 'phone_otp_secret',
             { expiresIn: '15m' }
         );
@@ -773,7 +803,7 @@ const verifyPhoneLoginOTP = async (req, res) => {
 /**
  * POST /auth/phone-otp/register
  * Body: { phoneToken, name, email, address }
- * The phoneToken proves the phone was verified by Twilio.
+ * The phoneToken proves the phone was verified via Fast2SMS OTP.
  */
 const registerWithPhoneOTP = async (req, res) => {
     try {
@@ -795,7 +825,7 @@ const registerWithPhoneOTP = async (req, res) => {
 
         const rawDigits = decoded.phone.replace(/\D/g, '').slice(-10);
 
-        // Double-check no duplicate
+        // Double-check no duplicate email
         const already = await userSchema.findOne({ email: email.toLowerCase().trim() });
         if (already) {
             return res.status(400).json({ success: false, message: 'An account with this email already exists. Please sign in.' });

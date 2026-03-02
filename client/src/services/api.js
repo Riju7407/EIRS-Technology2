@@ -231,8 +231,8 @@ export const authService = {
     }
   },
 
-  // ── Twilio Phone OTP Login / Registration ─────────────────────────────────
-  sendTwilioPhoneOTP: async (phone) => {
+  // ── Twilio Phone OTP Login / Registration (now using Fast2SMS) ──────────────
+  sendFast2SMSOTP: async (phone) => {
     try {
       const response = await api.post('/auth/phone-otp/send', { phone });
       return response.data;
@@ -241,7 +241,7 @@ export const authService = {
     }
   },
 
-  verifyTwilioPhoneOTP: async (phone, code) => {
+  verifyFast2SMSOTP: async (phone, code) => {
     try {
       const response = await api.post('/auth/phone-otp/verify', { phone, code });
       return response.data;
@@ -250,7 +250,7 @@ export const authService = {
     }
   },
 
-  registerWithTwilioPhoneOTP: async ({ phoneToken, name, email, address }) => {
+  registerWithFast2SMSOTP: async ({ phoneToken, name, email, address }) => {
     try {
       const response = await api.post('/auth/phone-otp/register', { phoneToken, name, email, address });
       return response.data;

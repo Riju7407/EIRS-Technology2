@@ -1,9 +1,21 @@
-require('dotenv').config();
+const path = require('path');
+
+// Load environment variables — try server/.env first (has all credentials),
+// then fall back to root .env. dotenv won't overwrite vars already set by
+// the hosting platform (e.g. Render env vars).
+require('dotenv').config({ path: path.resolve(__dirname, '..', 'server', '.env') });
+require('dotenv').config(); // root .env (won't overwrite what's already loaded)
+
+// Apply production defaults for any env vars still missing
+const { applyProductionDefaults } = require('../server/config/productionEnv');
+if (process.env.NODE_ENV !== 'development') {
+    applyProductionDefaults();
+}
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
-const path = require('path');
 
 // Initialize Express app
 const app = express();

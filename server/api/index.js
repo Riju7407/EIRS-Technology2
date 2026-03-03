@@ -1,4 +1,15 @@
+const path = require('path');
+
+// Load environment variables
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 require('dotenv').config();
+
+// Apply production defaults for any env vars still missing
+const { applyProductionDefaults } = require('../config/productionEnv');
+if (process.env.NODE_ENV !== 'development') {
+    applyProductionDefaults();
+}
+
 const express = require('express');
 const compression = require('compression');
 const { authRouter } = require('../router/authRouter.js');

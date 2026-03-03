@@ -457,6 +457,7 @@ const requestPasswordChangeOTP = async (req, res, next) => {
         // Send OTP email — fall back to console log only in local development
         let emailSent = false;
         const isDev = process.env.NODE_ENV === 'development';
+        console.log(`[OTP] NODE_ENV=${process.env.NODE_ENV}, isDev=${isDev}, EMAIL_USER=${process.env.EMAIL_USER ? 'SET' : 'MISSING'}, EMAIL_PASSWORD=${process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'}`);
         try {
             await sendOTPEmail(email, otp, purpose);
             emailSent = true;

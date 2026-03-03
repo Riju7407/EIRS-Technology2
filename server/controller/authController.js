@@ -456,12 +456,13 @@ const requestPasswordChangeOTP = async (req, res, next) => {
 
         // Send OTP email — fall back to console log only in local development
         let emailSent = false;
+        const isDev = process.env.NODE_ENV === 'development';
         try {
             await sendOTPEmail(email, otp, purpose);
             emailSent = true;
         } catch (emailError) {
             console.error('Email sending failed:', emailError.message);
-            if (process.env.NODE_ENV !== 'development') {
+            if (!isDev) {
                 // In staging / production (or when NODE_ENV is not set) always return an error
                 return res.status(500).json({
                     success: false,
@@ -477,6 +478,14 @@ const requestPasswordChangeOTP = async (req, res, next) => {
             console.log('║  (Email not sent — Gmail credentials invalid)    ║');
             console.log('╚══════════════════════════════════════════════════╝');
             console.log('');
+        }
+
+        // In production, only respond success if email was actually sent
+        if (!isDev && !emailSent) {
+            return res.status(500).json({
+                success: false,
+                message: `Failed to send OTP email. Please try again later.`
+            });
         }
 
         res.status(200).json({

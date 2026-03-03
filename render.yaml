@@ -15,7 +15,14 @@ services:
         scope: build,runtime
         value: Secret
       - key: NODE_ENV
+        scope: build,runtime
         value: production
+      - key: EMAIL_USER
+        scope: build,runtime
+        value: technologyeirs@gmail.com
+      - key: EMAIL_PASSWORD
+        scope: build,runtime
+        value: alvkfppkptaptzta
       - key: RAZORPAY_KEY_ID
         scope: build,runtime
         value: rzp_live_SK2al1KdtZ4MA3

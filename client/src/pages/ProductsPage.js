@@ -24,6 +24,7 @@ const CATEGORIES_DATA = [
   { name: 'IoT Solutions', subcategories: ['Smart Sensors', 'IoT Devices', 'Connected Systems', 'Wireless Modules'] },
   { name: 'Automation Systems', subcategories: ['Smart Lighting', 'Climate Control', 'Access Control', 'Integration Modules'] },
   { name: 'Fire Alarm Systems', subcategories: ['Smoke Detectors', 'Heat Detectors', 'Manual Call Points', 'Control Panels'] },
+  { name: 'Networking Device', subcategories: ['Routers', 'Switches', 'Access Points', 'Patch Panels', 'Network Cables & Accessories', 'Modems'] },
 ];
 
 const SORT_OPTIONS = [

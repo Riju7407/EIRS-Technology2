@@ -23,6 +23,9 @@ services:
       - key: EMAIL_PASSWORD
         scope: build,runtime
         value: alvkfppkptaptzta
+      - key: FRONTEND_URL
+        scope: build,runtime
+        value: https://eirs.vercel.app
       - key: RAZORPAY_KEY_ID
         scope: build,runtime
         value: rzp_live_SK2al1KdtZ4MA3

@@ -26,12 +26,28 @@ setImmediate(() => {
             if (error) {
                 console.error('❌ Email transporter error:', error.message);
                 console.error('   Check EMAIL_USER / EMAIL_PASSWORD in .env and that a Gmail App Password is used (requires 2-Step Verification).');
+                console.error('   ');
+                console.error('   🔧 Setup Instructions:');
+                console.error('   1. Go to myaccount.google.com');
+                console.error('   2. Select "Security" from left menu');
+                console.error('   3. Enable "2-Step Verification" if not already enabled');
+                console.error('   4. Go back to Security, find "App passwords"');
+                console.error('   5. Select "Mail" and "Windows Computer" (or your device)');
+                console.error('   6. Copy the 16-character password (remove spaces)');
+                console.error('   7. Update EMAIL_PASSWORD in your .env or Render dashboard');
+                console.error('   ');
+                if (process.env.NODE_ENV === 'production') {
+                    console.error('   ⚠️  PRODUCTION ERROR: Email service is DOWN. Users cannot reset passwords!');
+                }
             } else {
                 console.log('✅ Email server is ready to send emails');
             }
         });
     } catch (e) {
         console.error('❌ Email transporter setup failed:', e.message);
+        if (process.env.NODE_ENV === 'production') {
+            console.error('   ⚠️  PRODUCTION ERROR: Email setup failed!');
+        }
     }
 });
 

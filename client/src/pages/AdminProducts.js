@@ -459,6 +459,17 @@ const AdminProducts = () => {
         'Manual Call Points',
         'Control Panels'
       ]
+    },
+    {
+      name: 'Networking Device',
+      subcategories: [
+        'Routers',
+        'Switches',
+        'Access Points',
+        'Patch Panels',
+        'Network Cables & Accessories',
+        'Modems'
+      ]
     }
   ];
 

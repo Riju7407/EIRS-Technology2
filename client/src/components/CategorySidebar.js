@@ -93,6 +93,36 @@ const CategorySidebar = ({
       id: 'fire',
       name: 'Fire Alarm Systems',
       redirect: true
+    },
+    {
+      id: 'networking',
+      name: 'Networking Device',
+      subcategories: [
+        {
+          name: 'Routers',
+          redirect: true
+        },
+        {
+          name: 'Switches',
+          redirect: true
+        },
+        {
+          name: 'Access Points',
+          redirect: true
+        },
+        {
+          name: 'Patch Panels',
+          redirect: true
+        },
+        {
+          name: 'Network Cables & Accessories',
+          redirect: true
+        },
+        {
+          name: 'Modems',
+          redirect: true
+        }
+      ]
     }
   ];
 

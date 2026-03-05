@@ -73,6 +73,17 @@ const newCategoriesData = [
       { name: 'Manual Call Points', children: [] },
       { name: 'Control Panels', children: [] }
     ]
+  },
+  {
+    mainCategory: 'Networking Device',
+    subcategories: [
+      { name: 'Routers', children: [] },
+      { name: 'Switches', children: [] },
+      { name: 'Access Points', children: [] },
+      { name: 'Patch Panels', children: [] },
+      { name: 'Network Cables & Accessories', children: [] },
+      { name: 'Modems', children: [] }
+    ]
   }
 ];
 

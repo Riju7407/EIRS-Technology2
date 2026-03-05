@@ -84,8 +84,8 @@ const HeroSection = () => {
       image: 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771049038/Router_vd7b2c.png',
       title: 'Networking Devices',
       onClick: () => {
-        console.log('🔗 Navigating to products with category: CCTV Components');
-        navigate('/products?category=CCTV Components');
+        console.log('🔗 Navigating to products with category: Networking Device');
+        navigate('/products?category=Networking Device');
       }
     }
   ];

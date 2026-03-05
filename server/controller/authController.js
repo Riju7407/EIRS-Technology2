@@ -465,6 +465,11 @@ const requestPasswordChangeOTP = async (req, res, next) => {
             console.error('Email sending failed:', emailError.message);
             if (!isDev) {
                 // In staging / production (or when NODE_ENV is not set) always return an error
+                console.error('⚠️  ALERT: Email service failed in production!');
+                console.error('   This will prevent password resets for users.');
+                console.error('   Check Render dashboard environment variables:');
+                console.error('   - EMAIL_USER should be your Gmail address');
+                console.error('   - EMAIL_PASSWORD should be a 16-character Gmail App Password (not regular password)');
                 return res.status(500).json({
                     success: false,
                     message: `Failed to send OTP email. Please check your email address and try again. If the problem persists, contact support.`

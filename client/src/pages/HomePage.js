@@ -36,6 +36,7 @@ const CATEGORY_LINKS = [
   { icon: <FaFire />, label: 'Fire Alarm', query: 'Fire Alarm Systems', color: '#fa709a', bg: '#fa709a' },
   { icon: <FaRobot />, label: 'Automation', query: 'Automation Systems', color: '#f6d365', bg: '#f6d365' },
   { icon: <FaWrench />, label: 'IoT Solutions', query: 'IoT Solutions', color: '#a18cd1', bg: '#a18cd1' },
+  { icon: <FaBolt />, label: 'Networking', query: 'Networking Device', color: '#00b4d8', bg: '#00b4d8' },
 ];
 
 const TRUST_BADGES = [

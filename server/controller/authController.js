@@ -454,52 +454,48 @@ const requestPasswordChangeOTP = async (req, res, next) => {
         user.otpPurpose = purpose;
         await user.save();
 
-        // Send OTP email — fall back to console log only in local development
+        // Try email first; if it fails, fall back to SMS (Fast2SMS)
         let emailSent = false;
-        const isDev = process.env.NODE_ENV === 'development';
-        console.log(`[OTP] NODE_ENV=${process.env.NODE_ENV}, isDev=${isDev}, EMAIL_USER=${process.env.EMAIL_USER ? 'SET' : 'MISSING'}, EMAIL_PASSWORD=${process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING'}`);
+        let smsSent = false;
+
         try {
             await sendOTPEmail(email, otp, purpose);
             emailSent = true;
+            console.log(`[OTP] Email sent successfully to ${email}`);
         } catch (emailError) {
-            console.error('Email sending failed:', emailError.message);
-            if (!isDev) {
-                // In staging / production (or when NODE_ENV is not set) always return an error
-                console.error('⚠️  ALERT: Email service failed in production!');
-                console.error('   This will prevent password resets for users.');
-                console.error('   Check Render dashboard environment variables:');
-                console.error('   - EMAIL_USER should be your Gmail address');
-                console.error('   - EMAIL_PASSWORD should be a 16-character Gmail App Password (not regular password)');
-                return res.status(500).json({
-                    success: false,
-                    message: `Failed to send OTP email. Please check your email address and try again. If the problem persists, contact support.`
-                });
-            }
-            // In local development — log OTP to console so it can be used without working email
-            console.log('');
-            console.log('╔══════════════════════════════════════════════════╗');
-            console.log('║            ⚠️  DEV MODE: EMAIL BYPASSED           ║');
-            console.log(`║  OTP for ${email.padEnd(38)}║`);
-            console.log(`║  OTP CODE: ${otp.padEnd(38)}║`);
-            console.log('║  (Email not sent — Gmail credentials invalid)    ║');
-            console.log('╚══════════════════════════════════════════════════╝');
-            console.log('');
+            console.error('[OTP] Email failed:', emailError.message, '— trying SMS fallback...');
         }
 
-        // In production, only respond success if email was actually sent
-        if (!isDev && !emailSent) {
+        if (!emailSent) {
+            // SMS fallback: send OTP to the user's registered phone number
+            try {
+                const { sendOTPviaSMS } = require('../services/fast2smsService');
+                const phone = (user.phoneNumber || '').replace(/\D/g, '').slice(-10);
+                if (phone.length === 10) {
+                    await sendOTPviaSMS(phone, otp);
+                    smsSent = true;
+                    console.log(`[OTP] SMS sent successfully to phone ending ...${phone.slice(-4)}`);
+                } else {
+                    console.error('[OTP] SMS fallback skipped: no valid phone number on account');
+                }
+            } catch (smsError) {
+                console.error('[OTP] SMS fallback also failed:', smsError.message);
+            }
+        }
+
+        if (!emailSent && !smsSent) {
             return res.status(500).json({
                 success: false,
-                message: `Failed to send OTP email. Please try again later.`
+                message: 'Failed to send OTP. Please try again later or contact support.'
             });
         }
 
+        const deliveryMethod = emailSent ? 'email' : 'SMS to your registered mobile number';
         res.status(200).json({
             success: true,
             emailSent,
-            message: emailSent
-                ? `OTP has been sent to ${email}. Valid for 10 minutes.`
-                : `OTP generated (dev mode — email failed). Check the server console for your OTP code. Valid for 10 minutes.`
+            smsSent,
+            message: `OTP has been sent to your ${deliveryMethod}. Valid for 10 minutes.`
         });
     } catch (error) {
         console.error('Request OTP error:', error);

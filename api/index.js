@@ -142,6 +142,24 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: 'EIRS Technology API', version: '1.0.0' });
 });
 
+// Email diagnostic route — tests SMTP connectivity from Render
+app.get('/diag/email', async (req, res) => {
+    const nodemailer = require('nodemailer');
+    const user = (process.env.EMAIL_USER || '').trim();
+    const pass = (process.env.EMAIL_PASSWORD || '').replace(/\s+/g, '');
+    if (!user || !pass) {
+        return res.json({ ok: false, error: 'EMAIL_USER or EMAIL_PASSWORD not set in env', user: !!user, pass: !!pass });
+    }
+    const t = nodemailer.createTransport({
+        host: 'smtp.gmail.com', port: 587, secure: false,
+        auth: { user, pass }, tls: { rejectUnauthorized: false }
+    });
+    t.verify((err) => {
+        if (err) return res.json({ ok: false, error: err.message, emailUser: user });
+        res.json({ ok: true, message: 'Gmail SMTP connected successfully', emailUser: user, nodeEnv: process.env.NODE_ENV, frontendUrl: process.env.FRONTEND_URL || 'NOT SET' });
+    });
+});
+
 // Mount authRouter at /auth - it handles all /auth/* routes
 // Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
 app.use('/auth', authRouter);

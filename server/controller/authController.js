@@ -702,6 +702,19 @@ const sendPhoneLoginOTP = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number' });
         }
 
+        // Check if phone number is registered BEFORE sending OTP
+        const existingUser = await userSchema.findOne({
+            phoneNumber: { $in: [rawDigits, '91' + rawDigits, '+91' + rawDigits] }
+        });
+
+        if (!existingUser) {
+            return res.status(404).json({
+                success:       false,
+                notRegistered: true,
+                message:       'This mobile number is not registered. Please sign up first.'
+            });
+        }
+
         // Rate-limit: allow resend only after 30 seconds
         const existing = phoneOTPStore.get(rawDigits);
         if (existing && existing.expiresAt > Date.now() && (Date.now() - existing.createdAt < 30000)) {
@@ -720,16 +733,10 @@ const sendPhoneLoginOTP = async (req, res) => {
             expiresAt: Date.now() + 5 * 60 * 1000
         });
 
-        // Tell the client whether this phone is already registered
-        const existingUser = await userSchema.findOne({
-            phoneNumber: { $in: [rawDigits, '91' + rawDigits, '+91' + rawDigits] }
-        });
-
         return res.status(200).json({
-            success:   true,
-            isNewUser: !existingUser,
-            phone:     rawDigits,
-            message:   `OTP sent to ${rawDigits}`
+            success: true,
+            phone:   rawDigits,
+            message: `OTP sent to ${rawDigits}`
         });
     } catch (err) {
         console.error('[sendPhoneLoginOTP]', err.message);

@@ -309,6 +309,8 @@
 
 .cart-item {
   position: relative;
+  padding: 4px 6px;
+  min-width: 44px;
 }
 
 .action-badge {

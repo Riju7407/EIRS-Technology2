@@ -28,6 +28,7 @@ const SignInPage = () => {
   const [phoneToken, setPhoneToken] = useState('');
   const [regData, setRegData] = useState({ name: '', email: '', address: '' });
   const [countdown, setCountdown] = useState(0);
+  const [notRegistered, setNotRegistered] = useState(false);
 
   // Countdown timer for resend
   React.useEffect(() => {
@@ -82,7 +83,7 @@ const SignInPage = () => {
 
   // ─── Send OTP via Fast2SMS ───────────────────────────────────
   const handleSendOTP = async () => {
-    setError(''); setMessage(''); setLoading(true);
+    setError(''); setMessage(''); setLoading(true); setNotRegistered(false);
 
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 10) {
@@ -95,14 +96,24 @@ const SignInPage = () => {
       const res = await authService.sendFast2SMSOTP(digits);
       if (res.success) {
         setOtpSent(true);
-        setIsNewUser(res.isNewUser);
+        setIsNewUser(false);
         setMessage(res.message || 'OTP sent successfully!');
         setCountdown(30);
+      } else if (res.notRegistered) {
+        setNotRegistered(true);
+        setError('');
       } else {
         setError(res.message || 'Failed to send OTP');
       }
     } catch (err) {
-      setError(err.message || 'Failed to send OTP');
+      // axios throws on non-2xx; parse the response body
+      const data = err?.response?.data;
+      if (data?.notRegistered) {
+        setNotRegistered(true);
+        setError('');
+      } else {
+        setError(data?.message || err.message || 'Failed to send OTP');
+      }
     } finally {
       setLoading(false);
     }
@@ -190,6 +201,7 @@ const SignInPage = () => {
     setRegData({ name: '', email: '', address: '' });
     setError('');
     setMessage('');
+    setNotRegistered(false);
   };
 
   return (
@@ -215,7 +227,7 @@ const SignInPage = () => {
               }}>
               <FaEnvelope /> Email
             </button>
-            <button type="button" onClick={() => { setLoginMode('mobile'); setError(''); setMessage(''); }}
+            <button type="button" onClick={() => { setLoginMode('mobile'); resetMobileFlow(); setError(''); setMessage(''); }}
               style={{
                 flex: 1, padding: '10px', border: 'none', cursor: 'pointer',
                 fontWeight: 600, fontSize: '0.95rem',
@@ -267,7 +279,7 @@ const SignInPage = () => {
           {loginMode === 'mobile' && (
             <div className="auth-form">
               {/* Step 1: Enter phone number */}
-              {!otpSent && !phoneToken && (
+              {!otpSent && !phoneToken && !notRegistered && (
                 <>
                   <div className="form-group">
                     <label htmlFor="phone">Mobile Number</label>
@@ -284,9 +296,36 @@ const SignInPage = () => {
                   </div>
                   <button type="button" className="btn btn-primary btn-large" disabled={loading || phone.length !== 10}
                     onClick={handleSendOTP}>
-                    {loading ? 'Sending OTP...' : 'Send OTP'}
+                    {loading ? 'Checking...' : 'Send OTP'}
                   </button>
                 </>
+              )}
+
+              {/* Not registered banner */}
+              {notRegistered && (
+                <div style={{
+                  background: '#fff8e1', border: '1.5px solid #f6c90e', borderRadius: 10,
+                  padding: '18px 20px', textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '1.05rem', fontWeight: 700, color: '#b45309', marginBottom: 8 }}>
+                    ⚠️ Number Not Registered
+                  </p>
+                  <p style={{ fontSize: '0.9rem', color: '#78350f', marginBottom: 16 }}>
+                    <strong>+91 {phone}</strong> is not linked to any EIRS account.
+                    Please create an account first.
+                  </p>
+                  <Link to="/signup" style={{
+                    display: 'inline-block', padding: '10px 28px',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: '#fff', borderRadius: 50, fontWeight: 700,
+                    fontSize: '0.9rem', textDecoration: 'none', marginBottom: 12
+                  }}>Sign Up Now</Link>
+                  <br />
+                  <button type="button" onClick={resetMobileFlow}
+                    style={{ background: 'none', border: 'none', color: '#667eea', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', marginTop: 4 }}>
+                    ← Try a different number
+                  </button>
+                </div>
               )}
 
               {/* Step 2: Enter OTP */}

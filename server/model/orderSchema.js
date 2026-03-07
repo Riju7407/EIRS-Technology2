@@ -60,6 +60,7 @@ const orderSchema = new Schema({
         fullName: String,
         email: String,
         phone: String,
+        houseNo: String,
         address: String,
         city: String,
         state: String,

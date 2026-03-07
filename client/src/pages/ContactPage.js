@@ -277,7 +277,7 @@ const ContactPage = () => {
                   <FaMapMarkerAlt /> Lucknow, Uttar Pradesh – 226001
                 </div>
                 <a
-                  href="https://maps.google.com/?q=Lucknow,UP"
+                  href="https://maps.app.goo.gl/2YBiPuWHPuWVvSsd6"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="cp-map-btn"
@@ -288,7 +288,7 @@ const ContactPage = () => {
               <div className="cp-map-frame">
                 <iframe
                   title="EIRS Technology Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3559.7765228516636!2d80.94615931503836!3d26.846694683159736!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bfd991f32b16b%3A0x93ccba8909978be7!2sLucknow%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14242.575744298869!2d80.89042695541991!3d26.819463900000006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bff0d7fa113c3%3A0xcec32720b820cb74!2sEIRS%20TECHNOLOGY%7C%20CCTV%20CAMERA%20INSTALLATION%20REPAIR%20SERVICES%20IN%20LUCKNOW%7C%20COMPUTER%20NETWORKING%7C%20BIOMETRIC%7C%20INTERCOM-LANDLINE%7C%20AMC!5e0!3m2!1sen!2sin!4v1772876390908!5m2!1sen!2sin"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

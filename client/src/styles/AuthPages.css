@@ -1,4 +1,8 @@
 /* Auth Pages Styles */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .auth-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

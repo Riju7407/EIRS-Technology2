@@ -17,6 +17,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
     fullName: user?.name || userName || '',
     email: userEmail || user?.email || '',
     phone: user?.phoneNumber || '',
+    houseNo: '',
     address: user?.address || '',
     city: '',
     state: '',
@@ -374,9 +375,21 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Address *</label>
+                  <label>House No. / Flat No. / Building</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Flat 3B, Krishna Apartments"
+                    value={shippingAddress.houseNo}
+                    onChange={(e) => handleAddressChange('houseNo', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Street / Area / Locality *</label>
                   <textarea
-                    placeholder="Enter complete address"
+                    placeholder="Street name, area, locality"
                     value={shippingAddress.address}
                     onChange={(e) => handleAddressChange('address', e.target.value)}
                     className={addressErrors.address ? 'error' : ''}

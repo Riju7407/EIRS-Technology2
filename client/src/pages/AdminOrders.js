@@ -1,21 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { FaBox, FaTruck, FaCheckCircle, FaClock, FaTimesCircle, FaTrash, FaEdit, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import {
+  FaBox, FaTruck, FaCheckCircle, FaClock, FaTimesCircle, FaTrash, FaEdit,
+  FaChevronDown, FaChevronUp, FaUndo, FaMoneyBillWave, FaCheckDouble, FaBan,
+  FaSearch, FaMapMarkerAlt, FaCreditCard, FaExclamationTriangle,
+  FaBoxOpen, FaTimes, FaSort
+} from 'react-icons/fa';
 import { orderService } from '../services/api';
 import AdminLayout from '../components/AdminLayout';
 import '../styles/AdminOrders.css';
+
+const STATUS_META = {
+  Pending:   { color: '#f59e0b', bg: '#fffbeb', border: '#fcd34d', label: 'Pending'   },
+  Confirmed: { color: '#3b82f6', bg: '#eff6ff', border: '#93c5fd', label: 'Confirmed' },
+  Shipped:   { color: '#8b5cf6', bg: '#f5f3ff', border: '#c4b5fd', label: 'Shipped'   },
+  Delivered: { color: '#10b981', bg: '#f0fdf4', border: '#6ee7b7', label: 'Delivered' },
+  Cancelled: { color: '#ef4444', bg: '#fef2f2', border: '#fca5a5', label: 'Cancelled' },
+};
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [filter, setFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('recent');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [newStatus, setNewStatus] = useState('');
-  const [sortBy, setSortBy] = useState('recent');
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [refundActionLoading, setRefundActionLoading] = useState(null);
+  const [adminNotes, setAdminNotes] = useState({});
+  const [toast, setToast] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
 
-  useEffect(() => {
-    fetchAllOrders();
-  }, []);
+  useEffect(() => { fetchAllOrders(); }, []);
 
   const fetchAllOrders = async () => {
     try {
@@ -29,375 +46,601 @@ const AdminOrders = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Pending':
-        return <FaClock className="status-icon pending" />;
-      case 'Confirmed':
-        return <FaBox className="status-icon confirmed" />;
-      case 'Shipped':
-        return <FaTruck className="status-icon shipped" />;
-      case 'Delivered':
-        return <FaCheckCircle className="status-icon delivered" />;
-      case 'Cancelled':
-        return <FaTimesCircle className="status-icon cancelled" />;
-      default:
-        return <FaClock className="status-icon pending" />;
-    }
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Pending':
-        return '#f59e0b';
-      case 'Confirmed':
-        return '#3b82f6';
-      case 'Shipped':
-        return '#8b5cf6';
-      case 'Delivered':
-        return '#10b981';
-      case 'Cancelled':
-        return '#ef4444';
-      default:
-        return '#6b7280';
-    }
-  };
+  const getStatusMeta = (status) =>
+    STATUS_META[status] || { color: '#6b7280', bg: '#f3f4f6', border: '#d1d5db', label: status };
 
-  const getStatusBgColor = (status) => {
-    switch (status) {
-      case 'Pending':
-        return '#fffbeb';
-      case 'Confirmed':
-        return '#eff6ff';
-      case 'Shipped':
-        return '#f5f3ff';
-      case 'Delivered':
-        return '#f0fdf4';
-      case 'Cancelled':
-        return '#fef2f2';
-      default:
-        return '#f3f4f6';
-    }
-  };
-
-  const getOrderStats = () => {
-    return {
-      total: orders.length,
-      pending: orders.filter(o => o.orderStatus === 'Pending').length,
-      confirmed: orders.filter(o => o.orderStatus === 'Confirmed').length,
-      shipped: orders.filter(o => o.orderStatus === 'Shipped').length,
-      delivered: orders.filter(o => o.orderStatus === 'Delivered').length,
-      cancelled: orders.filter(o => o.orderStatus === 'Cancelled').length,
-      totalRevenue: orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+  const getRefundBadge = (refundInfo) => {
+    if (!refundInfo || refundInfo.status === 'None') return null;
+    const map = {
+      Requested: { color: '#f59e0b', bg: '#fffbeb', label: 'Refund Requested' },
+      Approved:  { color: '#3b82f6', bg: '#eff6ff', label: 'Refund Approved'  },
+      Processed: { color: '#10b981', bg: '#f0fdf4', label: 'Refund Processed' },
+      Rejected:  { color: '#ef4444', bg: '#fef2f2', label: 'Refund Rejected'  },
     };
+    return map[refundInfo.status] || null;
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    if (window.confirm('Are you sure you want to delete this order?')) {
-      try {
-        await orderService.deleteOrder(orderId);
-        setOrders(orders.filter(order => order._id !== orderId));
-        alert('Order deleted successfully!');
-      } catch (error) {
-        console.error('Error deleting order:', error);
-        alert('Failed to delete order');
-      }
+  const getStats = () => ({
+    total: orders.length,
+    pending: orders.filter(o => o.orderStatus === 'Pending').length,
+    confirmed: orders.filter(o => o.orderStatus === 'Confirmed').length,
+    shipped: orders.filter(o => o.orderStatus === 'Shipped').length,
+    delivered: orders.filter(o => o.orderStatus === 'Delivered').length,
+    cancelled: orders.filter(o => o.orderStatus === 'Cancelled').length,
+    revenue: orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
+    pendingRefunds: orders.filter(o => o.refundInfo?.status === 'Requested').length,
+  });
+
+  const handleDeleteOrder = async () => {
+    const orderId = deleteModal;
+    setDeleteModal(null);
+    try {
+      await orderService.deleteOrder(orderId);
+      setOrders(prev => prev.filter(o => o._id !== orderId));
+      showToast('Order deleted successfully.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to delete order', 'error');
     }
   };
 
   const handleUpdateStatus = async (orderId) => {
-    if (!newStatus) {
-      alert('Please select a status');
-      return;
-    }
+    if (!newStatus) { showToast('Please select a status', 'error'); return; }
+    setStatusLoading(true);
     try {
       await orderService.updateOrderStatus(orderId, newStatus);
-      setOrders(orders.map(order =>
-        order._id === orderId ? { ...order, orderStatus: newStatus } : order
+      setOrders(prev => prev.map(o =>
+        o._id === orderId ? { ...o, orderStatus: newStatus } : o
       ));
       setEditingOrderId(null);
       setNewStatus('');
-      alert('Order status updated successfully!');
+      showToast('Order status updated successfully.');
     } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('Failed to update order status');
+      showToast(error.response?.data?.message || 'Failed to update status', 'error');
+    } finally {
+      setStatusLoading(false);
     }
   };
 
-  const statusOptions = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'];
+  const handleApproveRefund = async (orderId) => {
+    setRefundActionLoading(orderId + '_approve');
+    try {
+      await orderService.approveRefund(orderId, { adminNotes: adminNotes[orderId] || '' });
+      await fetchAllOrders();
+      setAdminNotes(prev => ({ ...prev, [orderId]: '' }));
+      showToast('Refund approved successfully.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to approve refund', 'error');
+    } finally {
+      setRefundActionLoading(null);
+    }
+  };
 
-  const filteredOrders = filter === 'All'
-    ? orders
-    : orders.filter(order => order.orderStatus === filter);
+  const handleRejectRefund = async (orderId) => {
+    if (!adminNotes[orderId]?.trim()) {
+      showToast('Please provide a rejection reason in admin notes.', 'error');
+      return;
+    }
+    setRefundActionLoading(orderId + '_reject');
+    try {
+      await orderService.rejectRefund(orderId, { adminNotes: adminNotes[orderId] });
+      await fetchAllOrders();
+      setAdminNotes(prev => ({ ...prev, [orderId]: '' }));
+      showToast('Refund rejected.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to reject refund', 'error');
+    } finally {
+      setRefundActionLoading(null);
+    }
+  };
 
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
-    if (sortBy === 'recent') return new Date(b.createdAt) - new Date(a.createdAt);
-    if (sortBy === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
-    if (sortBy === 'highest') return b.totalAmount - a.totalAmount;
-    if (sortBy === 'lowest') return a.totalAmount - b.totalAmount;
-    return 0;
+  const handleProcessRefund = async (orderId) => {
+    setRefundActionLoading(orderId + '_process');
+    try {
+      await orderService.processRefund(orderId);
+      await fetchAllOrders();
+      showToast('Refund marked as processed.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to process refund', 'error');
+    } finally {
+      setRefundActionLoading(null);
+    }
+  };
+
+  const formatDate = (date) => new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric',
   });
 
-  const stats = getOrderStats();
+  const formatCurrency = (amount) =>
+    `Rs.${(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}`;
+
+  const getInitials = (name) =>
+    (name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const statusOptions = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'];
+
+  const stats = getStats();
+
+  const filtered = (() => {
+    let list = orders;
+    if (filter === 'Refund Requests') {
+      list = list.filter(o => o.refundInfo?.status === 'Requested');
+    } else if (filter !== 'All') {
+      list = list.filter(o => o.orderStatus === filter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(o =>
+        o._id.toLowerCase().includes(q) ||
+        o.userId?.name?.toLowerCase().includes(q) ||
+        o.userId?.email?.toLowerCase().includes(q)
+      );
+    }
+    return [...list].sort((a, b) => {
+      if (sortBy === 'recent')  return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortBy === 'oldest')  return new Date(a.createdAt) - new Date(b.createdAt);
+      if (sortBy === 'highest') return (b.totalAmount || 0) - (a.totalAmount || 0);
+      if (sortBy === 'lowest')  return (a.totalAmount || 0) - (b.totalAmount || 0);
+      return 0;
+    });
+  })();
+
+  const FILTER_TABS = [
+    { key: 'All',             label: 'All Orders', count: stats.total         },
+    { key: 'Pending',         label: 'Pending',    count: stats.pending       },
+    { key: 'Confirmed',       label: 'Confirmed',  count: stats.confirmed     },
+    { key: 'Shipped',         label: 'Shipped',    count: stats.shipped       },
+    { key: 'Delivered',       label: 'Delivered',  count: stats.delivered     },
+    { key: 'Cancelled',       label: 'Cancelled',  count: stats.cancelled     },
+    { key: 'Refund Requests', label: 'Refunds',    count: stats.pendingRefunds},
+  ];
+
+  const STAT_CARDS = [
+    { key: 'total',    label: 'Total Orders',    value: stats.total,                icon: <FaBoxOpen />,      color: '#6366f1' },
+    { key: 'pending',  label: 'Pending',         value: stats.pending,              icon: <FaClock />,        color: '#f59e0b' },
+    { key: 'shipped',  label: 'Shipped',         value: stats.shipped,              icon: <FaTruck />,        color: '#8b5cf6' },
+    { key: 'delivered',label: 'Delivered',       value: stats.delivered,            icon: <FaCheckCircle />,  color: '#10b981' },
+    { key: 'cancelled',label: 'Cancelled',       value: stats.cancelled,            icon: <FaTimesCircle />,  color: '#ef4444' },
+    { key: 'revenue',  label: 'Total Revenue',   value: formatCurrency(stats.revenue), icon: <FaMoneyBillWave />, color: '#06b6d4', wide: true },
+    { key: 'refunds',  label: 'Pending Refunds', value: stats.pendingRefunds,       icon: <FaUndo />,         color: '#f97316' },
+  ];
+
+  if (loading) {
+    return (
+      <AdminLayout pageTitle="Orders" breadcrumbs={[{ label: 'Orders' }]}>
+        <div className="ao-loading">
+          <div className="ao-spinner" />
+          <p>Loading orders...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout pageTitle="Orders" breadcrumbs={[{ label: 'Orders' }]}>
-    <div className="admin-orders-page">
-      {/* Header Section */}
-      <div className="admin-orders-header">
-        <div className="header-content">
-          <h1>Order Management</h1>
-          <p>Manage and track all customer orders efficiently</p>
-        </div>
-      </div>
+      <div className="ao-page">
+        {/* Toast */}
+        {toast && (
+          <div className={`ao-toast ao-toast--${toast.type}`}>
+            {toast.type === 'error' ? <FaExclamationTriangle /> : <FaCheckCircle />}
+            <span>{toast.msg}</span>
+          </div>
+        )}
 
-      {/* Statistics Dashboard */}
-      <div className="orders-stats-grid">
-        <div className="stat-card total">
-          <div className="stat-icon">📦</div>
-          <div className="stat-content">
-            <h3>{stats.total}</h3>
-            <p>Total Orders</p>
+        {/* Header */}
+        <div className="ao-header">
+          <div className="ao-header-text">
+            <h1>Order Management</h1>
+            <p>Track, update and manage all customer orders</p>
           </div>
+          <div className="ao-header-badge">{stats.total} Total Orders</div>
         </div>
-        <div className="stat-card pending">
-          <div className="stat-icon">⏳</div>
-          <div className="stat-content">
-            <h3>{stats.pending}</h3>
-            <p>Pending Orders</p>
-          </div>
-        </div>
-        <div className="stat-card confirmed">
-          <div className="stat-icon">✓</div>
-          <div className="stat-content">
-            <h3>{stats.confirmed}</h3>
-            <p>Confirmed Orders</p>
-          </div>
-        </div>
-        <div className="stat-card shipped">
-          <div className="stat-icon">🚚</div>
-          <div className="stat-content">
-            <h3>{stats.shipped}</h3>
-            <p>Shipped Orders</p>
-          </div>
-        </div>
-        <div className="stat-card delivered">
-          <div className="stat-icon">✅</div>
-          <div className="stat-content">
-            <h3>{stats.delivered}</h3>
-            <p>Delivered Orders</p>
-          </div>
-        </div>
-        <div className="stat-card revenue">
-          <div className="stat-icon">💰</div>
-          <div className="stat-content">
-            <h3>₹{stats.totalRevenue.toFixed(0)}</h3>
-            <p>Total Revenue</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Controls Section */}
-      <div className="orders-controls">
-        <div className="controls-left">
-          <div className="filter-group">
-            <label>Filter by Status:</label>
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
-              <option value="All">All Orders</option>
-              <option value="Pending">Pending</option>
-              <option value="Confirmed">Confirmed</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
+        {/* Stats Row */}
+        <div className="ao-stats">
+          {STAT_CARDS.map(s => (
+            <div key={s.key}
+              className={`ao-stat${s.wide ? ' ao-stat--wide' : ''}`}
+              style={{ borderTopColor: s.color }}>
+              <div className="ao-stat-icon" style={{ background: s.color + '18', color: s.color }}>
+                {s.icon}
+              </div>
+              <div className="ao-stat-body">
+                <div className="ao-stat-value" style={{ color: s.color }}>{s.value}</div>
+                <div className="ao-stat-label">{s.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-          <div className="filter-group">
-            <label>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="filter-select">
+        {/* Controls Bar */}
+        <div className="ao-controls">
+          <div className="ao-search">
+            <FaSearch className="ao-search-icon" />
+            <input
+              type="text"
+              placeholder="Search order ID, customer name or email..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="ao-search-input"
+            />
+            {searchQuery && (
+              <button className="ao-search-clear" onClick={() => setSearchQuery('')}>
+                <FaTimes />
+              </button>
+            )}
+          </div>
+          <div className="ao-sort">
+            <FaSort className="ao-sort-icon" />
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="ao-sort-select">
               <option value="recent">Most Recent</option>
               <option value="oldest">Oldest First</option>
               <option value="highest">Highest Amount</option>
               <option value="lowest">Lowest Amount</option>
             </select>
           </div>
+          <span className="ao-count">{filtered.length} of {stats.total} orders</span>
         </div>
 
-        <div className="controls-right">
-          <span className="results-count">Showing {sortedOrders.length} of {stats.total} orders</span>
-        </div>
-      </div>
-
-      {/* Orders List */}
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading orders...</p>
-        </div>
-      ) : sortedOrders.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📭</div>
-          <h3>No Orders Found</h3>
-          <p>There are no orders matching your filters</p>
-        </div>
-      ) : (
-        <div className="orders-list">
-          {sortedOrders.map((order) => (
-            <div key={order._id} className="order-card-new">
-              {/* Order Card Header */}
-              <div className="order-card-header">
-                <div className="order-header-left">
-                  <div className="order-id-section">
-                    <h3 className="order-id">#{order._id.substring(0, 8).toUpperCase()}</h3>
-                    <span className="order-date">{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                  </div>
-                  <div className="customer-details">
-                    <p className="customer-name"><strong>{order.userId?.name || 'Unknown Customer'}</strong></p>
-                    <p className="customer-email">{order.userId?.email || 'N/A'}</p>
-                  </div>
-                </div>
-
-                <div className="order-header-right">
-                  <div className="order-amount">
-                    <span className="amount-label">Total Amount</span>
-                    <span className="amount-value">₹{order.totalAmount?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="status-badge" style={{ backgroundColor: getStatusBgColor(order.orderStatus), borderColor: getStatusColor(order.orderStatus) }}>
-                    {getStatusIcon(order.orderStatus)}
-                    <span>{order.orderStatus}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Info */}
-              <div className="order-quick-info">
-                <div className="info-item">
-                  <span className="info-label">Items</span>
-                  <span className="info-value">{order.items?.length || 0}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Quantity</span>
-                  <span className="info-value">{order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0}</span>
-                </div>
-              </div>
-
-              {/* Expandable Details */}
-              {expandedOrderId === order._id && (
-                <div className="order-details-expanded">
-                  {/* Order Items Table */}
-                  <div className="details-section">
-                    <h4>Order Items</h4>
-                    <div className="items-table-wrapper">
-                      <table className="items-table">
-                        <thead>
-                          <tr>
-                            <th>Product Name</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {order.items?.map((item, index) => (
-                            <tr key={index}>
-                              <td>{item.productName || 'Product'}</td>
-                              <td><span className="qty-badge">{item.quantity}</span></td>
-                              <td>₹{item.price?.toFixed(2) || '0.00'}</td>
-                              <td className="total-cell">₹{(item.quantity * item.price)?.toFixed(2) || '0.00'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Shipping Address */}
-                  <div className="details-section">
-                    <h4>Shipping Address</h4>
-                    <div className="address-card">
-                      <p className="address-line">{order.shippingAddress?.street || 'N/A'}</p>
-                      <p className="address-line">{order.shippingAddress?.city || ''}, {order.shippingAddress?.state || ''} {order.shippingAddress?.zipCode || ''}</p>
-                      <p className="address-line phone">📱 {order.shippingAddress?.phone || 'N/A'}</p>
-                    </div>
-                  </div>
-
-                  {/* Status Update Section */}
-                  <div className="details-section">
-                    <h4>Update Order Status</h4>
-                    {editingOrderId === order._id ? (
-                      <div className="status-edit-form">
-                        <div className="edit-inputs">
-                          <select
-                            value={newStatus}
-                            onChange={(e) => setNewStatus(e.target.value)}
-                            className="status-select-input"
-                          >
-                            <option value="">Select Status</option>
-                            {statusOptions.map(status => (
-                              <option key={status} value={status}>{status}</option>
-                            ))}
-                          </select>
-                          <button
-                            className="btn-save-status"
-                            onClick={() => handleUpdateStatus(order._id)}
-                          >
-                            Save Status
-                          </button>
-                          <button
-                            className="btn-cancel-edit"
-                            onClick={() => {
-                              setEditingOrderId(null);
-                              setNewStatus('');
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        className="btn-edit-status"
-                        onClick={() => {
-                          setEditingOrderId(order._id);
-                          setNewStatus(order.orderStatus);
-                        }}
-                      >
-                        <FaEdit /> Edit Status
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Footer */}
-              <div className="order-card-footer">
-                <button
-                  className={`btn-expand-details ${expandedOrderId === order._id ? 'expanded' : ''}`}
-                  onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
-                >
-                  {expandedOrderId === order._id ? (
-                    <>
-                      <FaChevronUp /> Hide Details
-                    </>
-                  ) : (
-                    <>
-                      <FaChevronDown /> View Details
-                    </>
-                  )}
-                </button>
-                <button
-                  className="btn-delete-order"
-                  onClick={() => handleDeleteOrder(order._id)}
-                  title="Delete this order"
-                >
-                  <FaTrash /> Delete
-                </button>
-              </div>
-            </div>
+        {/* Filter Tabs */}
+        <div className="ao-tabs">
+          {FILTER_TABS.map(tab => (
+            <button
+              key={tab.key}
+              className={`ao-tab${filter === tab.key ? ' ao-tab--active' : ''}${tab.key === 'Refund Requests' && stats.pendingRefunds > 0 ? ' ao-tab--alert' : ''}`}
+              onClick={() => setFilter(tab.key)}
+            >
+              {tab.label}
+              <span className="ao-tab-count">{tab.count}</span>
+            </button>
           ))}
         </div>
-      )}
-    </div>
+
+        {/* Orders */}
+        {filtered.length === 0 ? (
+          <div className="ao-empty">
+            <FaBoxOpen size={56} color="#d1d5db" />
+            <h3>No orders found</h3>
+            <p>
+              {searchQuery
+                ? `No results for "${searchQuery}"`
+                : `No ${filter === 'All' ? '' : filter + ' '}orders yet.`}
+            </p>
+          </div>
+        ) : (
+          <div className="ao-list">
+            {filtered.map(order => {
+              const meta = getStatusMeta(order.orderStatus);
+              const refundBadge = getRefundBadge(order.refundInfo);
+              const isExpanded = expandedOrderId === order._id;
+
+              return (
+                <div key={order._id} className="ao-card">
+                  <div className="ao-card-bar" style={{ background: meta.color }} />
+
+                  {/* Card Header */}
+                  <div className="ao-card-head">
+                    <div className="ao-card-customer">
+                      <div className="ao-avatar" style={{ background: meta.color + '22', color: meta.color }}>
+                        {getInitials(order.userId?.name)}
+                      </div>
+                      <div>
+                        <p className="ao-customer-name">{order.userId?.name || 'Unknown Customer'}</p>
+                        <p className="ao-customer-email">{order.userId?.email || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="ao-card-meta">
+                      <div className="ao-order-id">#{order._id.slice(-8).toUpperCase()}</div>
+                      <div className="ao-order-date">{formatDate(order.createdAt)}</div>
+                      <div className="ao-item-count">
+                        {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
+                        {' · '}
+                        {order.items?.reduce((s, i) => s + i.quantity, 0) || 0} qty
+                      </div>
+                    </div>
+
+                    <div className="ao-card-right">
+                      <div className="ao-amount">{formatCurrency(order.totalAmount)}</div>
+                      <div className="ao-pills">
+                        <span className="ao-status-pill"
+                          style={{ color: meta.color, background: meta.bg, borderColor: meta.border }}>
+                          {meta.label}
+                        </span>
+                        {refundBadge && (
+                          <span className="ao-refund-pill"
+                            style={{ color: refundBadge.color, background: refundBadge.bg }}>
+                            <FaUndo /> {refundBadge.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Info */}
+                  <div className="ao-card-info">
+                    <span><FaCreditCard /> {order.paymentMethod || 'N/A'}</span>
+                    <span className={`ao-pay-status ao-pay-status--${(order.paymentStatus || '').toLowerCase()}`}>
+                      {order.paymentStatus || 'Pending'}
+                    </span>
+                    {order.createdAt && <span>Placed {formatDate(order.createdAt)}</span>}
+                  </div>
+
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="ao-details">
+                      {/* Items Table */}
+                      <div className="ao-section">
+                        <h4 className="ao-section-title"><FaBox /> Order Items</h4>
+                        <div className="ao-items-table-wrap">
+                          <table className="ao-items-table">
+                            <thead>
+                              <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {order.items?.map((item, i) => (
+                                <tr key={i}>
+                                  <td>
+                                    <div className="ao-item-cell">
+                                      {item.image
+                                        ? <img src={item.image} alt={item.productName} className="ao-item-thumb" />
+                                        : <div className="ao-item-thumb ao-item-thumb--ph"><FaBox /></div>
+                                      }
+                                      <span className="ao-item-name">{item.productName || 'Product'}</span>
+                                    </div>
+                                  </td>
+                                  <td>{item.category || '—'}</td>
+                                  <td><span className="ao-qty-badge">{item.quantity}</span></td>
+                                  <td>Rs.{item.price?.toLocaleString('en-IN') || '0'}</td>
+                                  <td className="ao-item-total">
+                                    Rs.{((item.quantity || 0) * (item.price || 0)).toLocaleString('en-IN')}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="ao-detail-cols">
+                        {/* Shipping */}
+                        <div className="ao-section">
+                          <h4 className="ao-section-title"><FaMapMarkerAlt /> Shipping Address</h4>
+                          <div className="ao-addr-box">
+                            {order.shippingAddress ? (
+                              <>
+                                {order.shippingAddress.fullName && (
+                                  <p><strong>{order.shippingAddress.fullName}</strong></p>
+                                )}
+                                {order.shippingAddress.houseNo && (
+                                  <p>{order.shippingAddress.houseNo}</p>
+                                )}
+                                {order.shippingAddress.address
+                                  ? <p>{order.shippingAddress.address}</p>
+                                  : order.shippingAddress.street
+                                    ? <p>{order.shippingAddress.street}</p>
+                                    : null
+                                }
+                                <p>
+                                  {[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.zipCode]
+                                    .filter(Boolean).join(', ')}
+                                </p>
+                                {order.shippingAddress.phone && <p>Ph: {order.shippingAddress.phone}</p>}
+                                {order.shippingAddress.email && <p>Email: {order.shippingAddress.email}</p>}
+                              </>
+                            ) : <p>No address on file</p>}
+                          </div>
+                        </div>
+
+                        {/* Payment */}
+                        <div className="ao-section">
+                          <h4 className="ao-section-title"><FaCreditCard /> Payment Summary</h4>
+                          <div className="ao-price-box">
+                            <div className="ao-price-row">
+                              <span>Subtotal ({order.totalItems || order.items?.length} items)</span>
+                              <span>{formatCurrency(order.totalAmount)}</span>
+                            </div>
+                            <div className="ao-price-row">
+                              <span>Shipping</span>
+                              <span className="ao-free">FREE</span>
+                            </div>
+                            <div className="ao-price-row ao-price-row--total">
+                              <strong>Total</strong>
+                              <strong>{formatCurrency(order.totalAmount)}</strong>
+                            </div>
+                            <div className="ao-price-row">
+                              <span>Payment Method</span>
+                              <span style={{ fontWeight: 600, color: '#6366f1' }}>{order.paymentMethod || 'N/A'}</span>
+                            </div>
+                            {order.paymentSubMethod && order.paymentSubMethod !== order.paymentMethod && (
+                              <div className="ao-price-row">
+                                <span>Sub-Method</span>
+                                <span>{order.paymentSubMethod}</span>
+                              </div>
+                            )}
+                            <div className="ao-price-row">
+                              <span>Payment Status</span>
+                              <span className={`ao-pay-status ao-pay-status--${(order.paymentStatus || '').toLowerCase()}`}>
+                                {order.paymentStatus || 'Pending'}
+                              </span>
+                            </div>
+                            {order.razorpayPaymentId && (
+                              <div className="ao-price-row">
+                                <span>Payment ID</span>
+                                <span style={{ fontSize: '0.78rem', color: '#64748b', wordBreak: 'break-all' }}>{order.razorpayPaymentId}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Refund Management */}
+                      {order.refundInfo && order.refundInfo.status !== 'None' && (
+                        <div className="ao-section ao-section--refund">
+                          <h4 className="ao-section-title">
+                            <FaUndo /> Refund Management
+                            <span className="ao-refund-status-chip" style={{
+                              background: order.refundInfo.status === 'Requested' ? '#fffbeb' :
+                                          order.refundInfo.status === 'Approved'  ? '#eff6ff' :
+                                          order.refundInfo.status === 'Processed' ? '#f0fdf4' : '#fef2f2',
+                              color:      order.refundInfo.status === 'Requested' ? '#d97706' :
+                                          order.refundInfo.status === 'Approved'  ? '#2563eb' :
+                                          order.refundInfo.status === 'Processed' ? '#059669' : '#dc2626',
+                            }}>
+                              {order.refundInfo.status}
+                            </span>
+                          </h4>
+                          <div className="ao-refund-grid">
+                            <div><label>Amount</label>
+                              <p>{formatCurrency(order.refundInfo.refundAmount || order.totalAmount)}</p></div>
+                            {order.refundInfo.reason && (
+                              <div><label>Customer Reason</label><p>{order.refundInfo.reason}</p></div>
+                            )}
+                            {order.refundInfo.requestedAt && (
+                              <div><label>Requested</label><p>{formatDate(order.refundInfo.requestedAt)}</p></div>
+                            )}
+                            {order.refundInfo.processedAt && (
+                              <div><label>Processed</label><p>{formatDate(order.refundInfo.processedAt)}</p></div>
+                            )}
+                            {order.refundInfo.adminNotes && (
+                              <div style={{ gridColumn: '1/-1' }}>
+                                <label>Admin Notes</label><p>{order.refundInfo.adminNotes}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {(order.refundInfo.status === 'Requested' || order.refundInfo.status === 'Approved') && (
+                            <div className="ao-refund-actions">
+                              <div className="ao-notes-field">
+                                <label>
+                                  Admin Notes
+                                  {order.refundInfo.status === 'Requested'
+                                    ? <span> (required to reject)</span>
+                                    : <span> (optional)</span>
+                                  }
+                                </label>
+                                <textarea
+                                  value={adminNotes[order._id] || ''}
+                                  onChange={e => setAdminNotes(prev => ({ ...prev, [order._id]: e.target.value }))}
+                                  placeholder="Add a note visible to the customer..."
+                                  rows={2}
+                                />
+                              </div>
+                              <div className="ao-refund-btns">
+                                {order.refundInfo.status === 'Requested' && (
+                                  <>
+                                    <button className="ao-btn ao-btn--approve"
+                                      onClick={() => handleApproveRefund(order._id)}
+                                      disabled={refundActionLoading === order._id + '_approve'}>
+                                      <FaCheckDouble />{' '}
+                                      {refundActionLoading === order._id + '_approve' ? 'Approving...' : 'Approve Refund'}
+                                    </button>
+                                    <button className="ao-btn ao-btn--reject"
+                                      onClick={() => handleRejectRefund(order._id)}
+                                      disabled={refundActionLoading === order._id + '_reject'}>
+                                      <FaBan />{' '}
+                                      {refundActionLoading === order._id + '_reject' ? 'Rejecting...' : 'Reject Refund'}
+                                    </button>
+                                  </>
+                                )}
+                                {order.refundInfo.status === 'Approved' && (
+                                  <button className="ao-btn ao-btn--process"
+                                    onClick={() => handleProcessRefund(order._id)}
+                                    disabled={refundActionLoading === order._id + '_process'}>
+                                    <FaMoneyBillWave />{' '}
+                                    {refundActionLoading === order._id + '_process' ? 'Processing...' : 'Mark as Processed'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Status Update */}
+                      <div className="ao-section">
+                        <h4 className="ao-section-title"><FaEdit /> Update Order Status</h4>
+                        {editingOrderId === order._id ? (
+                          <div className="ao-status-edit">
+                            <select
+                              value={newStatus}
+                              onChange={e => setNewStatus(e.target.value)}
+                              className="ao-status-select">
+                              <option value="">Select new status</option>
+                              {statusOptions.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                            <button className="ao-btn ao-btn--save"
+                              onClick={() => handleUpdateStatus(order._id)}
+                              disabled={statusLoading}>
+                              {statusLoading ? 'Saving...' : 'Save'}
+                            </button>
+                            <button className="ao-btn ao-btn--ghost"
+                              onClick={() => { setEditingOrderId(null); setNewStatus(''); }}>
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button className="ao-btn ao-btn--edit-status"
+                            onClick={() => { setEditingOrderId(order._id); setNewStatus(order.orderStatus); }}>
+                            <FaEdit /> Change Status
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Card Footer */}
+                  <div className="ao-card-foot">
+                    <button className="ao-btn-expand"
+                      onClick={() => setExpandedOrderId(isExpanded ? null : order._id)}>
+                      {isExpanded
+                        ? <><FaChevronUp /> Hide Details</>
+                        : <><FaChevronDown /> View Details</>
+                      }
+                    </button>
+                    <button className="ao-btn-delete" onClick={() => setDeleteModal(order._id)}>
+                      <FaTrash /> Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteModal && (
+          <div className="ao-modal-overlay" onClick={() => setDeleteModal(null)}>
+            <div className="ao-modal" onClick={e => e.stopPropagation()}>
+              <div className="ao-modal-head">
+                <FaExclamationTriangle />
+                <h3>Delete Order</h3>
+                <button onClick={() => setDeleteModal(null)}><FaTimes /></button>
+              </div>
+              <div className="ao-modal-body">
+                <p>Are you sure you want to permanently delete order <strong>#{deleteModal.slice(-8).toUpperCase()}</strong>?</p>
+                <p>This action cannot be undone.</p>
+              </div>
+              <div className="ao-modal-foot">
+                <button className="ao-btn ao-btn--ghost" onClick={() => setDeleteModal(null)}>Cancel</button>
+                <button className="ao-btn ao-btn--danger" onClick={handleDeleteOrder}>Yes, Delete</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </AdminLayout>
   );
 };

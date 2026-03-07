@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaLocationArrow, FaSpinner } from 'react-icons/fa';
 import { authService } from '../services/api';
 import '../styles/AuthPages.css';
 
@@ -10,6 +10,8 @@ const SignUpPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,6 +20,50 @@ const SignUpPage = () => {
     password: '',
     confirmPassword: '',
   });
+
+  const handleAutoDetectLocation = async () => {
+    if (!navigator.geolocation) {
+      setGeoError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError('');
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude: lat, longitude: lng } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=en`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const data = await res.json();
+          const p = data.address || {};
+          const parts = [
+            p.road || p.hamlet || p.village,
+            p.suburb || p.neighbourhood,
+            p.city || p.town || p.county,
+            p.state,
+            p.postcode,
+          ].filter(Boolean);
+          const resolved = parts.join(', ') || data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          setFormData(prev => ({ ...prev, address: resolved }));
+        } catch {
+          setGeoError('Could not fetch address. Please type it manually.');
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (err) => {
+        setGeoLoading(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setGeoError('Location access denied. Please type your address manually.');
+        } else {
+          setGeoError('Unable to detect location. Please type your address manually.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -128,6 +174,34 @@ const SignUpPage = () => {
 
             <div className="form-group">
               <label htmlFor="address">Address</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
+                <button
+                  type="button"
+                  onClick={handleAutoDetectLocation}
+                  disabled={geoLoading}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    background: geoLoading ? '#a0aec0' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '50px',
+                    fontSize: '0.82rem',
+                    fontWeight: '600',
+                    cursor: geoLoading ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {geoLoading ? <FaSpinner style={{ animation: 'spin 0.9s linear infinite' }} /> : <FaLocationArrow />}
+                  {geoLoading ? 'Detecting…' : 'Auto-Detect Location'}
+                </button>
+              </div>
+              {geoError && (
+                <p style={{ color: '#c53030', fontSize: '0.8rem', marginBottom: '6px' }}>{geoError}</p>
+              )}
               <input
                 type="text"
                 id="address"
@@ -135,7 +209,7 @@ const SignUpPage = () => {
                 value={formData.address}
                 onChange={handleInputChange}
                 required
-                placeholder="Enter your address"
+                placeholder="Or type your address manually"
               />
             </div>
 

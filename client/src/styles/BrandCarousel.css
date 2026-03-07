@@ -5,9 +5,9 @@
 
 .bc-section {
   padding: 56px 0 52px;
-  background: #ffffff;
-  border-top: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
+  background: #0f172a;
+  border-top: 1px solid #1e293b;
+  border-bottom: 1px solid #1e293b;
   overflow: hidden;
 }
 
@@ -18,7 +18,7 @@
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #0f172a;
+  color: #f1f5f9;
   margin-bottom: 36px;
   position: relative;
 }
@@ -30,12 +30,12 @@
   top: 50%;
   width: 160px;
   height: 3px;
-  background: linear-gradient(to right, transparent, #94a3b8);
+  background: linear-gradient(to right, transparent, #475569);
   transform: translateY(-50%);
   border-radius: 2px;
 }
 .bc-label::before { right: calc(50% + 230px); }
-.bc-label::after  { left:  calc(50% + 230px); background: linear-gradient(to left, transparent, #94a3b8); }
+.bc-label::after  { left:  calc(50% + 230px); background: linear-gradient(to left, transparent, #475569); }
 
 /* ── Track wrapper (clips overflow + fades edges) ─────────── */
 .bc-track-wrap {
@@ -54,8 +54,8 @@
   z-index: 2;
   pointer-events: none;
 }
-.bc-fade--left  { left:  0; background: linear-gradient(to right, #fff 10%, transparent); }
-.bc-fade--right { right: 0; background: linear-gradient(to left,  #fff 10%, transparent); }
+.bc-fade--left  { left:  0; background: linear-gradient(to right, #0f172a 10%, transparent); }
+.bc-fade--right { right: 0; background: linear-gradient(to left,  #0f172a 10%, transparent); }
 
 /* ── Scrolling track ───────────────────────────────────────── */
 .bc-track {
@@ -116,7 +116,7 @@
 .bc-name {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #0f172a;
   letter-spacing: 0.3px;
   transition: color 0.22s;
 }

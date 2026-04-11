@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaCreditCard, FaWallet, FaMobile, FaMapMarkerAlt, FaBuilding, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
+import {
+  FaTimes,
+  FaCreditCard,
+  FaWallet,
+  FaMobile,
+  FaMapMarkerAlt,
+  FaBuilding,
+  FaMoneyBillWave,
+  FaCheckCircle,
+  FaLocationArrow,
+  FaSpinner,
+  FaExclamationTriangle
+} from 'react-icons/fa';
 import paymentService from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import '../styles/CheckoutModal.css';
@@ -25,6 +37,9 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
   });
   
   const [addressErrors, setAddressErrors] = useState({});
+  const [addressInputMode, setAddressInputMode] = useState('manual');
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState({ type: 'idle', message: '' });
 
   // Ensure the payment method stays synced
   useEffect(() => {
@@ -52,14 +67,45 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
     if (!shippingAddress.email.trim()) errors.email = 'Email is required';
     if (!shippingAddress.phone.trim()) errors.phone = 'Phone number is required';
     if (shippingAddress.phone.length < 10) errors.phone = 'Phone number must be at least 10 digits';
-    if (!shippingAddress.address.trim()) errors.address = 'Address is required';
-    if (!shippingAddress.city.trim()) errors.city = 'City is required';
-    if (!shippingAddress.state.trim()) errors.state = 'State is required';
-    if (!shippingAddress.zipCode.trim()) errors.zipCode = 'Zip code is required';
-    if (shippingAddress.zipCode.length < 5) errors.zipCode = 'Zip code must be at least 5 digits';
+
+    if (addressInputMode === 'manual') {
+      if (!shippingAddress.address.trim()) errors.address = 'Address is required';
+      if (!shippingAddress.city.trim()) errors.city = 'City is required';
+      if (!shippingAddress.state.trim()) errors.state = 'State is required';
+      if (!shippingAddress.zipCode.trim()) errors.zipCode = 'Zip code is required';
+      if (shippingAddress.zipCode.length < 5) errors.zipCode = 'Zip code must be at least 5 digits';
+    }
+
+    if (addressInputMode === 'auto') {
+      const hasDetectedAddress =
+        shippingAddress.address.trim() &&
+        shippingAddress.city.trim() &&
+        shippingAddress.state.trim() &&
+        shippingAddress.zipCode.trim();
+
+      if (!hasDetectedAddress || locationStatus.type !== 'success') {
+        errors.autoDetect = 'Please click Auto Detect Location and wait for success before payment';
+      }
+    }
     
     setAddressErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleAddressModeChange = (mode) => {
+    setAddressInputMode(mode);
+    setAddressErrors(prev => ({
+      ...prev,
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      autoDetect: ''
+    }));
+
+    if (mode === 'manual') {
+      setLocationStatus({ type: 'idle', message: '' });
+    }
   };
 
   const handleAddressChange = (field, value) => {
@@ -74,6 +120,112 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
         [field]: ''
       }));
     }
+  };
+
+  const reverseGeocodeLocation = async (lat, lng) => {
+    try {
+      const url =
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+        `&lat=${lat}&lon=${lng}&accept-language=en`;
+
+      const res = await fetch(url, {
+        headers: { 'Accept-Language': 'en' }
+      });
+
+      if (!res.ok) {
+        throw new Error('Reverse geocode request failed');
+      }
+
+      const data = await res.json();
+      const parsed = data?.address || {};
+
+      const street = [
+        parsed.house_number,
+        parsed.road,
+        parsed.suburb || parsed.neighbourhood || parsed.hamlet
+      ].filter(Boolean).join(', ');
+
+      return {
+        address: street || data.display_name || '',
+        city: parsed.city || parsed.town || parsed.village || parsed.county || '',
+        state: parsed.state || '',
+        zipCode: parsed.postcode || ''
+      };
+    } catch (err) {
+      console.error('Reverse geocoding failed:', err);
+      return null;
+    }
+  };
+
+  const handleAutoDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus({
+        type: 'error',
+        message: 'Geolocation is not supported by your browser. Please enter your address manually.'
+      });
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    setLocationStatus({ type: 'loading', message: 'Detecting your location...' });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const resolved = await reverseGeocodeLocation(lat, lng);
+
+        if (!resolved) {
+          setLocationStatus({
+            type: 'error',
+            message: 'Location detected, but address lookup failed. Please fill details manually.'
+          });
+          setIsDetectingLocation(false);
+          return;
+        }
+
+        setShippingAddress(prev => ({
+          ...prev,
+          address: resolved.address || prev.address,
+          city: resolved.city || prev.city,
+          state: resolved.state || prev.state,
+          zipCode: resolved.zipCode || prev.zipCode
+        }));
+
+        setAddressErrors(prev => {
+          const next = { ...prev };
+          if (resolved.address) delete next.address;
+          if (resolved.city) delete next.city;
+          if (resolved.state) delete next.state;
+          if (resolved.zipCode) delete next.zipCode;
+          return next;
+        });
+
+        setLocationStatus({
+          type: 'success',
+          message: 'Location detected and address fields updated.'
+        });
+        setIsDetectingLocation(false);
+      },
+      (err) => {
+        let message = 'Unable to detect location. Please enter your address manually.';
+        if (err.code === err.PERMISSION_DENIED) {
+          message = 'Location permission denied. Please allow permission or fill manually.';
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          message = 'Location information unavailable. Please try again.';
+        } else if (err.code === err.TIMEOUT) {
+          message = 'Location request timed out. Please try again.';
+        }
+
+        setLocationStatus({ type: 'error', message });
+        setIsDetectingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
+      }
+    );
   };
 
   const handlePayment = async () => {
@@ -373,6 +525,34 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
                 </div>
               </div>
 
+              <div className="form-row single">
+                <div className="address-mode-switch">
+                  <p className="address-mode-title">Address Input Method *</p>
+                  <div className="address-mode-options">
+                    <label className="address-mode-option">
+                      <input
+                        type="radio"
+                        name="addressInputMode"
+                        value="manual"
+                        checked={addressInputMode === 'manual'}
+                        onChange={() => handleAddressModeChange('manual')}
+                      />
+                      <span>Manual Entry</span>
+                    </label>
+                    <label className="address-mode-option">
+                      <input
+                        type="radio"
+                        name="addressInputMode"
+                        value="auto"
+                        checked={addressInputMode === 'auto'}
+                        onChange={() => handleAddressModeChange('auto')}
+                      />
+                      <span>Auto Detect Location</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>House No. / Flat No. / Building</label>
@@ -385,55 +565,96 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Street / Area / Locality *</label>
-                  <textarea
-                    placeholder="Street name, area, locality"
-                    value={shippingAddress.address}
-                    onChange={(e) => handleAddressChange('address', e.target.value)}
-                    className={addressErrors.address ? 'error' : ''}
-                    rows="2"
-                  />
-                  {addressErrors.address && <span className="error-text">{addressErrors.address}</span>}
-                </div>
-              </div>
+              {addressInputMode === 'auto' && (
+                <div className="form-row single">
+                  <div className="location-detect-wrapper">
+                    <button
+                      type="button"
+                      className="location-detect-btn"
+                      onClick={handleAutoDetectLocation}
+                      disabled={isDetectingLocation}
+                    >
+                      {isDetectingLocation ? (
+                        <><FaSpinner className="spin" /> Detecting...</>
+                      ) : (
+                        <><FaLocationArrow /> Auto Detect Location</>
+                      )}
+                    </button>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter city"
-                    value={shippingAddress.city}
-                    onChange={(e) => handleAddressChange('city', e.target.value)}
-                    className={addressErrors.city ? 'error' : ''}
-                  />
-                  {addressErrors.city && <span className="error-text">{addressErrors.city}</span>}
+                    {locationStatus.message && (
+                      <p className={`location-status location-status-${locationStatus.type}`}>
+                        {locationStatus.type === 'error' ? <FaExclamationTriangle /> : <FaCheckCircle />}
+                        <span>{locationStatus.message}</span>
+                      </p>
+                    )}
+
+                    {addressErrors.autoDetect && <span className="error-text">{addressErrors.autoDetect}</span>}
+
+                    {locationStatus.type === 'success' && (
+                      <div className="detected-address-preview">
+                        <p><strong>Street:</strong> {shippingAddress.address}</p>
+                        <p><strong>City:</strong> {shippingAddress.city}</p>
+                        <p><strong>State:</strong> {shippingAddress.state}</p>
+                        <p><strong>Zip:</strong> {shippingAddress.zipCode}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>State *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter state"
-                    value={shippingAddress.state}
-                    onChange={(e) => handleAddressChange('state', e.target.value)}
-                    className={addressErrors.state ? 'error' : ''}
-                  />
-                  {addressErrors.state && <span className="error-text">{addressErrors.state}</span>}
-                </div>
-                <div className="form-group">
-                  <label>Zip Code *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter zip code"
-                    value={shippingAddress.zipCode}
-                    onChange={(e) => handleAddressChange('zipCode', e.target.value)}
-                    className={addressErrors.zipCode ? 'error' : ''}
-                  />
-                  {addressErrors.zipCode && <span className="error-text">{addressErrors.zipCode}</span>}
-                </div>
-              </div>
+              )}
+
+              {addressInputMode === 'manual' && (
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Street / Area / Locality *</label>
+                      <textarea
+                        placeholder="Street name, area, locality"
+                        value={shippingAddress.address}
+                        onChange={(e) => handleAddressChange('address', e.target.value)}
+                        className={addressErrors.address ? 'error' : ''}
+                        rows="2"
+                      />
+                      {addressErrors.address && <span className="error-text">{addressErrors.address}</span>}
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>City *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter city"
+                        value={shippingAddress.city}
+                        onChange={(e) => handleAddressChange('city', e.target.value)}
+                        className={addressErrors.city ? 'error' : ''}
+                      />
+                      {addressErrors.city && <span className="error-text">{addressErrors.city}</span>}
+                    </div>
+                    <div className="form-group">
+                      <label>State *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter state"
+                        value={shippingAddress.state}
+                        onChange={(e) => handleAddressChange('state', e.target.value)}
+                        className={addressErrors.state ? 'error' : ''}
+                      />
+                      {addressErrors.state && <span className="error-text">{addressErrors.state}</span>}
+                    </div>
+                    <div className="form-group">
+                      <label>Zip Code *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter zip code"
+                        value={shippingAddress.zipCode}
+                        onChange={(e) => handleAddressChange('zipCode', e.target.value)}
+                        className={addressErrors.zipCode ? 'error' : ''}
+                      />
+                      {addressErrors.zipCode && <span className="error-text">{addressErrors.zipCode}</span>}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

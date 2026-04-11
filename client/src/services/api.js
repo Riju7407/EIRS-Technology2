@@ -468,6 +468,33 @@ export const serviceService = {
       throw error.response?.data || error.message;
     }
   },
+
+  createBooking: async (bookingData) => {
+    try {
+      const response = await api.post('/auth/service-bookings', bookingData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getMyBookings: async () => {
+    try {
+      const response = await api.get('/auth/service-bookings/my');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getAllBookings: async () => {
+    try {
+      const response = await api.get('/auth/service-bookings/admin/all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 // Contact Services

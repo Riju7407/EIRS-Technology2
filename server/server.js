@@ -12,6 +12,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const User = require('./model/userSchema');
 const bcrypt = require('bcrypt');
+const { getCrmSyncStatus } = require('./services/crmSyncService');
 
 // Start database connection immediately (non-blocking)
 let dbConnected = false;
@@ -70,6 +71,16 @@ const createAdminOnStartup = async () => {
 setTimeout(createAdminOnStartup, 1000);
 
 // CORS configuration - Updated for production
+const parseOrigins = (value) => String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const envOrigins = [
+    ...parseOrigins(process.env.FRONTEND_URL),
+    ...parseOrigins(process.env.ALLOWED_ORIGINS)
+];
+
 const corsOptions = {
     origin: function (origin, callback) {
         const allowedOrigins = [
@@ -78,7 +89,8 @@ const corsOptions = {
             'http://localhost:3002',
             'http://192.168.0.147:3000',
             'http://192.168.0.147:3001',
-            'https://eirstechnology.com'
+            'https://eirstechnology.com',
+            ...envOrigins
         ];
 
         // Check if origin matches allowed list or regex patterns
@@ -153,6 +165,13 @@ app.get('/', (req, res) => {
 app.get('/api', (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.json({ message: 'EIRS Technology API', version: '1.0.0' });
+});
+
+app.get('/api/integrations/crm/status', (_req, res) => {
+    res.status(200).json({
+        success: true,
+        crm: getCrmSyncStatus()
+    });
 });
 
 app.get('/about', (req, res) => {

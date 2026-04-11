@@ -2,7 +2,7 @@ import React from 'react';
 import { FaTimes } from 'react-icons/fa';
 import '../styles/ServiceModal.css';
 
-const ServiceModal = ({ isOpen, onClose, title, message, type = 'info' }) => {
+const ServiceModal = ({ isOpen, onClose, title, message, type = 'info', children }) => {
   if (!isOpen) return null;
 
   return (
@@ -15,13 +15,15 @@ const ServiceModal = ({ isOpen, onClose, title, message, type = 'info' }) => {
           </button>
         </div>
         <div className="modal-body">
-          <p>{message}</p>
+          {children || <p>{message}</p>}
         </div>
-        <div className="modal-footer">
-          <button className="btn btn-primary" onClick={onClose}>
-            Close
-          </button>
-        </div>
+        {!children && (
+          <div className="modal-footer">
+            <button className="btn btn-primary" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

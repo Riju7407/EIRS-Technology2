@@ -5,6 +5,7 @@ const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, c
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getFeaturedProducts, toggleFeatured } = require('../controller/productController');
 const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder, cancelOrder, requestRefund, approveRefund, rejectRefund, processRefund } = require('../controller/orderController');
+const { createServiceBooking, getUserServiceBookings, getAllServiceBookings } = require('../controller/serviceBookingController');
 const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
 const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
@@ -75,6 +76,12 @@ authRouter.get('/services/admin', adminMiddleware, getAllServices);
 authRouter.post('/services/add', jwtAuth, adminMiddleware, addService);
 authRouter.put('/services/update/:id', jwtAuth, adminMiddleware, updateService);
 authRouter.delete('/services/delete/:id', jwtAuth, adminMiddleware, deleteService);
+
+// Service Booking Routes
+authRouter.post('/service-bookings', jwtAuth, createServiceBooking);
+authRouter.get('/service-bookings/my', jwtAuth, getUserServiceBookings);
+authRouter.get('/service-bookings/admin/all', jwtAuth, adminMiddleware, getAllServiceBookings);
+
 authRouter.get('/products/featured', getFeaturedProducts);
 authRouter.get('/products', getAllProducts);
 authRouter.get('/products/:id', getProductById);

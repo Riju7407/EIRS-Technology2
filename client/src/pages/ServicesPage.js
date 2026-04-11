@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FaTools, FaHeadset, FaClipboardList, FaAmbulance, FaTimes,
   FaCertificate, FaTrophy, FaClock, FaTag, FaShieldAlt, FaWrench,
@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import { serviceService } from '../services/api';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
+import { useAuth } from '../context/AuthContext';
 import ServiceModal from '../components/ServiceModal';
 import CategorySidebar from '../components/CategorySidebar';
 import Footer from '../components/Footer';
@@ -67,11 +68,24 @@ const STATS = [
 ];
 
 const ServicesPage = () => {
+  const navigate = useNavigate();
+  const { isLoggedIn, user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [dbServices, setDbServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failedImages, setFailedImages] = useState({});
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+  const [bookingSuccess, setBookingSuccess] = useState('');
+  const [bookingForm, setBookingForm] = useState({
+    customerName: '',
+    phoneNumber: '',
+    email: '',
+    address: '',
+    preferredDate: '',
+    notes: '',
+  });
   const { isSidebarOpen, closeSidebar } = useCategoryFilter();
 
   useEffect(() => { fetchServices(); }, []);
@@ -85,8 +99,64 @@ const ServicesPage = () => {
   };
 
   const handleServiceClick = (service) => {
+    setBookingError('');
+    setBookingSuccess('');
+    setBookingForm({
+      customerName: user?.name || '',
+      phoneNumber: user?.phoneNumber || '',
+      email: user?.email || '',
+      address: user?.address || '',
+      preferredDate: '',
+      notes: '',
+    });
     setSelectedService(service);
     setModalOpen(true);
+  };
+
+  const handleBookingInputChange = (e) => {
+    const { name, value } = e.target;
+    setBookingForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBookService = async (e) => {
+    e.preventDefault();
+    setBookingError('');
+    setBookingSuccess('');
+
+    if (!isLoggedIn) {
+      navigate('/signin');
+      return;
+    }
+
+    if (!selectedService?._id) {
+      setBookingError('Booking is unavailable for this service right now.');
+      return;
+    }
+
+    if (!bookingForm.customerName || !bookingForm.phoneNumber || !bookingForm.address) {
+      setBookingError('Please fill name, phone number and address.');
+      return;
+    }
+
+    try {
+      setBookingSubmitting(true);
+      await serviceService.createBooking({
+        serviceId: selectedService._id,
+        customerName: bookingForm.customerName,
+        phoneNumber: bookingForm.phoneNumber,
+        email: bookingForm.email,
+        address: bookingForm.address,
+        preferredDate: bookingForm.preferredDate || null,
+        notes: bookingForm.notes,
+      });
+
+      setBookingSuccess('Your service booking has been submitted successfully.');
+      setBookingForm(prev => ({ ...prev, notes: '' }));
+    } catch (err) {
+      setBookingError(err?.message || err?.response?.data?.message || 'Unable to book service. Please try again.');
+    } finally {
+      setBookingSubmitting(false);
+    }
   };
 
   const serviceImages = {
@@ -255,8 +325,104 @@ const ServicesPage = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={selectedService?.name || selectedService?.title || 'Service Details'}
-        message={selectedService?.description || ''}
-      />
+      >
+        <div className="sp-booking-modal">
+          <p className="sp-booking-desc">{selectedService?.description || ''}</p>
+
+          <form className="sp-booking-form" onSubmit={handleBookService}>
+            <div className="sp-booking-grid">
+              <div className="sp-booking-group">
+                <label>Full Name *</label>
+                <input
+                  type="text"
+                  name="customerName"
+                  value={bookingForm.customerName}
+                  onChange={handleBookingInputChange}
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+              <div className="sp-booking-group">
+                <label>Phone Number *</label>
+                <input
+                  type="text"
+                  name="phoneNumber"
+                  value={bookingForm.phoneNumber}
+                  onChange={handleBookingInputChange}
+                  placeholder="Enter phone number"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="sp-booking-group">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                value={bookingForm.email}
+                onChange={handleBookingInputChange}
+                placeholder="Enter email"
+              />
+            </div>
+
+            <div className="sp-booking-group">
+              <label>Address *</label>
+              <textarea
+                name="address"
+                value={bookingForm.address}
+                onChange={handleBookingInputChange}
+                placeholder="Enter service address"
+                rows={3}
+                required
+              />
+            </div>
+
+            <div className="sp-booking-grid">
+              <div className="sp-booking-group">
+                <label>Preferred Date</label>
+                <input
+                  type="date"
+                  name="preferredDate"
+                  value={bookingForm.preferredDate}
+                  onChange={handleBookingInputChange}
+                />
+              </div>
+              <div className="sp-booking-group">
+                <label>Service Price</label>
+                <input
+                  type="text"
+                  value={selectedService?.price ? `Rs. ${selectedService.price}` : 'On request'}
+                  readOnly
+                />
+              </div>
+            </div>
+
+            <div className="sp-booking-group">
+              <label>Notes</label>
+              <textarea
+                name="notes"
+                value={bookingForm.notes}
+                onChange={handleBookingInputChange}
+                placeholder="Any specific requirement"
+                rows={2}
+              />
+            </div>
+
+            {bookingError && <div className="sp-booking-alert sp-booking-alert--error">{bookingError}</div>}
+            {bookingSuccess && <div className="sp-booking-alert sp-booking-alert--success">{bookingSuccess}</div>}
+
+            <div className="sp-booking-actions">
+              <button type="button" className="sp-booking-btn sp-booking-btn--secondary" onClick={() => setModalOpen(false)}>
+                Close
+              </button>
+              <button type="submit" className="sp-booking-btn sp-booking-btn--primary" disabled={bookingSubmitting}>
+                {bookingSubmitting ? 'Booking...' : 'Book Service'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </ServiceModal>
     </>
   );
 };

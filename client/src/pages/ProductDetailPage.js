@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaBolt, FaStar, FaStarHalfAlt, FaRegStar, FaShieldAlt, FaTruck, FaUndo, FaTag, FaChevronRight, FaHome, FaDownload, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { productService, reviewService } from '../services/api';
@@ -34,8 +34,18 @@ const ProductDetailPage = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageZoom, setImageZoom] = useState(false);
 
+  useLayoutEffect(() => {
+    // Force reset to the top product details section on every product id change.
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    setSelectedImageIndex(0);
+    setImageZoom(false);
+    setActiveTab('description');
+    setQuantity(1);
+  }, [id]);
+
   useEffect(() => {
-    window.scrollTo(0, 0);
     const fetchProduct = async () => {
       try {
         const response = await productService.getProductById(id);
@@ -477,7 +487,16 @@ const ProductDetailPage = () => {
             <h2 className="pdp-section-title">Similar Products</h2>
             <div className="pdp-related-grid">
               {relatedProducts.map((p) => (
-                <Link to={`/product/${p._id}`} key={p._id} className="pdp-related-card">
+                <Link
+                  to={`/product/${p._id}`}
+                  key={p._id}
+                  className="pdp-related-card"
+                  onClick={() => {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                  }}
+                >
                   <div className="pdp-related-img">
                     <img src={p.image || (p.images && p.images[0])} alt={p.productName || p.name} />
                   </div>

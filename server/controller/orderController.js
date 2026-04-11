@@ -1,4 +1,5 @@
 const Order = require('../model/orderSchema.js');
+const { syncOrderToCrm, fireAndForget } = require('../services/crmSyncService');
 
 exports.createOrder = async (req, res) => {
     try {
@@ -24,6 +25,11 @@ exports.createOrder = async (req, res) => {
         });
 
         await order.save();
+
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-create:${order._id}`
+        );
 
         res.status(201).json({
             success: true,
@@ -111,6 +117,11 @@ exports.updateOrderStatus = async (req, res) => {
                 message: 'Order not found'
             });
         }
+
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-status:${order._id}`
+        );
 
         res.json({
             success: true,
@@ -212,6 +223,11 @@ exports.cancelOrder = async (req, res) => {
 
         await order.save();
 
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-cancel:${order._id}`
+        );
+
         res.json({
             success: true,
             message: 'Order cancelled successfully',
@@ -273,6 +289,11 @@ exports.requestRefund = async (req, res) => {
 
         await order.save();
 
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-refund-request:${order._id}`
+        );
+
         res.json({
             success: true,
             message: 'Refund request submitted successfully',
@@ -316,6 +337,11 @@ exports.approveRefund = async (req, res) => {
 
         await order.save();
 
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-refund-approve:${order._id}`
+        );
+
         res.json({
             success: true,
             message: 'Refund approved successfully',
@@ -358,6 +384,11 @@ exports.rejectRefund = async (req, res) => {
 
         await order.save();
 
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-refund-reject:${order._id}`
+        );
+
         res.json({
             success: true,
             message: 'Refund rejected successfully',
@@ -398,6 +429,11 @@ exports.processRefund = async (req, res) => {
         order.refundInfo.processedAt = new Date();
 
         await order.save();
+
+        fireAndForget(
+            () => syncOrderToCrm(order),
+            `order-refund-process:${order._id}`
+        );
 
         res.json({
             success: true,

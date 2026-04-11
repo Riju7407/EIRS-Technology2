@@ -652,6 +652,108 @@
 
 .sp-cta-btn--outline:hover { background: rgba(255,255,255,0.1); }
 
+/* Service booking modal */
+.sp-booking-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sp-booking-desc {
+  margin: 0;
+  color: var(--sp-text-mid);
+  line-height: 1.6;
+}
+
+.sp-booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sp-booking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.sp-booking-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sp-booking-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--sp-text);
+}
+
+.sp-booking-group input,
+.sp-booking-group textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.sp-booking-group input:focus,
+.sp-booking-group textarea:focus {
+  outline: none;
+  border-color: var(--sp-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.sp-booking-alert {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sp-booking-alert--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.sp-booking-alert--success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.sp-booking-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.sp-booking-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sp-booking-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sp-booking-btn--secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.sp-booking-btn--primary {
+  background: linear-gradient(135deg, var(--sp-primary), var(--sp-secondary));
+  color: #fff;
+}
+
 /*  Responsive  */
 @media (max-width: 1024px) {
   .sp-services-grid { grid-template-columns: repeat(2, 1fr); }
@@ -678,4 +780,6 @@
   .sp-cta-inner { padding: 28px 20px; }
   .sp-cta-actions { flex-direction: column; width: 100%; }
   .sp-cta-btn { justify-content: center; }
+  .sp-booking-grid { grid-template-columns: 1fr; }
+  .sp-booking-actions { flex-direction: column; }
 }

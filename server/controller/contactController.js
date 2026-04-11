@@ -1,10 +1,31 @@
 const Contact = require('../model/contactSchema');
+const { syncContactToCrm, fireAndForget } = require('../services/crmSyncService');
 
 // Create and save a new contact message
 const contactForm = async (req, res) => {
     try {
-        const response = req.body;
-        await Contact.create(response);
+        const body = req.body || {};
+
+        // Backward-compatible mapping for older contact form payload shape.
+        const normalizedPhone = String(body.phoneNumber || '')
+            .replace(/\D/g, '')
+            .slice(-15);
+
+        const mappedPayload = {
+            name: body.name,
+            email: body.email || req.user?.email || '',
+            phoneNumber: normalizedPhone,
+            subject: body.subject || (body.location ? `Enquiry from ${body.location}` : 'Website Enquiry'),
+            message: body.message || body.description || ''
+        };
+
+        const contact = await Contact.create(mappedPayload);
+
+        fireAndForget(
+            () => syncContactToCrm(mappedPayload),
+            `contact:${contact._id}`
+        );
+
         res.status(201).json({ 
             success: true,
             message: 'Contact message created successfully' 
@@ -12,7 +33,7 @@ const contactForm = async (req, res) => {
     } catch (error) {
         res.status(400).json({ 
             success: false,
-            error: error.message 
+            message: error.message 
         });
     }
 };

@@ -9,15 +9,19 @@ const AdminServices = () => {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [serviceBookings, setServiceBookings] = useState([]);
   const [formData, setFormData] = useState({ name: '', description: '', price: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
     fetchServices();
+    fetchServiceBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -29,6 +33,18 @@ const AdminServices = () => {
       if (e.status === 401 || e.response?.status === 401) navigate('/signin');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchServiceBookings = async () => {
+    try {
+      const r = await serviceService.getAllBookings();
+      setServiceBookings(Array.isArray(r.data) ? r.data : r.data || []);
+    } catch (e) {
+      if (e.status === 401 || e.response?.status === 401) navigate('/signin');
+      setServiceBookings([]);
+    } finally {
+      setBookingsLoading(false);
     }
   };
 
@@ -83,6 +99,33 @@ const AdminServices = () => {
   const filtered = services.filter(s =>
     s.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const filteredBookings = serviceBookings.filter((booking) => {
+    const query = bookingSearch.toLowerCase();
+    if (!query) return true;
+    return (
+      booking.serviceName?.toLowerCase().includes(query) ||
+      booking.customerName?.toLowerCase().includes(query) ||
+      booking.phoneNumber?.toLowerCase().includes(query) ||
+      booking.userId?.email?.toLowerCase().includes(query)
+    );
+  });
+
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  const getBookingStatusClass = (status) => {
+    if (status === 'Confirmed') return 'ap-badge-blue';
+    if (status === 'Completed') return 'ap-badge-green';
+    if (status === 'Cancelled') return 'ap-badge-red';
+    return 'ap-badge-yellow';
+  };
 
   return (
     <AdminLayout pageTitle="Services" breadcrumbs={[{ label: 'Services' }]}>
@@ -181,6 +224,73 @@ const AdminServices = () => {
             <p>{searchTerm ? 'No services match your search.' : 'Add your first service above.'}</p>
           </div>
         )}
+
+        <div style={{ marginTop: 32 }}>
+          <div className="ap-header" style={{ marginBottom: 16 }}>
+            <div className="ap-header-text">
+              <h2 style={{ marginBottom: 4 }}>Service Bookings</h2>
+              <p>Bookings created by users from the services page.</p>
+            </div>
+          </div>
+
+          <div className="ap-toolbar">
+            <div className="ap-search">
+              <FaSearch className="ap-search-icon" />
+              <input
+                type="text"
+                placeholder="Search bookings by service, customer or phone..."
+                value={bookingSearch}
+                onChange={e => setBookingSearch(e.target.value)}
+              />
+            </div>
+            <span className="ap-results-count">{filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}</span>
+          </div>
+
+          {bookingsLoading ? (
+            <div className="ap-loading"><div className="ap-spinner" /><p>Loading bookings...</p></div>
+          ) : filteredBookings.length > 0 ? (
+            <div className="ap-table-wrap">
+              <table className="ap-table">
+                <thead>
+                  <tr>
+                    <th>Booked On</th>
+                    <th>Service</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Preferred Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBookings.map((booking) => (
+                    <tr key={booking._id}>
+                      <td>{formatDate(booking.createdAt)}</td>
+                      <td><strong>{booking.serviceName || booking.serviceId?.name || 'Service'}</strong></td>
+                      <td>{booking.customerName || booking.userId?.name || 'N/A'}</td>
+                      <td>{booking.phoneNumber || booking.userId?.phoneNumber || 'N/A'}</td>
+                      <td>{booking.email || booking.userId?.email || 'N/A'}</td>
+                      <td><span className="ap-enquiry-msg">{booking.address || 'N/A'}</span></td>
+                      <td>{formatDate(booking.preferredDate)}</td>
+                      <td>
+                        <span className={`ap-badge ${getBookingStatusClass(booking.status)}`}>
+                          {booking.status || 'Pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="ap-empty">
+              <div className="ap-empty-icon">📅</div>
+              <h3>No service bookings yet</h3>
+              <p>{bookingSearch ? 'No bookings match your search.' : 'User bookings will appear here.'}</p>
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );

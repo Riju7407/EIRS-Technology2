@@ -58,7 +58,7 @@ const ResetPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://eirs-technology2-2.onrender.com/auth/reset-password', {
+      const response = await axios.post('https://eirs-technology-production.up.railway.app/auth/reset-password', {
         email: decodeURIComponent(email),
         resetToken: token,
         newPassword

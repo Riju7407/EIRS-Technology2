@@ -1,31 +1,115 @@
 const nodemailer = require('nodemailer');
 
-// Build a fresh transporter each time so it always picks up the current env vars.
-// Uses explicit Gmail SMTP settings (more reliable than service:'gmail') and strips
-// spaces from the App Password (Google accepts them, but some SMTP wrappers don't).
-const createTransporter = () => {
+const DEFAULT_CONNECT_TIMEOUT_MS = Number(process.env.EMAIL_CONNECT_TIMEOUT_MS || 12000);
+const DEFAULT_SOCKET_TIMEOUT_MS = Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 20000);
+const DEFAULT_GREETING_TIMEOUT_MS = Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 12000);
+const RETRY_DELAY_MS = Number(process.env.EMAIL_RETRY_DELAY_MS || 1200);
+const RETRY_ATTEMPTS = Number(process.env.EMAIL_RETRY_ATTEMPTS || 2);
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const asBool = (value, fallback = false) => {
+    if (value === undefined || value === null || value === '') return fallback;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
+};
+
+const isTimeoutError = (error) => {
+    const msg = String(error?.message || '').toLowerCase();
+    return (
+        msg.includes('timeout') ||
+        msg.includes('timed out') ||
+        msg.includes('etimedout') ||
+        msg.includes('greeting never received') ||
+        msg.includes('connection closed unexpectedly')
+    );
+};
+
+const getTransportConfigs = () => {
     const user = (process.env.EMAIL_USER || '').trim();
-    const pass = (process.env.EMAIL_PASSWORD || '').replace(/\s+/g, ''); // strip spaces from App Password
+    const pass = (process.env.EMAIL_PASSWORD || '').replace(/\s+/g, '');
     if (!user || !pass) {
         throw new Error('EMAIL_USER or EMAIL_PASSWORD is not set in environment variables');
     }
-    return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // STARTTLS
+
+    const smtpHost = (process.env.SMTP_HOST || '').trim();
+    const smtpPort = Number(process.env.SMTP_PORT || 0);
+    const smtpSecure = asBool(process.env.SMTP_SECURE, smtpPort === 465);
+
+    const common = {
         auth: { user, pass },
-        tls: { rejectUnauthorized: false }
-    });
+        connectionTimeout: DEFAULT_CONNECT_TIMEOUT_MS,
+        socketTimeout: DEFAULT_SOCKET_TIMEOUT_MS,
+        greetingTimeout: DEFAULT_GREETING_TIMEOUT_MS,
+        pool: false,
+        tls: {
+            rejectUnauthorized: asBool(process.env.EMAIL_TLS_REJECT_UNAUTHORIZED, false)
+        }
+    };
+
+    if (smtpHost) {
+        return [{
+            ...common,
+            host: smtpHost,
+            port: smtpPort || (smtpSecure ? 465 : 587),
+            secure: smtpSecure,
+            name: 'custom-smtp'
+        }];
+    }
+
+    return [
+        {
+            ...common,
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
+            name: 'gmail-465'
+        },
+        {
+            ...common,
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
+            name: 'gmail-587'
+        }
+    ];
+};
+
+const createTransporter = (transportConfig) => nodemailer.createTransport(transportConfig);
+
+const sendWithFallback = async (mailOptions) => {
+    const transports = getTransportConfigs();
+    let lastError;
+
+    for (const config of transports) {
+        const transporter = createTransporter(config);
+        for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
+            try {
+                await transporter.sendMail(mailOptions);
+                return true;
+            } catch (error) {
+                lastError = error;
+                const shouldRetry = isTimeoutError(error) && attempt < RETRY_ATTEMPTS;
+                if (!shouldRetry) break;
+                await sleep(RETRY_DELAY_MS * attempt);
+            }
+        }
+    }
+
+    throw lastError || new Error('Email send failed');
 };
 
 // Verify on startup (non-blocking — only logs, never crashes the server)
 setImmediate(() => {
     try {
-        const t = createTransporter();
+        const firstTransport = getTransportConfigs()[0];
+        const t = createTransporter(firstTransport);
         t.verify((error) => {
             if (error) {
                 console.error('❌ Email transporter error:', error.message);
-                console.error('   Check EMAIL_USER / EMAIL_PASSWORD in .env and that a Gmail App Password is used (requires 2-Step Verification).');
+                console.error('   Check EMAIL_USER / EMAIL_PASSWORD and SMTP settings in environment variables.');
+                if (isTimeoutError(error)) {
+                    console.error('   SMTP timeout detected. Try setting SMTP_HOST/SMTP_PORT explicitly in deployment env.');
+                }
                 console.error('   ');
                 console.error('   🔧 Setup Instructions:');
                 console.error('   1. Go to myaccount.google.com');
@@ -119,7 +203,7 @@ const sendOTPEmail = async (email, otp, purpose) => {
             html: htmlContent
         };
 
-        await createTransporter().sendMail(mailOptions);
+        await sendWithFallback(mailOptions);
         console.log(`✅ OTP sent successfully to ${email}`);
         return true;
     } catch (error) {
@@ -196,7 +280,7 @@ const sendPasswordResetEmail = async (email, resetToken, frontendUrl) => {
             html: htmlContent
         };
 
-        await createTransporter().sendMail(mailOptions);
+        await sendWithFallback(mailOptions);
         console.log(`✅ Password reset email sent successfully to ${email}`);
         console.log(`Reset link: ${resetLink}`);
         return true;

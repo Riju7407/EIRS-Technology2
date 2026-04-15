@@ -54,7 +54,7 @@ const ProductsPage = () => {
     const s = searchParams.get('subcategory');
     return s ? decodeURIComponent(s) : '';
   });
-  const [selectedSubmenu] = useState(() => {
+  const [selectedSubmenu, setSelectedSubmenu] = useState(() => {
     const sm = searchParams.get('submenu');
     return sm ? decodeURIComponent(sm) : '';
   });
@@ -133,15 +133,23 @@ const ProductsPage = () => {
 
   useEffect(() => {
     const searchQuery = searchParams.get('search');
-    if (searchQuery) setSearchTerm(decodeURIComponent(searchQuery));
+    setSearchTerm(searchQuery ? decodeURIComponent(searchQuery) : '');
+
     const categoryFromUrl = searchParams.get('category');
     if (categoryFromUrl) {
       setSelectedCategory(decodeURIComponent(categoryFromUrl));
-      setSelectedSubcategory('');
+      const subcategoryFromUrl = searchParams.get('subcategory');
+      setSelectedSubcategory(subcategoryFromUrl ? decodeURIComponent(subcategoryFromUrl) : '');
+
+      const submenuFromUrl = searchParams.get('submenu');
+      setSelectedSubmenu(submenuFromUrl ? decodeURIComponent(submenuFromUrl) : '');
+
       setSelectedBrand('');
       setSelectedSidebarCategories(new Set());
     } else {
       setSelectedCategory('');
+      setSelectedSubcategory('');
+      setSelectedSubmenu('');
     }
   }, [searchParams]);
 
@@ -197,6 +205,7 @@ const ProductsPage = () => {
 
   const clearFilters = () => {
     setSearchTerm(''); setSelectedCategory(''); setSelectedSubcategory(''); setSelectedBrand('');
+    setSelectedSubmenu('');
     setMinPrice(''); setMaxPrice(''); setSortBy(''); setSelectedSidebarCategories(new Set());
     setCurrentPage(1); setOpenDropdown(null); setShowPricePanel(false);
   };

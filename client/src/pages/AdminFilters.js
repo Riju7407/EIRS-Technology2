@@ -27,7 +27,8 @@ const AdminFilters = () => {
     displayOrder: 0
   });
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+  const API_BASE = `${API_ROOT}/api`;
   const filterTypes = ['brand', 'resolution', 'channels', 'priceRange', 'other'];
 
   useEffect(() => {

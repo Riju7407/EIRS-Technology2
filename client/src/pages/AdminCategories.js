@@ -14,7 +14,8 @@ const AdminCategories = () => {
         description: ''
     });
 
-    const API_BASE = 'http://localhost:5000/api';
+    const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    const API_BASE = `${API_ROOT}/api`;
 
     // Fetch all categories
     useEffect(() => {

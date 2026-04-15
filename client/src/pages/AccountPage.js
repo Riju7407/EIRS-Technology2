@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import '../styles/AccountPage.css';
 
+const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
 const AccountPage = () => {
   const navigate = useNavigate();
   const { isLoggedIn, user, logout } = useAuth();
@@ -89,7 +91,7 @@ const AccountPage = () => {
         setIsLoading(false); return;
       }
       const response = await axios.put(
-        `http://localhost:5000/auth/users/edit/${userData._id}`,
+        `${API_ROOT}/auth/users/edit/${userData._id}`,
         { name: editData.name, email: editData.email, phoneNumber: editData.phoneNumber,
           address: editData.address, city: editData.city, state: editData.state, pincode: editData.pincode },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
@@ -138,7 +140,7 @@ const AccountPage = () => {
         setIsLoading(false); return;
       }
       const response = await axios.put(
-        `http://localhost:5000/auth/change-password/${userData._id}`,
+        `${API_ROOT}/auth/change-password/${userData._id}`,
         { currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );

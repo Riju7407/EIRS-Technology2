@@ -4,9 +4,8 @@ import { FaArrowLeft, FaLock, FaEnvelope, FaEye, FaEyeSlash, FaCheckCircle } fro
 import axios from 'axios';
 import '../styles/ForgotPasswordPage.css';
 
-const API_BASE = process.env.NODE_ENV === 'production'
-  ? 'https://eirs-technology2-2.onrender.com/auth'
-  : 'http://localhost:5000/auth';
+const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+const API_BASE = `${API_ROOT}/auth`;
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();

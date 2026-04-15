@@ -11,8 +11,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Only run if VERCEL_TOKEN is configured — skip gracefully otherwise
-    if: ${{ secrets.VERCEL_TOKEN != '' }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     
     steps:
       - name: Checkout code
@@ -20,12 +22,13 @@ jobs:
       
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
+
+      - name: Skip deploy when Vercel secrets are missing
+        if: ${{ env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '' }}
+        run: echo "Skipping deploy: required Vercel secrets are not configured."
       
       - name: Deploy to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
         run: |
           vercel --prod --yes \
             --token "$VERCEL_TOKEN"

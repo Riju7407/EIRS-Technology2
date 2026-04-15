@@ -76,8 +76,18 @@ const ProductsPage = () => {
     try {
       const data = await productService.getAllProducts(1, 50);
       const arr = Array.isArray(data) ? data : (data.data || []);
-      setProducts(arr);
-      setFilteredProducts(arr);
+
+      // If cache/network race returns an empty list, force one fresh fetch
+      // before showing an empty catalog to users.
+      if (arr.length === 0) {
+        const fresh = await productService.getProductsFresh(1, 50);
+        const freshArr = Array.isArray(fresh) ? fresh : (fresh.data || []);
+        setProducts(freshArr);
+        setFilteredProducts(freshArr);
+      } else {
+        setProducts(arr);
+        setFilteredProducts(arr);
+      }
     } catch {
       setProducts([]);
       setFilteredProducts([]);

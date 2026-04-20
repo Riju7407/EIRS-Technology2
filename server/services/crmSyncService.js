@@ -17,6 +17,9 @@ const getConfig = () => ({
     enabled: String(process.env.CRM_SYNC_ENABLED || '').toLowerCase() === 'true'
 });
 
+const isWebsiteEntitySyncEnabled = () =>
+    String(process.env.CRM_SYNC_WEBSITE_ENTITIES || '').toLowerCase() === 'true';
+
 const isEnabledAndConfigured = () => {
     const { enabled, baseURL, email, password } = getConfig();
     return Boolean(enabled && baseURL && email && password);
@@ -319,11 +322,13 @@ const syncUserToCrm = async (user) => {
 
     if (!payload.externalUserId) return;
 
-    await upsertWebsiteSyncEntity({
-        path: '/api/website-sync/users',
-        payload,
-        label: 'CRM website user sync'
-    });
+    if (isWebsiteEntitySyncEnabled()) {
+        await upsertWebsiteSyncEntity({
+            path: '/api/website-sync/users',
+            payload,
+            label: 'CRM website user sync'
+        });
+    }
 };
 
 const syncContactToCrm = async (contact) => {
@@ -342,7 +347,7 @@ const syncContactToCrm = async (contact) => {
         stage: 'new'
     });
 
-    if (externalContactId) {
+    if (externalContactId && isWebsiteEntitySyncEnabled()) {
         await upsertWebsiteSyncEntity({
             path: '/api/website-sync/contacts',
             payload: {
@@ -378,24 +383,26 @@ const syncServiceBookingToCrm = async (booking) => {
         stage: 'qualified'
     });
 
-    await upsertWebsiteSyncEntity({
-        path: '/api/website-sync/bookings',
-        payload: {
-            externalBookingId: String(booking?._id || ''),
-            externalUserId: String(booking?.userId || ''),
-            serviceId: String(booking?.serviceId || ''),
-            serviceName: booking?.serviceName || '',
-            servicePrice: Number(booking?.servicePrice || 0),
-            customerName: booking?.customerName || '',
-            email: booking?.email || '',
-            phoneNumber: booking?.phoneNumber || '',
-            address: booking?.address || '',
-            preferredDate: booking?.preferredDate || null,
-            notes: booking?.notes || '',
-            source: 'website'
-        },
-        label: 'CRM website booking sync'
-    });
+    if (isWebsiteEntitySyncEnabled()) {
+        await upsertWebsiteSyncEntity({
+            path: '/api/website-sync/bookings',
+            payload: {
+                externalBookingId: String(booking?._id || ''),
+                externalUserId: String(booking?.userId || ''),
+                serviceId: String(booking?.serviceId || ''),
+                serviceName: booking?.serviceName || '',
+                servicePrice: Number(booking?.servicePrice || 0),
+                customerName: booking?.customerName || '',
+                email: booking?.email || '',
+                phoneNumber: booking?.phoneNumber || '',
+                address: booking?.address || '',
+                preferredDate: booking?.preferredDate || null,
+                notes: booking?.notes || '',
+                source: 'website'
+            },
+            label: 'CRM website booking sync'
+        });
+    }
 };
 
 const syncOrderToCrm = async (order) => {
@@ -438,32 +445,34 @@ const syncOrderToCrm = async (order) => {
         invoiceNumber: String(order._id)
     });
 
-    await upsertWebsiteSyncEntity({
-        path: '/api/website-sync/orders',
-        payload: {
-            externalOrderId: String(order?._id || ''),
-            externalUserId: String(order?.userId || ''),
-            customerName: name,
-            customerEmail: email,
-            customerPhone: phone,
-            totalPrice: Number(order?.totalPrice || 0),
-            totalItems: Number(order?.totalItems || 0),
-            status: order?.status || 'Pending',
-            paymentStatus: order?.paymentStatus || 'Pending',
-            paymentMethod: order?.paymentMethod || '',
-            notes: order?.notes || '',
-            orderDate: order?.orderDate || new Date(),
-            items: Array.isArray(order?.items) ? order.items.map((item) => ({
-                productId: String(item?.productId || ''),
-                productName: item?.productName || '',
-                quantity: Number(item?.quantity || 0),
-                price: Number(item?.price || 0)
-            })) : [],
-            shippingAddress: order?.shippingAddress || {},
-            source: 'website'
-        },
-        label: 'CRM website order sync'
-    });
+    if (isWebsiteEntitySyncEnabled()) {
+        await upsertWebsiteSyncEntity({
+            path: '/api/website-sync/orders',
+            payload: {
+                externalOrderId: String(order?._id || ''),
+                externalUserId: String(order?.userId || ''),
+                customerName: name,
+                customerEmail: email,
+                customerPhone: phone,
+                totalPrice: Number(order?.totalPrice || 0),
+                totalItems: Number(order?.totalItems || 0),
+                status: order?.status || 'Pending',
+                paymentStatus: order?.paymentStatus || 'Pending',
+                paymentMethod: order?.paymentMethod || '',
+                notes: order?.notes || '',
+                orderDate: order?.orderDate || new Date(),
+                items: Array.isArray(order?.items) ? order.items.map((item) => ({
+                    productId: String(item?.productId || ''),
+                    productName: item?.productName || '',
+                    quantity: Number(item?.quantity || 0),
+                    price: Number(item?.price || 0)
+                })) : [],
+                shippingAddress: order?.shippingAddress || {},
+                source: 'website'
+            },
+            label: 'CRM website order sync'
+        });
+    }
 };
 
 const fireAndForget = (promiseFactory, label) => {

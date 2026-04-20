@@ -164,6 +164,7 @@ app.get('/diag/email', async (req, res) => {
 // Mount authRouter at /auth - it handles all /auth/* routes
 // Client calls /api/auth/signin, Vercel strips /api, becomes /auth/signin
 app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
 
 // Category, subcategory and filter routes
 // Mount at BOTH '/' and '/api' so routes work whether Vercel rewrites strip /api or not

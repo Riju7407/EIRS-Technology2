@@ -17,7 +17,7 @@ const productionDefaults = {
     EMAIL_PASSWORD: 'alvkfppkptaptzta',
     FRONTEND_URL: 'https://eirs-technology.vercel.app',
     CRM_SYNC_ENABLED: 'true',
-    CRM_BASE_URL: 'https://eirs-technology-crm.onrender.com',
+    CRM_BASE_URL: 'https://eirs-technology-crm.vercel.app',
     CRM_TIMEOUT_MS: '20000',
     RAZORPAY_KEY_ID: 'rzp_live_SK2al1KdtZ4MA3',
     RAZORPAY_KEY_SECRET: '2lyRlnz8Erd6EkbOUIvHTONp',

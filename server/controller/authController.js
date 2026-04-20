@@ -2,6 +2,7 @@ const userSchema = require("../model/userSchema");
 const emailvalidator = require("email-validation");
 const bcrypt = require("bcrypt");
 const { generateOTP, sendOTPEmail, sendPasswordResetEmail } = require("../services/emailService");
+const { syncUserToCrm, fireAndForget } = require('../services/crmSyncService');
 
 // Signup logic
 
@@ -43,6 +44,11 @@ const signup = async (req, res, next) => {
 
         const userInfo = new userSchema(userData);
         const savedUser = await userInfo.save();
+
+        fireAndForget(
+            () => syncUserToCrm(savedUser),
+            `user-signup:${savedUser._id}`
+        );
         
         console.log('User created successfully:', savedUser._id);
         

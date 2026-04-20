@@ -1,7 +1,7 @@
 import fs from 'fs';
 
-const websiteApi = 'https://eirs-technology2-2.onrender.com';
-const crmApi = 'https://eirs-technology-crm.onrender.com/api';
+const websiteApi = 'https://eirs-technology.vercel.app';
+const crmApi = 'https://eirs-technology-crm.vercel.app/api';
 
 const envText = fs.readFileSync('server/.env', 'utf8');
 const getEnv = (name) => {

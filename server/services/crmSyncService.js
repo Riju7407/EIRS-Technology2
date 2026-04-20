@@ -4,8 +4,13 @@ const DEFAULT_TIMEOUT = 12000;
 let cachedToken = null;
 let tokenFetchedAt = 0;
 
+const normalizeBaseUrl = (value) => String(value || '')
+    .trim()
+    .replace(/\/$/, '')
+    .replace(/\/api$/i, '');
+
 const getConfig = () => ({
-    baseURL: String(process.env.CRM_BASE_URL || '').replace(/\/$/, ''),
+    baseURL: normalizeBaseUrl(process.env.CRM_BASE_URL),
     email: process.env.CRM_EMAIL,
     password: process.env.CRM_PASSWORD,
     timeout: Number(process.env.CRM_TIMEOUT_MS || DEFAULT_TIMEOUT),
@@ -25,6 +30,11 @@ const getCrmSyncStatus = () => {
         baseURL: config.baseURL || null,
         timeout: config.timeout
     };
+};
+
+const extractList = (response, key) => {
+    const data = response?.data || response || {};
+    return Array.isArray(data?.[key]) ? data[key] : [];
 };
 
 const splitName = (fullName = '') => {
@@ -100,13 +110,15 @@ const findClientByEmail = async (email) => {
     if (!email) return null;
 
     const client = getHttpClient();
-    const headers = await authHeaders();
     const response = await withRetry(
-        () => client.get('/api/clients', { headers, params: { search: email, limit: 50 } }),
+        async () => {
+            const headers = await authHeaders();
+            return client.get('/api/clients', { headers, params: { search: email, limit: 50 } });
+        },
         'CRM client search'
     );
 
-    const clients = response?.data?.clients || [];
+    const clients = extractList(response, 'clients');
     return clients.find((item) => String(item.email || '').toLowerCase() === String(email).toLowerCase()) || null;
 };
 
@@ -117,7 +129,6 @@ const createOrGetClient = async ({ fullName, email, phone, addressText, source, 
     }
 
     const { firstName, lastName } = splitName(fullName);
-    const headers = await authHeaders();
     const client = getHttpClient();
 
     const payload = {
@@ -138,7 +149,10 @@ const createOrGetClient = async ({ fullName, email, phone, addressText, source, 
     };
 
     const response = await withRetry(
-        () => client.post('/api/clients', payload, { headers }),
+        async () => {
+            const headers = await authHeaders();
+            return client.post('/api/clients', payload, { headers });
+        },
         'CRM client create'
     );
 
@@ -147,7 +161,6 @@ const createOrGetClient = async ({ fullName, email, phone, addressText, source, 
 
 const createProspect = async ({ fullName, email, phone, company, notes, stage = 'new' }) => {
     const { firstName, lastName } = splitName(fullName);
-    const headers = await authHeaders();
     const client = getHttpClient();
 
     const payload = {
@@ -161,11 +174,16 @@ const createProspect = async ({ fullName, email, phone, company, notes, stage = 
         notes: notes || ''
     };
 
-    await withRetry(() => client.post('/api/prospects', payload, { headers }), 'CRM prospect create');
+    await withRetry(
+        async () => {
+            const headers = await authHeaders();
+            return client.post('/api/prospects', payload, { headers });
+        },
+        'CRM prospect create'
+    );
 };
 
 const addClientPurchase = async ({ clientId, product, amount, status, notes, invoiceNumber }) => {
-    const headers = await authHeaders();
     const client = getHttpClient();
 
     const payload = {
@@ -178,13 +196,141 @@ const addClientPurchase = async ({ clientId, product, amount, status, notes, inv
     };
 
     await withRetry(
-        () => client.post(`/api/clients/${clientId}/purchase`, payload, { headers }),
+        async () => {
+            const headers = await authHeaders();
+            return client.post(`/api/clients/${clientId}/purchase`, payload, { headers });
+        },
         'CRM purchase add'
     );
 };
 
-const syncContactToCrm = async ({ name, email, phoneNumber, subject, message }) => {
+const upsertWebsiteSyncEntity = async ({ path, payload, label }) => {
+    const client = getHttpClient();
+
+    await withRetry(
+        async () => {
+            const headers = await authHeaders();
+            return client.post(path, payload, { headers });
+        },
+        label
+    );
+};
+
+const getCrmSyncOverview = async () => {
+    const status = getCrmSyncStatus();
+    if (!status.configured) {
+        return {
+            configured: false,
+            enabled: status.enabled,
+            baseURL: status.baseURL,
+            totals: {
+                websiteProspects: 0,
+                websiteClients: 0,
+                websitePurchases: 0
+            },
+            recentProspects: [],
+            recentClients: []
+        };
+    }
+
+    const client = getHttpClient();
+
+    const [prospectsResp, clientsResp] = await Promise.all([
+        withRetry(
+            async () => {
+                const headers = await authHeaders();
+                return client.get('/api/service-management', {
+                    headers,
+                    params: { source: 'website', page: 1, limit: 10 }
+                });
+            },
+            'CRM website prospects fetch'
+        ),
+        withRetry(
+            async () => {
+                const headers = await authHeaders();
+                return client.get('/api/clients', {
+                    headers,
+                    params: { source: 'website', page: 1, limit: 10 }
+                });
+            },
+            'CRM website clients fetch'
+        )
+    ]);
+
+    const prospects = extractList(prospectsResp, 'prospects');
+    const clients = extractList(clientsResp, 'clients');
+
+    const totalProspects = Number(prospectsResp?.data?.total || prospects.length || 0);
+    const totalClients = Number(clientsResp?.data?.total || clients.length || 0);
+    const totalPurchases = clients.reduce(
+        (count, item) => count + (Array.isArray(item?.purchaseHistory) ? item.purchaseHistory.length : 0),
+        0
+    );
+
+    const pickProspect = (item) => ({
+        id: item?._id,
+        name: [item?.firstName, item?.lastName].filter(Boolean).join(' ').trim() || 'Unknown',
+        email: item?.email || '',
+        stage: item?.stage || '',
+        source: item?.source || '',
+        createdAt: item?.createdAt || null
+    });
+
+    const pickClient = (item) => ({
+        id: item?._id,
+        name: [item?.firstName, item?.lastName].filter(Boolean).join(' ').trim() || 'Unknown',
+        email: item?.email || '',
+        status: item?.status || '',
+        source: item?.source || '',
+        purchaseCount: Array.isArray(item?.purchaseHistory) ? item.purchaseHistory.length : 0,
+        createdAt: item?.createdAt || null
+    });
+
+    return {
+        configured: true,
+        enabled: status.enabled,
+        baseURL: status.baseURL,
+        totals: {
+            websiteProspects: totalProspects,
+            websiteClients: totalClients,
+            websitePurchases: totalPurchases
+        },
+        recentProspects: prospects.map(pickProspect),
+        recentClients: clients.map(pickClient)
+    };
+};
+
+const syncUserToCrm = async (user) => {
     if (!isEnabledAndConfigured()) return;
+
+    const payload = {
+        externalUserId: String(user?._id || user?.id || ''),
+        name: user?.name || 'Website User',
+        email: user?.email || '',
+        phoneNumber: user?.phoneNumber || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        pincode: user?.pincode || '',
+        isAdmin: Boolean(user?.isAdmin),
+        source: 'website'
+    };
+
+    if (!payload.externalUserId) return;
+
+    await upsertWebsiteSyncEntity({
+        path: '/api/website-sync/users',
+        payload,
+        label: 'CRM website user sync'
+    });
+};
+
+const syncContactToCrm = async (contact) => {
+    if (!isEnabledAndConfigured()) return;
+
+    const { name, email, phoneNumber, subject, message } = contact || {};
+    const externalContactId = String(contact?._id || contact?.id || '').trim();
 
     const notes = `Contact enquiry\nSubject: ${subject || ''}\nMessage: ${message || ''}`;
     await createProspect({
@@ -195,6 +341,22 @@ const syncContactToCrm = async ({ name, email, phoneNumber, subject, message }) 
         notes,
         stage: 'new'
     });
+
+    if (externalContactId) {
+        await upsertWebsiteSyncEntity({
+            path: '/api/website-sync/contacts',
+            payload: {
+                externalContactId,
+                name: name || 'Website Contact',
+                email: email || '',
+                phoneNumber: phoneNumber || '',
+                subject: subject || '',
+                message: message || '',
+                source: 'website'
+            },
+            label: 'CRM website contact sync'
+        });
+    }
 };
 
 const syncServiceBookingToCrm = async (booking) => {
@@ -214,6 +376,25 @@ const syncServiceBookingToCrm = async (booking) => {
         company: '',
         notes,
         stage: 'qualified'
+    });
+
+    await upsertWebsiteSyncEntity({
+        path: '/api/website-sync/bookings',
+        payload: {
+            externalBookingId: String(booking?._id || ''),
+            externalUserId: String(booking?.userId || ''),
+            serviceId: String(booking?.serviceId || ''),
+            serviceName: booking?.serviceName || '',
+            servicePrice: Number(booking?.servicePrice || 0),
+            customerName: booking?.customerName || '',
+            email: booking?.email || '',
+            phoneNumber: booking?.phoneNumber || '',
+            address: booking?.address || '',
+            preferredDate: booking?.preferredDate || null,
+            notes: booking?.notes || '',
+            source: 'website'
+        },
+        label: 'CRM website booking sync'
     });
 };
 
@@ -256,6 +437,33 @@ const syncOrderToCrm = async (order) => {
         notes: `Order status: ${order.status}. Payment status: ${order.paymentStatus || 'Pending'}`,
         invoiceNumber: String(order._id)
     });
+
+    await upsertWebsiteSyncEntity({
+        path: '/api/website-sync/orders',
+        payload: {
+            externalOrderId: String(order?._id || ''),
+            externalUserId: String(order?.userId || ''),
+            customerName: name,
+            customerEmail: email,
+            customerPhone: phone,
+            totalPrice: Number(order?.totalPrice || 0),
+            totalItems: Number(order?.totalItems || 0),
+            status: order?.status || 'Pending',
+            paymentStatus: order?.paymentStatus || 'Pending',
+            paymentMethod: order?.paymentMethod || '',
+            notes: order?.notes || '',
+            orderDate: order?.orderDate || new Date(),
+            items: Array.isArray(order?.items) ? order.items.map((item) => ({
+                productId: String(item?.productId || ''),
+                productName: item?.productName || '',
+                quantity: Number(item?.quantity || 0),
+                price: Number(item?.price || 0)
+            })) : [],
+            shippingAddress: order?.shippingAddress || {},
+            source: 'website'
+        },
+        label: 'CRM website order sync'
+    });
 };
 
 const fireAndForget = (promiseFactory, label) => {
@@ -266,6 +474,8 @@ const fireAndForget = (promiseFactory, label) => {
 
 module.exports = {
     getCrmSyncStatus,
+    getCrmSyncOverview,
+    syncUserToCrm,
     syncContactToCrm,
     syncServiceBookingToCrm,
     syncOrderToCrm,

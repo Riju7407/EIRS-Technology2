@@ -22,7 +22,11 @@ const contactForm = async (req, res) => {
         const contact = await Contact.create(mappedPayload);
 
         fireAndForget(
-            () => syncContactToCrm(mappedPayload),
+            () => syncContactToCrm({
+                ...mappedPayload,
+                _id: contact._id,
+                createdAt: contact.createdAt
+            }),
             `contact:${contact._id}`
         );
 

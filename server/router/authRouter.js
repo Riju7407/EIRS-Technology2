@@ -8,6 +8,7 @@ const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrder
 const { createServiceBooking, getUserServiceBookings, getAllServiceBookings } = require('../controller/serviceBookingController');
 const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
 const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
+const { getCrmSyncOverview } = require('../services/crmSyncService');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
 const jwtAuth = require('../middleware/jwtAuth');
 const { upload, cloudinary } = require('../config/cloudinary');
@@ -43,6 +44,17 @@ authRouter.post('/signup',signup);
 authRouter.post('/signin',signin);
 authRouter.get('/user', jwtAuth, getuser);
 authRouter.get('/admin/status', jwtAuth, checkAdminStatus);
+authRouter.get('/integrations/crm/overview', jwtAuth, adminMiddleware, async (_req, res) => {
+  try {
+    const overview = await getCrmSyncOverview();
+    return res.status(200).json({ success: true, overview });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to fetch CRM sync overview'
+    });
+  }
+});
 authRouter.post('/logout', jwtAuth, logout);
 authRouter.post('/contact', jwtAuth, submitContact);
 authRouter.put('/change-password/:id', jwtAuth, changePassword);

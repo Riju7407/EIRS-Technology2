@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FaPhone, FaBox, FaTags, FaUsers, FaShoppingCart,
-  FaEye, FaPlus, FaSync,
+  FaEye, FaPlus, FaSync, FaExternalLinkAlt, FaPlug,
 } from 'react-icons/fa';
 import AdminLayout from '../components/AdminLayout';
 import { adminService, productService } from '../services/api';
@@ -21,6 +21,7 @@ const StatCard = ({ label, value, icon, color }) => (
 );
 
 const AdminDashboard = () => {
+  const crmPortalUrl = 'https://eirs-technology-crm.vercel.app';
   const [stats, setStats] = useState({
     totalEnquiries: 0,
     todayEnquiries: 0,
@@ -30,16 +31,27 @@ const AdminDashboard = () => {
     totalOrders: 0,
   });
   const [recentEnquiries, setRecentEnquiries] = useState([]);
+  const [crmOverview, setCrmOverview] = useState({
+    configured: false,
+    enabled: false,
+    totals: {
+      websiteProspects: 0,
+      websiteClients: 0,
+      websitePurchases: 0,
+    },
+    recentProspects: [],
+  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchDashboardData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     try {
-      const [enquiriesRes, usersRes, productsRes] = await Promise.allSettled([
+      const [enquiriesRes, usersRes, productsRes, crmRes] = await Promise.allSettled([
         adminService.getContacts(),
         adminService.getAllUsers(),
         productService.getAllProducts(),
+        adminService.getCrmSyncOverview(),
       ]);
       const contacts = enquiriesRes.status === 'fulfilled' ? (enquiriesRes.value?.data || []) : [];
       const users = usersRes.status === 'fulfilled' ? (usersRes.value?.data || usersRes.value || []) : [];
@@ -55,6 +67,20 @@ const AdminDashboard = () => {
         totalOrders: 0,
       });
       setRecentEnquiries(contacts.slice(0, 6));
+
+      const crmData = crmRes.status === 'fulfilled' ? crmRes.value?.overview : null;
+      if (crmData) {
+        setCrmOverview({
+          configured: Boolean(crmData.configured),
+          enabled: Boolean(crmData.enabled),
+          totals: {
+            websiteProspects: Number(crmData?.totals?.websiteProspects || 0),
+            websiteClients: Number(crmData?.totals?.websiteClients || 0),
+            websitePurchases: Number(crmData?.totals?.websitePurchases || 0),
+          },
+          recentProspects: Array.isArray(crmData.recentProspects) ? crmData.recentProspects.slice(0, 4) : [],
+        });
+      }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
     } finally {
@@ -187,6 +213,60 @@ const AdminDashboard = () => {
                 ))}
               </div>
             </div>
+
+            <div className="dash-card dash-crm-card">
+              <div className="dash-card-header">
+                <h3 className="dash-card-title">Website to CRM Sync</h3>
+                <a
+                  href={crmPortalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dash-view-all"
+                >
+                  <FaExternalLinkAlt /> Open CRM
+                </a>
+              </div>
+              <div className="dash-crm-body">
+                <div className={`dash-crm-status ${(crmOverview.enabled && crmOverview.configured) ? 'ok' : 'warn'}`}>
+                  <FaPlug />
+                  {(crmOverview.enabled && crmOverview.configured)
+                    ? 'CRM sync is active'
+                    : 'CRM sync needs configuration'}
+                </div>
+
+                <div className="dash-crm-kpis">
+                  <div className="dash-crm-kpi">
+                    <span className="dash-crm-kpi-label">Website Prospects</span>
+                    <strong>{crmOverview.totals.websiteProspects}</strong>
+                  </div>
+                  <div className="dash-crm-kpi">
+                    <span className="dash-crm-kpi-label">Website Clients</span>
+                    <strong>{crmOverview.totals.websiteClients}</strong>
+                  </div>
+                  <div className="dash-crm-kpi">
+                    <span className="dash-crm-kpi-label">Tracked Purchases</span>
+                    <strong>{crmOverview.totals.websitePurchases}</strong>
+                  </div>
+                </div>
+
+                {crmOverview.recentProspects.length > 0 ? (
+                  <div className="dash-crm-recent">
+                    {crmOverview.recentProspects.map((item) => (
+                      <div key={item.id} className="dash-crm-recent-item">
+                        <div>
+                          <p className="dash-crm-name">{item.name}</p>
+                          <p className="dash-crm-email">{item.email}</p>
+                        </div>
+                        <span className="dash-crm-stage">{item.stage || 'new'}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="dash-crm-empty">No website records found in CRM yet.</p>
+                )}
+              </div>
+            </div>
+
             {/* Store Overview */}
             <div className="dash-card">
               <div className="dash-card-header">

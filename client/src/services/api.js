@@ -587,6 +587,15 @@ export const adminService = {
       throw error.response?.data || error.message;
     }
   },
+
+  getCrmSyncOverview: async () => {
+    try {
+      const response = await api.get('/auth/integrations/crm/overview');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
 
 // Order Services

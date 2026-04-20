@@ -8,6 +8,7 @@ const paymentRouter = require('./router/paymentRouter.js');
 const categoryRouter = require('./router/categoryRouter.js');
 const locationRouter = require('./router/locationRouter.js');
 const websiteSyncRouter = require('./router/websiteSyncRouter.js');
+const crmOpsRouter = require('./router/crmOpsRouter.js');
 const databaseconnect = require('./config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -141,6 +142,7 @@ app.use('/api/payment', paymentRouter);
 
 app.use('/api', categoryRouter);
 app.use('/api/website-sync', websiteSyncRouter);
+app.use('/api', crmOpsRouter);
 
 // Geospatial location routes – POST /api/location, GET /api/location/nearby
 app.use('/api', locationRouter);

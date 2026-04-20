@@ -26,6 +26,7 @@ const { authRouter } = require('../server/router/authRouter');
 const categoryRouter = require('../server/router/categoryRouter');
 const locationRouter = require('../server/router/locationRouter');
 const paymentRouter  = require('../server/router/paymentRouter');
+const websiteSyncRouter = require('../server/router/websiteSyncRouter');
 const User = require('../server/model/userSchema');
 const bcrypt = require('bcrypt');
 
@@ -176,6 +177,9 @@ app.use('/api', locationRouter);   // Direct/Render: /api/location
 // Payment routes
 app.use('/payment', paymentRouter);
 app.use('/api/payment', paymentRouter);
+
+// CRM website sync routes (shared DB, shared backend)
+app.use('/api/website-sync', websiteSyncRouter);
 
 // Serve static files from React build AFTER all API routes
 // (express.static only handles GET/HEAD — placing it before routes causes 405 on POST API calls)

@@ -71,7 +71,12 @@ const getCrmToken = async () => {
     }
 
     const client = getHttpClient();
-    const response = await client.post('/api/auth/login', { email, password });
+    let response;
+    try {
+        response = await client.post('/api/auth/login', { email, password });
+    } catch (legacyLoginError) {
+        response = await client.post('/auth/signin', { email, password });
+    }
     const token = response?.data?.token;
 
     if (!token) {

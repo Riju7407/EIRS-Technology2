@@ -3,6 +3,10 @@ const Prospect = require('../model/prospectSchema');
 const Employee = require('../model/employeeSchema');
 const Campaign = require('../model/campaignSchema');
 const Distribution = require('../model/distributionSchema');
+const FollowUp = require('../model/followUpSchema');
+const Interaction = require('../model/interactionSchema');
+const Quotation = require('../model/quotationSchema');
+const User = require('../model/userSchema');
 const jwtAuth = require('../middleware/jwtAuth');
 const { adminMiddleware } = require('../middleware/adminMiddleware');
 
@@ -33,6 +37,29 @@ const generateAssignmentId = async () => {
         assignmentId: { $regex: `^ASG-${datePart}-` },
     });
     return `ASG-${datePart}-${String(count + 1).padStart(4, '0')}`;
+};
+
+const mapUserToClient = (user) => {
+    if (!user) return null;
+    const name = String(user.name || '').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    return {
+        _id: user._id,
+        firstName: parts[0] || name || 'Client',
+        lastName: parts.slice(1).join(' ') || '',
+        email: user.email || '',
+        phone: user.phoneNumber || '',
+        company: '',
+    };
+};
+
+const hydrateUsersById = async (ids) => {
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean).map((id) => String(id))));
+    if (!uniqueIds.length) return new Map();
+    const users = await User.find({ _id: { $in: uniqueIds } }).select('name email phoneNumber');
+    const map = new Map();
+    users.forEach((u) => map.set(String(u._id), u));
+    return map;
 };
 
 router.use(jwtAuth, adminMiddleware);
@@ -555,6 +582,418 @@ router.delete('/distribution/:id', async (req, res) => {
         return res.status(200).json({ success: true, message: 'Distribution deleted successfully' });
     } catch (error) {
         return res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+// Quotations
+router.post('/quotations', async (req, res) => {
+    try {
+        const { clientId, quoteNumber } = req.body;
+        const client = await User.findById(clientId).select('name email phoneNumber address city state pincode');
+        if (!client) {
+            return res.status(404).json({ message: 'Client not found' });
+        }
+
+        const fallbackQuoteNumber = `Q-${Date.now()}`;
+        const quotation = new Quotation({
+            ...req.body,
+            quoteNumber: quoteNumber || fallbackQuoteNumber,
+            clientId,
+            clientName: req.body.clientName || client.name || '',
+            clientPhone: req.body.clientPhone || client.phoneNumber || '',
+            clientAddress:
+                req.body.clientAddress ||
+                [client.address, client.city, client.state, client.pincode].filter(Boolean).join(', '),
+            createdBy: req.user._id || req.user.id,
+        });
+
+        await quotation.save();
+        return res.status(201).json({ message: 'Quotation saved successfully', quotation });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to save quotation', error: error.message });
+    }
+});
+
+router.get('/quotations', async (req, res) => {
+    try {
+        const { page = 1, limit = 10, status, clientId, search } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const filter = {};
+        if (status) filter.status = status;
+        if (clientId) filter.clientId = clientId;
+        if (search) {
+            const regex = { $regex: escapeRegex(search), $options: 'i' };
+            filter.$or = [{ quoteNumber: regex }, { clientName: regex }];
+        }
+
+        const [total, quotations] = await Promise.all([
+            Quotation.countDocuments(filter),
+            Quotation.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit))
+                .populate('createdBy', 'name email'),
+        ]);
+
+        return res.status(200).json({
+            quotations,
+            totalCount: total,
+            totalPages: Math.ceil(total / Number(limit)),
+            currentPage: Number(page),
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to fetch quotations', error: error.message });
+    }
+});
+
+router.get('/quotations/:id', async (req, res) => {
+    try {
+        const quotation = await Quotation.findById(req.params.id).populate('createdBy', 'name email');
+        if (!quotation) {
+            return res.status(404).json({ message: 'Quotation not found' });
+        }
+        return res.status(200).json(quotation);
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to fetch quotation', error: error.message });
+    }
+});
+
+router.patch('/quotations/:id/status', async (req, res) => {
+    try {
+        const quotation = await Quotation.findByIdAndUpdate(
+            req.params.id,
+            { status: req.body.status },
+            { new: true }
+        );
+        if (!quotation) {
+            return res.status(404).json({ message: 'Quotation not found' });
+        }
+        return res.status(200).json({ message: 'Quotation status updated', quotation });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to update quotation', error: error.message });
+    }
+});
+
+router.get('/quotations/:id/download', async (req, res) => {
+    try {
+        const quotation = await Quotation.findById(req.params.id);
+        if (!quotation) {
+            return res.status(404).json({ message: 'Quotation not found' });
+        }
+        return res.status(200).json({ message: 'Download data ready', quotationNumber: quotation.quoteNumber, data: quotation });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to download quotation', error: error.message });
+    }
+});
+
+router.delete('/quotations/:id', async (req, res) => {
+    try {
+        const quotation = await Quotation.findByIdAndDelete(req.params.id);
+        if (!quotation) {
+            return res.status(404).json({ message: 'Quotation not found' });
+        }
+        return res.status(200).json({ message: 'Quotation deleted successfully' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to delete quotation', error: error.message });
+    }
+});
+
+// Follow-ups
+router.get('/followups', async (req, res) => {
+    try {
+        const { status, label, priority, assignedTo, clientId, page = 1, limit = 10 } = req.query;
+        const query = { isDeleted: false };
+        if (status) query.status = status;
+        if (label) query.label = label;
+        if (priority) query.priority = priority;
+        if (assignedTo) query.assignedTo = assignedTo;
+        if (clientId) query.client = clientId;
+
+        await FollowUp.updateMany(
+            { status: 'scheduled', scheduledDate: { $lt: new Date() }, isDeleted: false },
+            { status: 'overdue' }
+        );
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const [total, followUps] = await Promise.all([
+            FollowUp.countDocuments(query),
+            FollowUp.find(query).sort({ scheduledDate: 1 }).skip(skip).limit(Number(limit)),
+        ]);
+
+        const userIds = [];
+        followUps.forEach((f) => {
+            userIds.push(f.client, f.scheduledBy, f.assignedTo);
+        });
+        const userMap = await hydrateUsersById(userIds);
+
+        const mapped = followUps.map((f) => ({
+            ...f.toObject(),
+            client: mapUserToClient(userMap.get(String(f.client))),
+            scheduledBy: mapUserToClient(userMap.get(String(f.scheduledBy))),
+            assignedTo: mapUserToClient(userMap.get(String(f.assignedTo))),
+        }));
+
+        return res.status(200).json({
+            success: true,
+            count: mapped.length,
+            total,
+            totalPages: Math.ceil(total / Number(limit)),
+            currentPage: Number(page),
+            followUps: mapped,
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/followups/stats', async (_req, res) => {
+    try {
+        const [scheduled, overdue, completed, pending, paymentDue, byLabel] = await Promise.all([
+            FollowUp.countDocuments({ status: 'scheduled', isDeleted: false }),
+            FollowUp.countDocuments({ status: 'overdue', isDeleted: false }),
+            FollowUp.countDocuments({ status: 'completed', isDeleted: false }),
+            FollowUp.countDocuments({
+                label: 'Pending Response',
+                isDeleted: false,
+                status: { $nin: ['completed', 'cancelled'] },
+            }),
+            FollowUp.countDocuments({
+                label: 'Payment Due',
+                isDeleted: false,
+                status: { $nin: ['completed', 'cancelled'] },
+            }),
+            FollowUp.aggregate([
+                { $match: { isDeleted: false } },
+                { $group: { _id: '$label', count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+            ]),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            stats: { scheduled, overdue, completed, pending, paymentDue },
+            byLabel,
+            upcomingToday: [],
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/followups/labels', async (_req, res) => {
+    return res.status(200).json({ success: true, labels: FollowUp.schema.path('label').enumValues });
+});
+
+router.get('/followups/:id', async (req, res) => {
+    try {
+        const followUp = await FollowUp.findOne({ _id: req.params.id, isDeleted: false });
+        if (!followUp) {
+            return res.status(404).json({ success: false, message: 'Follow-up not found' });
+        }
+        const userMap = await hydrateUsersById([followUp.client, followUp.scheduledBy, followUp.assignedTo]);
+        return res.status(200).json({
+            success: true,
+            followUp: {
+                ...followUp.toObject(),
+                client: mapUserToClient(userMap.get(String(followUp.client))),
+                scheduledBy: mapUserToClient(userMap.get(String(followUp.scheduledBy))),
+                assignedTo: mapUserToClient(userMap.get(String(followUp.assignedTo))),
+            },
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.post('/followups', async (req, res) => {
+    try {
+        const client = await User.findById(req.body.client);
+        if (!client) {
+            return res.status(404).json({ success: false, message: 'Client not found' });
+        }
+        const followUp = await FollowUp.create({ ...req.body, scheduledBy: req.user.id });
+        return res.status(201).json({ success: true, message: 'Follow-up scheduled successfully', followUp });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/followups/:id', async (req, res) => {
+    try {
+        if (req.body.status === 'completed') {
+            req.body.completedAt = new Date();
+        }
+        const followUp = await FollowUp.findOneAndUpdate(
+            { _id: req.params.id, isDeleted: false },
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!followUp) {
+            return res.status(404).json({ success: false, message: 'Follow-up not found' });
+        }
+        return res.status(200).json({ success: true, message: 'Follow-up updated successfully', followUp });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.delete('/followups/:id', async (req, res) => {
+    try {
+        const followUp = await FollowUp.findOneAndUpdate(
+            { _id: req.params.id, isDeleted: false },
+            { isDeleted: true },
+            { new: true }
+        );
+        if (!followUp) {
+            return res.status(404).json({ success: false, message: 'Follow-up not found' });
+        }
+        return res.status(200).json({ success: true, message: 'Follow-up deleted successfully' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Interactions
+router.get('/interactions', async (req, res) => {
+    try {
+        const { type, status, priority, clientId, page = 1, limit = 10, search } = req.query;
+        const query = { isDeleted: false };
+        if (type) query.type = type;
+        if (status) query.status = status;
+        if (priority) query.priority = priority;
+        if (clientId) query.client = clientId;
+        if (search) {
+            const regex = { $regex: escapeRegex(search), $options: 'i' };
+            query.$or = [{ subject: regex }, { description: regex }];
+        }
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const [total, interactions] = await Promise.all([
+            Interaction.countDocuments(query),
+            Interaction.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+        ]);
+
+        const userIds = [];
+        interactions.forEach((i) => userIds.push(i.client, i.loggedBy, i.resolvedBy));
+        const userMap = await hydrateUsersById(userIds);
+
+        const mapped = interactions.map((i) => ({
+            ...i.toObject(),
+            client: mapUserToClient(userMap.get(String(i.client))),
+            loggedBy: mapUserToClient(userMap.get(String(i.loggedBy))),
+            resolvedBy: mapUserToClient(userMap.get(String(i.resolvedBy))),
+        }));
+
+        return res.status(200).json({
+            success: true,
+            count: mapped.length,
+            total,
+            totalPages: Math.ceil(total / Number(limit)),
+            currentPage: Number(page),
+            interactions: mapped,
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/interactions/stats', async (_req, res) => {
+    try {
+        const [total, open, resolved, escalated, byType, bySentiment] = await Promise.all([
+            Interaction.countDocuments({ isDeleted: false }),
+            Interaction.countDocuments({ status: 'open', isDeleted: false }),
+            Interaction.countDocuments({ status: 'resolved', isDeleted: false }),
+            Interaction.countDocuments({ status: 'escalated', isDeleted: false }),
+            Interaction.aggregate([
+                { $match: { isDeleted: false } },
+                { $group: { _id: '$type', count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+            ]),
+            Interaction.aggregate([
+                { $match: { isDeleted: false } },
+                { $group: { _id: '$sentiment', count: { $sum: 1 } } },
+            ]),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            stats: { total, open, resolved, escalated },
+            byType,
+            bySentiment,
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/interactions/client/:clientId', async (req, res) => {
+    try {
+        const interactions = await Interaction.find({ client: req.params.clientId, isDeleted: false }).sort({ createdAt: -1 });
+        return res.status(200).json({ success: true, count: interactions.length, interactions });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/interactions/:id', async (req, res) => {
+    try {
+        const interaction = await Interaction.findOne({ _id: req.params.id, isDeleted: false });
+        if (!interaction) {
+            return res.status(404).json({ success: false, message: 'Interaction not found' });
+        }
+        return res.status(200).json({ success: true, interaction });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.post('/interactions', async (req, res) => {
+    try {
+        const client = await User.findById(req.body.client);
+        if (!client) {
+            return res.status(404).json({ success: false, message: 'Client not found' });
+        }
+        const interaction = await Interaction.create({ ...req.body, loggedBy: req.user.id });
+        return res.status(201).json({ success: true, message: 'Interaction logged successfully', interaction });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/interactions/:id', async (req, res) => {
+    try {
+        if (req.body.status === 'resolved' || req.body.status === 'closed') {
+            req.body.resolvedAt = new Date();
+            req.body.resolvedBy = req.user.id;
+        }
+        const interaction = await Interaction.findOneAndUpdate(
+            { _id: req.params.id, isDeleted: false },
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!interaction) {
+            return res.status(404).json({ success: false, message: 'Interaction not found' });
+        }
+        return res.status(200).json({ success: true, message: 'Interaction updated successfully', interaction });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.delete('/interactions/:id', async (req, res) => {
+    try {
+        const interaction = await Interaction.findOneAndUpdate(
+            { _id: req.params.id, isDeleted: false },
+            { isDeleted: true },
+            { new: true }
+        );
+        if (!interaction) {
+            return res.status(404).json({ success: false, message: 'Interaction not found' });
+        }
+        return res.status(200).json({ success: true, message: 'Interaction deleted successfully' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 });
 

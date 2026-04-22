@@ -27,7 +27,8 @@
     "nodemon": "^3.1.11",
     "razorpay": "^2.9.6",
     "textflow.js": "^0.1.4",
-    "twilio": "^5.12.2"
+    "twilio": "^5.12.2",
+    "xlsx": "^0.18.5"
   },
   "description": ""
 }

@@ -8,6 +8,7 @@ const paymentRouter = require('./router/paymentRouter.js');
 const categoryRouter = require('./router/categoryRouter.js');
 const locationRouter = require('./router/locationRouter.js');
 const websiteSyncRouter = require('./router/websiteSyncRouter.js');
+const clientRouter = require('./router/clientRouter.js');
 const crmOpsRouter = require('./router/crmOpsRouter.js');
 const databaseconnect = require('./config/databaseConfig.js');
 const cookieParser = require('cookie-parser');
@@ -140,6 +141,7 @@ app.use('/api/auth', authRouter);
 app.use('/payment', paymentRouter);
 app.use('/api/payment', paymentRouter);
 
+app.use('/api/clients', clientRouter);
 app.use('/api', categoryRouter);
 app.use('/api/website-sync', websiteSyncRouter);
 app.use('/api', crmOpsRouter);

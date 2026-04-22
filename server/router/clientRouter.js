@@ -48,11 +48,13 @@ const uploadImportFile = (req, res, next) => {
   });
 };
 
-// Apply authentication to all routes
+// PUBLIC route - no authentication required for stats
+router.get('/stats', getClientStats);
+
+// Apply authentication to all other routes
 router.use(jwtAuth, adminMiddleware);
 
-// Stats route MUST come before /:id routes
-router.get('/stats', getClientStats);
+// Protected routes
 router.get('/export', exportClientsToExcel);
 router.post('/import', uploadImportFile, importClientsFromExcel);
 

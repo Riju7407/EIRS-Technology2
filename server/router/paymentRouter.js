@@ -2,6 +2,8 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Order = require('../model/orderSchema');
+const ServiceBooking = require('../model/serviceBookingSchema');
+const Service = require('../model/serviceSchema');
 const jwtAuth = require('../middleware/jwtAuth');
 
 const router = express.Router();
@@ -173,6 +175,128 @@ router.post('/verify-payment', jwtAuth, async (req, res) => {
     return res.json({ success: true, message: 'Payment verified successfully', order });
   } catch (err) {
     console.error('/verify-payment error:', err.message);
+    return res.status(500).json({ success: false, message: 'Payment verification failed', error: err.message });
+  }
+});
+
+/*
+  Service Booking Payments
+  -----------------------
+  Flow:
+   1) client creates ServiceBooking via /auth/service-bookings
+   2) client calls POST /payment/service-bookings/order with bookingId
+   3) client opens Razorpay checkout
+   4) client calls POST /payment/service-bookings/verify to confirm payment
+*/
+
+// POST /payment/service-bookings/order
+router.post('/service-bookings/order', jwtAuth, async (req, res) => {
+  try {
+    const { bookingId, currency = 'INR' } = req.body;
+    if (!bookingId) return res.status(400).json({ success: false, message: 'bookingId is required' });
+
+    const booking = await ServiceBooking.findById(bookingId);
+    if (!booking || booking.userId.toString() !== req.user.id.toString()) {
+      return res.status(404).json({ success: false, message: 'Service booking not found' });
+    }
+
+    if (booking.paymentStatus === 'Completed') {
+      return res.status(400).json({ success: false, message: 'Payment already completed for this booking' });
+    }
+
+    // Ensure we have a valid price
+    const service = await Service.findById(booking.serviceId).select('price name');
+    const price = Number(booking.servicePrice ?? service?.price ?? 0);
+    if (!Number.isFinite(price) || price <= 0) {
+      return res.status(400).json({ success: false, message: 'Service price is invalid for payment' });
+    }
+
+    const amountInPaise = Math.round(price * 100);
+
+    let rzpOrder;
+    try {
+      rzpOrder = await getRazorpay().orders.create({
+        amount: amountInPaise,
+        currency,
+        receipt: `svc_${booking._id}`,
+        notes: {
+          bookingId: booking._id.toString(),
+          serviceId: booking.serviceId.toString(),
+          serviceName: booking.serviceName || service?.name || 'Service',
+          userId: req.user.id.toString(),
+          company: 'EIRS Technology',
+        },
+      });
+    } catch (rzpErr) {
+      console.error('Razorpay service-booking create-order error:', rzpErr.message);
+      return res.status(502).json({
+        success: false,
+        message: 'Payment gateway error: ' + (rzpErr.error?.description || rzpErr.message),
+      });
+    }
+
+    booking.servicePrice = price;
+    booking.currency = currency;
+    booking.paymentMethod = 'Razorpay';
+    booking.paymentStatus = 'Pending';
+    booking.razorpayOrderId = rzpOrder.id;
+    await booking.save();
+
+    return res.json({
+      success: true,
+      key: process.env.RAZORPAY_KEY_ID,
+      orderId: rzpOrder.id,
+      bookingId: booking._id.toString(),
+      amount: rzpOrder.amount,
+      currency: rzpOrder.currency,
+    });
+  } catch (err) {
+    console.error('/service-bookings/order error:', err.message);
+    return res.status(500).json({ success: false, message: err.message || 'Failed to create service payment order' });
+  }
+});
+
+// POST /payment/service-bookings/verify
+router.post('/service-bookings/verify', jwtAuth, async (req, res) => {
+  try {
+    const { bookingId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!bookingId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing required payment verification fields' });
+    }
+
+    const booking = await ServiceBooking.findById(bookingId);
+    if (!booking || booking.userId.toString() !== req.user.id.toString()) {
+      return res.status(404).json({ success: false, message: 'Service booking not found' });
+    }
+
+    if (booking.razorpayOrderId && booking.razorpayOrderId !== razorpay_order_id) {
+      return res.status(400).json({ success: false, message: 'Order ID mismatch for this booking' });
+    }
+
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    const expectedSig = crypto
+      .createHmac('sha256', secret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+    if (expectedSig !== razorpay_signature) {
+      booking.paymentStatus = 'Failed';
+      await booking.save();
+      return res.status(400).json({ success: false, message: 'Payment verification failed - invalid signature' });
+    }
+
+    booking.paymentStatus = 'Completed';
+    booking.razorpayOrderId = razorpay_order_id;
+    booking.razorpayPaymentId = razorpay_payment_id;
+    booking.razorpaySignature = razorpay_signature;
+    booking.paidAt = new Date();
+    booking.status = 'Confirmed';
+    await booking.save();
+
+    return res.json({ success: true, message: 'Service booking payment verified', booking });
+  } catch (err) {
+    console.error('/service-bookings/verify error:', err.message);
     return res.status(500).json({ success: false, message: 'Payment verification failed', error: err.message });
   }
 });

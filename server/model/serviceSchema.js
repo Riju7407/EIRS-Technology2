@@ -17,6 +17,22 @@ const serviceSchema = new Schema({
         type: Number,
         required: [true, 'Service price is required'],
         min: [0, 'Price cannot be negative']
+    },
+    availableDates: {
+        type: [Date],
+        default: []
+    },
+    image: {
+        type: String,
+        default: null
+    },
+    features: {
+        type: [{
+            title: String,
+            description: String,
+            imageUrl: String
+        }],
+        default: []
     }
 }, {
     timestamps: true

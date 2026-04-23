@@ -1,3 +1,24 @@
+// Admin: Update booking status
+exports.updateServiceBookingStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        if (!['Pending', 'Confirmed', 'Completed', 'Cancelled'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status value' });
+        }
+        const booking = await ServiceBooking.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true }
+        );
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+        return res.status(200).json({ success: true, data: booking });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
 const ServiceBooking = require('../model/serviceBookingSchema');
 const Service = require('../model/serviceSchema');
 const User = require('../model/userSchema');
@@ -39,7 +60,7 @@ exports.createServiceBooking = async (req, res) => {
             phoneNumber: (phoneNumber || user.phoneNumber || '').trim(),
             email: (email || user.email || '').trim(),
             address: (address || user.address || '').trim(),
-            preferredDate: preferredDate || null,
+            preferredDate: preferredDate || service.preferredDate || null,
             notes: (notes || '').trim()
         });
 
@@ -64,7 +85,7 @@ exports.createServiceBooking = async (req, res) => {
 exports.getUserServiceBookings = async (req, res) => {
     try {
         const bookings = await ServiceBooking.find({ userId: req.user.id })
-            .populate('serviceId', 'name description price')
+            .populate('serviceId', 'name description price preferredDate')
             .sort({ createdAt: -1 });
 
         return res.status(200).json({

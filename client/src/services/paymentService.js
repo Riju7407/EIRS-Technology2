@@ -76,6 +76,30 @@ export const paymentService = {
     }
   },
 
+  // Create Razorpay order for a service booking
+  createServiceBookingOrder: async ({ bookingId, currency = 'INR' }) => {
+    try {
+      const response = await paymentApi.post('/payment/service-bookings/order', { bookingId, currency });
+      return response.data;
+    } catch (error) {
+      const err = error.response?.data || { message: error.message };
+      err.status = error.response?.status;
+      throw err;
+    }
+  },
+
+  // Verify Razorpay payment for a service booking
+  verifyServiceBookingPayment: async (payload) => {
+    try {
+      const response = await paymentApi.post('/payment/service-bookings/verify', payload);
+      return response.data;
+    } catch (error) {
+      const err = error.response?.data || { message: error.message };
+      err.status = error.response?.status;
+      throw err;
+    }
+  },
+
   // Load Razorpay script
   loadRazorpayScript: () => {
     return new Promise((resolve) => {

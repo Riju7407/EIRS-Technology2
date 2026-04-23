@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import ServicesPage from './pages/ServicesPage';
+import ServiceDetailPage from './pages/ServiceDetailPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
@@ -42,8 +43,9 @@ function AppContent() {
   // Hide Footer on orders page, account page, phone signup page, product detail pages, about page, contact page, and services page
   const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup', '/about', '/contact', '/services'];
   const isProductDetailPage = location.pathname.startsWith('/products/') || location.pathname.startsWith('/product/');
+  const isServiceDetailPage = location.pathname.startsWith('/services/');
   const isAdminPage = location.pathname.startsWith('/admin');
-  const shouldShowFooter = !hideFooterPaths.includes(location.pathname) && !isProductDetailPage && !isAdminPage;
+  const shouldShowFooter = !hideFooterPaths.includes(location.pathname) && !isProductDetailPage && !isServiceDetailPage && !isAdminPage;
 
   return (
     <div className="App">
@@ -53,6 +55,7 @@ function AppContent() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/services" element={<ServicesPage />} />
+        <Route path="/services/:id" element={<ServiceDetailPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:id" element={<ProductDetailPage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />

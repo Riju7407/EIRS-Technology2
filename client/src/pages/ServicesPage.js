@@ -99,18 +99,9 @@ const ServicesPage = () => {
   };
 
   const handleServiceClick = (service) => {
-    setBookingError('');
-    setBookingSuccess('');
-    setBookingForm({
-      customerName: user?.name || '',
-      phoneNumber: user?.phoneNumber || '',
-      email: user?.email || '',
-      address: user?.address || '',
-      preferredDate: '',
-      notes: '',
-    });
-    setSelectedService(service);
-    setModalOpen(true);
+    if (service?._id) {
+      navigate(`/services/${service._id}`);
+    }
   };
 
   const handleBookingInputChange = (e) => {

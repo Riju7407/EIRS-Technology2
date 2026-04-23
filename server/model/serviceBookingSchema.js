@@ -55,6 +55,38 @@ const serviceBookingSchema = new Schema(
             type: String,
             enum: ['Pending', 'Confirmed', 'Completed', 'Cancelled'],
             default: 'Pending'
+        },
+        paymentStatus: {
+            type: String,
+            enum: ['NotStarted', 'Pending', 'Completed', 'Failed', 'Cancelled'],
+            default: 'NotStarted'
+        },
+        paymentMethod: {
+            type: String,
+            default: 'Razorpay'
+        },
+        currency: {
+            type: String,
+            default: 'INR'
+        },
+        razorpayOrderId: {
+            type: String,
+            sparse: true,
+            default: null
+        },
+        razorpayPaymentId: {
+            type: String,
+            sparse: true,
+            default: null
+        },
+        razorpaySignature: {
+            type: String,
+            sparse: true,
+            default: null
+        },
+        paidAt: {
+            type: Date,
+            default: null
         }
     },
     {

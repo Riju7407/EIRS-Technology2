@@ -1,6 +1,7 @@
+const { updateServiceBookingStatus } = require('../controller/serviceBookingController');
 const express = require('express');
 const { signup, signin, getuser, logout, editUserProfile, postEditUserProfile, changePassword, forgotPassword, resetPassword, requestPasswordChangeOTP, verifyOTP, resetPasswordWithOTP, changePasswordWithOTP, sendPopupOTP, verifyPopupOTP, sendPhoneLoginOTP, verifyPhoneLoginOTP, registerWithPhoneOTP } = require('../controller/authController');
-const { services, getAllServices, deleteService, addService, updateService } = require('../controller/serviceController');
+const { services, getAllServices, deleteService, addService, updateService, getServiceById } = require('../controller/serviceController');
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getFeaturedProducts, toggleFeatured } = require('../controller/productController');
@@ -12,7 +13,10 @@ const { getCrmSyncOverview } = require('../services/crmSyncService');
 const {adminMiddleware} = require('../middleware/adminMiddleware');
 const jwtAuth = require('../middleware/jwtAuth');
 const { upload, cloudinary } = require('../config/cloudinary');
+
 const authRouter = express.Router();
+// Admin: Update service booking status
+authRouter.put('/service-bookings/:id/status', jwtAuth, adminMiddleware, updateServiceBookingStatus);
 
 // Cloudinary image upload (admin only)
 authRouter.post(
@@ -77,6 +81,8 @@ authRouter.post('/phone-otp/verify',   verifyPhoneLoginOTP);
 authRouter.post('/phone-otp/register', registerWithPhoneOTP);
 
 authRouter.get('/services', services);
+authRouter.get('/services/admin', adminMiddleware, getAllServices);
+authRouter.get('/services/:id', getServiceById);
 authRouter.get('/users', adminMiddleware, getAllUsers);
 authRouter.get('/contacts', adminMiddleware, getContacts);
 authRouter.delete('/contacts/:id', adminMiddleware, deleteContact);
@@ -84,9 +90,24 @@ authRouter.delete('/users/delete/:id', adminMiddleware, deleteUserById);
 authRouter.post('/users/promote/:userId', adminMiddleware, promoteToAdmin);
 authRouter.get('/users/edit/:id', jwtAuth, editUserProfile);
 authRouter.put('/users/edit/:id', jwtAuth, postEditUserProfile);
-authRouter.get('/services/admin', adminMiddleware, getAllServices);
-authRouter.post('/services/add', jwtAuth, adminMiddleware, addService);
-authRouter.put('/services/update/:id', jwtAuth, adminMiddleware, updateService);
+authRouter.post('/services/add', jwtAuth, adminMiddleware, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      console.error('[authRouter] Upload error:', err);
+      return res.status(400).json({ success: false, message: 'Image upload failed: ' + err.message });
+    }
+    next();
+  });
+}, addService);
+authRouter.put('/services/update/:id', jwtAuth, adminMiddleware, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      console.error('[authRouter] Upload error:', err);
+      return res.status(400).json({ success: false, message: 'Image upload failed: ' + err.message });
+    }
+    next();
+  });
+}, updateService);
 authRouter.delete('/services/delete/:id', jwtAuth, adminMiddleware, deleteService);
 
 // Service Booking Routes

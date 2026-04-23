@@ -1,4 +1,14 @@
-﻿/* ============================================================
+﻿/* Force admin tables to be wide enough for horizontal scroll */
+.ap-table {
+  min-width: 900px;
+}
+/* Enable horizontal scroll for wide admin tables */
+.ap-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+/* ============================================================
    ADMIN PAGES — Professional E-Commerce Admin Panel Styles
    ============================================================ */
 

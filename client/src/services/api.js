@@ -432,6 +432,15 @@ export const serviceService = {
     }
   },
 
+  getServiceById: async (id) => {
+    try {
+      const response = await api.get(`/auth/services/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   getAdminServices: async () => {
     try {
       const response = await api.get('/auth/services/admin');
@@ -489,6 +498,15 @@ export const serviceService = {
   getAllBookings: async () => {
     try {
       const response = await api.get('/auth/service-bookings/admin/all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateBookingStatus: async (id, status) => {
+    try {
+      const response = await api.put(`/auth/service-bookings/${id}/status`, { status });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

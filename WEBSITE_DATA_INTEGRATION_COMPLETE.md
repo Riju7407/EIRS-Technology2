@@ -1,6 +1,7 @@
 # Website Data Integration Complete ✅
 
 ## Overview
+
 The EIRS-CRM has been fully integrated with website data. Users, Orders, Bookings, and Contacts from the website are now accessible and manageable through the CRM dashboard.
 
 ## What's Been Implemented
@@ -8,6 +9,7 @@ The EIRS-CRM has been fully integrated with website data. Users, Orders, Booking
 ### 1. **Website Data Population** 📊
 
 #### In Main Server (`/server/seedWebsiteData.js`)
+
 - **Website Users (5 records)**
   - Raj Kumar Singh, Priya Sharma, Amit Patel, Neha Gupta, Vikram Reddy
   - Each has email, phone, address, city, state, pincode
@@ -27,6 +29,7 @@ The EIRS-CRM has been fully integrated with website data. Users, Orders, Booking
   - All from different potential customers
 
 #### In EIRS-CRM (`/EIRS-CRM/server/syncWebsiteData.js`)
+
 - Synced the same sample data to CRM database
 - Used local WebsiteUser, WebsiteOrder, WebsiteBooking, WebsiteContact models
 - Data accessible through CRM dashboard
@@ -34,6 +37,7 @@ The EIRS-CRM has been fully integrated with website data. Users, Orders, Booking
 ### 2. **API Endpoints** 🔌
 
 **Main Server Endpoints** (`https://eirs-technology-production.up.railway.app`):
+
 ```
 GET  /api/website-sync/stats      - Overall statistics
 GET  /api/website-sync/users      - List website users (paginated)
@@ -59,6 +63,7 @@ DELETE /api/website-sync/contacts/:id - Delete contact
 ```
 
 **EIRS-CRM Endpoints** (`https://eirs-technology-crm.vercel.app`):
+
 ```
 Same endpoints available through CRM with admin authentication:
 GET  /api/website-sync/*
@@ -72,6 +77,7 @@ DELETE /api/website-sync/*
 The EIRS-CRM now displays website data on these pages:
 
 #### **Website Users** (`/website-users`)
+
 - View all website customers
 - Search by name, email, phone
 - Create new users
@@ -81,6 +87,7 @@ The EIRS-CRM now displays website data on these pages:
 - Pagination support
 
 #### **Website Orders** (`/website-orders`)
+
 - View all customer orders
 - Filter by status (Pending, Confirmed, Shipped, Delivered, Cancelled)
 - Search functionality
@@ -89,6 +96,7 @@ The EIRS-CRM now displays website data on these pages:
 - View customer details linked to order
 
 #### **Website Service Bookings** (`/website-bookings`)
+
 - Manage service booking requests
 - Search by service name, customer name, phone
 - View preferred booking dates
@@ -97,6 +105,7 @@ The EIRS-CRM now displays website data on these pages:
 - Customer contact information
 
 #### **Website Contacts** (`/website-contacts`)
+
 - Track customer inquiries
 - Search by name, email, subject
 - Manage contact requests
@@ -106,6 +115,7 @@ The EIRS-CRM now displays website data on these pages:
 ### 4. **Database Structure** 💾
 
 **Main Server Database** (MongoDB Atlas):
+
 ```
 Collections:
 - users (website customers)
@@ -115,6 +125,7 @@ Collections:
 ```
 
 **EIRS-CRM Database** (MongoDB Atlas):
+
 ```
 Collections:
 - websiteusers (synced website users)
@@ -126,21 +137,23 @@ Collections:
 ### 5. **Integration Routes** 🔗
 
 #### Created: `websiteSyncProxyRoute.js`
+
 - Proxy routes for CRM to communicate with main server
 - Forwards requests with proper authentication
 - Handles errors and responses
 - Uses MAIN_SERVER_URL environment variable
 
 #### Connection Flow:
+
 ```
-CRM Frontend 
+CRM Frontend
   ↓
 CRM Backend API (/api/website-sync/*)
   ↓
 Local WebsiteData Models
   ↓
 CRM MongoDB Database
-  
+
 (Optional) CRM Backend → Main Server Proxy
   ↓
 Main Server API (/api/website-sync/*)
@@ -153,10 +166,12 @@ Main Server MongoDB Database
 ### 1. **View Website Data in CRM**
 
 Login to CRM: https://eirs-technology-crm.vercel.app
+
 - Email: `technologyeirs@gmail.com`
 - Password: `EIRS@123crm`
 
 Navigate to:
+
 - Dashboard → Website Users
 - Dashboard → Website Orders
 - Dashboard → Website Bookings
@@ -165,6 +180,7 @@ Navigate to:
 ### 2. **Manage Website Data**
 
 Each page allows you to:
+
 - **View**: Browse all records with pagination
 - **Search**: Filter records by keywords
 - **Create**: Add new records manually
@@ -174,12 +190,14 @@ Each page allows you to:
 ### 3. **Sync Data from Main Server**
 
 To sync data from main server to CRM (when needed):
+
 ```bash
 cd EIRS-CRM/server
 node syncWebsiteData.js
 ```
 
 To populate main server with sample data:
+
 ```bash
 cd server
 node seedWebsiteData.js
@@ -188,12 +206,14 @@ node seedWebsiteData.js
 ## API Usage Examples
 
 ### Fetch Website Users
+
 ```bash
 curl -X GET "https://eirs-technology-crm.vercel.app/api/website-sync/users?page=1&limit=10" \
   -H "Authorization: Bearer YOUR_CRM_TOKEN"
 ```
 
 ### Create New Order
+
 ```bash
 curl -X POST "https://eirs-technology-crm.vercel.app/api/website-sync/orders" \
   -H "Authorization: Bearer YOUR_CRM_TOKEN" \
@@ -209,6 +229,7 @@ curl -X POST "https://eirs-technology-crm.vercel.app/api/website-sync/orders" \
 ```
 
 ### Update Service Booking Status
+
 ```bash
 curl -X PUT "https://eirs-technology-crm.vercel.app/api/website-sync/bookings/{bookingId}" \
   -H "Authorization: Bearer YOUR_CRM_TOKEN" \
@@ -234,6 +255,7 @@ curl -X PUT "https://eirs-technology-crm.vercel.app/api/website-sync/bookings/{b
 ## Environment Variables
 
 **Main Server** (`.env`):
+
 ```
 MONGO_URI=mongodb+srv://technologyeirs_db_user:CLk9PmUACa5nFbnR@cluster0.blilxfo.mongodb.net/?appName=Cluster0
 JWT_SECRET=eirs_crm_jwt_secret_key_2024
@@ -241,6 +263,7 @@ FRONTEND_URL=https://eirs-technology-crm.vercel.app
 ```
 
 **EIRS-CRM** (`.env.local`):
+
 ```
 MONGO_URI=mongodb+srv://technologyeirs_db_user:CLk9PmUACa5nFbnR@cluster0.blilxfo.mongodb.net/?appName=Cluster0
 JWT_SECRET=eirs_crm_jwt_secret_key_2024
@@ -258,9 +281,11 @@ MAIN_SERVER_URL=https://eirs-technology-production.up.railway.app
 ## Recent Commits
 
 ### Main Server
+
 - `cf19008` - chore: Add website data seed script with 20 sample records
 
 ### EIRS-CRM
+
 - `6e770a1` - feat: Add website data sync and integration with main server
 - `530270d` - Fix: Correct API handler path in Vercel serverless function
 - `ad72ad8` - Fix: Add debugging and isAdmin field to User model, improve bootstrap

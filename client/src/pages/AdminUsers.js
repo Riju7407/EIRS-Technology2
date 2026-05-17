@@ -11,6 +11,7 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -131,7 +132,7 @@ const AdminUsers = () => {
                       <div className="ap-actions">
                         <button
                           className="ap-btn ap-btn-secondary ap-btn-sm"
-                          onClick={() => alert(`Name: ${user.name}\nEmail: ${user.email}\nPhone: ${user.phoneNumber}`)}
+                          onClick={() => setSelectedUser(user)}
                           title="View Details"
                         >
                           <FaEye /> View
@@ -164,6 +165,66 @@ const AdminUsers = () => {
             <div className="ap-empty-icon">👤</div>
             <h3>No users found</h3>
             <p>{searchTerm ? 'Try adjusting your search.' : 'No users have registered yet.'}</p>
+          </div>
+        )}
+
+        {selectedUser && (
+          <div className="ap-user-modal-overlay" onClick={() => setSelectedUser(null)}>
+            <div className="ap-user-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="ap-user-modal-header">
+                <div>
+                  <h3>User details</h3>
+                  <p className="ap-user-modal-subtitle">{selectedUser.name || 'User information'}</p>
+                </div>
+                <button className="ap-user-modal-close" onClick={() => setSelectedUser(null)} aria-label="Close user details">×</button>
+              </div>
+              <div className="ap-user-modal-body">
+                <div className="ap-user-detail-grid">
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Name</div>
+                    <div className="ap-user-detail-value">{selectedUser.name || 'N/A'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Email</div>
+                    <div className="ap-user-detail-value">{selectedUser.email || 'N/A'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Phone</div>
+                    <div className="ap-user-detail-value">{selectedUser.phoneNumber || 'N/A'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Role</div>
+                    <div className="ap-user-detail-value">{selectedUser.isAdmin ? 'Administrator' : 'Customer'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Joined</div>
+                    <div className="ap-user-detail-value">
+                      {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                    </div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Account ID</div>
+                    <div className="ap-user-detail-value">{selectedUser._id || 'N/A'}</div>
+                  </div>
+                  <div className="ap-user-detail-card ap-user-detail-grid-full">
+                    <div className="ap-user-detail-label">Address</div>
+                    <div className="ap-user-detail-value">{selectedUser.address || 'Not provided'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">City</div>
+                    <div className="ap-user-detail-value">{selectedUser.city || 'Not provided'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">State</div>
+                    <div className="ap-user-detail-value">{selectedUser.state || 'Not provided'}</div>
+                  </div>
+                  <div className="ap-user-detail-card">
+                    <div className="ap-user-detail-label">Pincode</div>
+                    <div className="ap-user-detail-value">{selectedUser.pincode || 'Not provided'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

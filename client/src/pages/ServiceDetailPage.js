@@ -1,11 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaCalendarAlt, FaRupeeSign, FaTools } from 'react-icons/fa';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
 import { serviceService } from '../services/api';
 import paymentService from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import '../styles/ServicesPage.css';
+
+const SERVICE_IMAGE_MAP = {
+	'Installation & Setup': 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771697329/Install_nr4hg1.png',
+	'AMC & Maintenance': 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771697310/AMC_tphu7z.png',
+	'Technical Support & Expert Consultation': 'https://res.cloudinary.com/dfitjwwws/image/upload/v1771697295/Technical_wdw9m2.png',
+};
 
 const toDateInputValue = (date) => {
 	if (!date) return '';
@@ -19,16 +25,15 @@ const toDateInputValue = (date) => {
 const ServiceDetailPage = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { isLoggedIn, user } = useAuth();
 
 	const [loading, setLoading] = useState(true);
 	const [service, setService] = useState(null);
 	const [error, setError] = useState('');
-
 	const [showBookingForm, setShowBookingForm] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [success, setSuccess] = useState('');
-
 	const [form, setForm] = useState({
 		customerName: user?.name || '',
 		phoneNumber: user?.phoneNumber || '',
@@ -38,14 +43,24 @@ const ServiceDetailPage = () => {
 		notes: '',
 	});
 
+	// scroll to hash target once service has loaded
+	useEffect(() => {
+		if (!loading && service && location?.hash) {
+			const id = location.hash.replace('#', '');
+			setTimeout(() => {
+				const el = document.getElementById(id);
+				if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}, 120);
+		}
+	}, [loading, service, location]);
 	useEffect(() => {
 		let isMounted = true;
-		const run = async () => {
+		const loadService = async () => {
 			try {
 				setLoading(true);
 				setError('');
-				const r = await serviceService.getServiceById(id);
-				const svc = r?.data || r;
+				const response = await serviceService.getServiceById(id);
+				const svc = response?.data || response;
 				if (isMounted) {
 					setService(svc);
 					setForm((prev) => ({
@@ -53,18 +68,17 @@ const ServiceDetailPage = () => {
 						preferredDate: prev.preferredDate || toDateInputValue(svc?.preferredDate),
 					}));
 				}
-			} catch (e) {
-				if (isMounted) setError(e?.message || e?.response?.data?.message || 'Unable to load service details');
+			} catch (fetchError) {
+				if (isMounted) setError(fetchError?.message || fetchError?.response?.data?.message || 'Unable to load service details');
 			} finally {
 				if (isMounted) setLoading(false);
 			}
 		};
-		run();
+		loadService();
 		return () => { isMounted = false; };
 	}, [id]);
 
 	useEffect(() => {
-		// Keep form synced with latest user values
 		setForm((prev) => ({
 			...prev,
 			customerName: prev.customerName || user?.name || '',
@@ -78,6 +92,37 @@ const ServiceDetailPage = () => {
 		const p = Number(service?.price);
 		return Number.isFinite(p) && p > 0 ? p : null;
 	}, [service]);
+
+	const availableDates = useMemo(() => {
+		if (!service) return [];
+		if (Array.isArray(service.availableDates)) return service.availableDates;
+		if (service.availableDates) return [service.availableDates];
+		return [];
+	}, [service]);
+
+	const imageUrl = useMemo(() => {
+		if (!service) return '';
+		return service.image || SERVICE_IMAGE_MAP[service.name] || '';
+	}, [service]);
+
+	const overviewText = useMemo(() => {
+		return service?.longDescription || service?.overview || service?.description || 'This service is tailored to deliver a premium experience with proven results.';
+	}, [service]);
+
+	const serviceTags = useMemo(() => {
+		const tags = [];
+		if (service?.category) tags.push(service.category);
+		if (service?.type) tags.push(service.type);
+		if (service?.level) tags.push(service.level);
+		return tags;
+	}, [service]);
+
+	const detailHighlights = useMemo(() => [
+		{ label: 'Price', value: displayPrice ? `₹${displayPrice}` : 'On Request' },
+		{ label: 'Schedule', value: availableDates.length ? `${availableDates.length} available` : 'Flexible' },
+		{ label: 'Duration', value: service?.duration || 'Flexible' },
+		{ label: 'Expertise', value: service?.expertise || service?.level || 'Certified Team' },
+	], [displayPrice, availableDates.length, service]);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -121,7 +166,6 @@ const ServiceDetailPage = () => {
 
 		setSubmitting(true);
 		try {
-			// 1) Create booking first
 			const bookingResp = await serviceService.createBooking({
 				serviceId: service._id,
 				customerName: form.customerName,
@@ -132,14 +176,10 @@ const ServiceDetailPage = () => {
 				notes: form.notes,
 			});
 
-			const booking = bookingResp?.data || bookingResp?.data?.data || bookingResp?.data?.booking || bookingResp?.data || bookingResp;
-			const bookingId = booking?._id || bookingResp?.data?._id || bookingResp?.data?.data?._id;
+			const booking = bookingResp?.data || bookingResp;
+			const bookingId = booking?._id || bookingResp?.data?._id;
+			if (!bookingId) throw new Error('Booking created but booking ID is missing.');
 
-			if (!bookingId) {
-				throw new Error('Booking created but booking ID is missing.');
-			}
-
-			// 2) Create Razorpay order for this booking
 			const scriptOk = await paymentService.loadRazorpayScript();
 			if (!scriptOk) throw new Error('Failed to load payment gateway. Please try again.');
 
@@ -149,7 +189,6 @@ const ServiceDetailPage = () => {
 			const { key, orderId, amount, currency } = orderResp;
 			if (!key || !orderId || !amount) throw new Error('Payment gateway did not return required order details');
 
-			// 3) Open Razorpay checkout
 			const options = {
 				key,
 				amount,
@@ -182,21 +221,39 @@ const ServiceDetailPage = () => {
 						} else {
 							setError(verifyResp?.message || 'Payment verification failed.');
 						}
-					} catch (verErr) {
-						setError(verErr?.message || 'Payment verification failed.');
+					} catch (verificationError) {
+						setError(verificationError?.message || 'Payment verification failed.');
 					}
 				},
 				modal: {
-					ondismiss: () => {
+					ondismiss: async () => {
+						// User dismissed the payment modal — remove pending booking to avoid storing failed records
+						try {
+							if (bookingId) await serviceService.deleteBooking(bookingId);
+						} catch (err) {
+							console.error('Failed to delete booking on modal dismiss:', err);
+						}
 						navigate('/');
 					},
 				},
 			};
 
 			const rzp = new window.Razorpay(options);
+			rzp.on('payment.failed', async (response) => {
+				// If payment failed, delete the pending booking to avoid storing failed entries
+				try {
+					if (bookingId) {
+						await serviceService.deleteBooking(bookingId);
+					}
+				} catch (delErr) {
+					console.error('Failed to delete booking after payment failure:', delErr);
+				}
+				setError('Payment failed: ' + (response.error?.description || 'Unknown reason'));
+				setSubmitting(false);
+			});
 			rzp.open();
-		} catch (err) {
-			setError(err?.message || err?.response?.data?.message || 'Unable to book service. Please try again.');
+		} catch (submitError) {
+			setError(submitError?.message || submitError?.response?.data?.message || 'Unable to book service. Please try again.');
 		} finally {
 			setSubmitting(false);
 		}
@@ -205,306 +262,168 @@ const ServiceDetailPage = () => {
 	return (
 		<>
 			<main className="sp-page">
-				<section className="sp-services-section" style={{ paddingTop: 24 }}>
+				<section className="sp-services-section sp-service-detail-hero">
 					<div className="sp-container">
-						<div style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
+						<div className="sp-service-detail-breadcrumb">
 							<button className="sp-hero-btn sp-hero-btn--outline" onClick={() => navigate('/services')}>
-								<FaArrowLeft /> Back
+								<FaArrowLeft /> Back to Services
 							</button>
-							<Link to="/services" className="sp-hero-btn sp-hero-btn--outline">All Services</Link>
+							<Link to="/services" className="sp-hero-btn sp-hero-btn--outline">Browse all services</Link>
 						</div>
 
 						{loading ? (
-							<div className="sp-loading"><div className="sp-spinner" /><p>Loading service</p></div>
+							<div className="sp-loading"><div className="sp-spinner" /><p>Loading service details</p></div>
 						) : error ? (
 							<div className="sp-booking-alert sp-booking-alert--error">{error}</div>
 						) : !service ? (
 							<div className="sp-booking-alert sp-booking-alert--error">Service not found.</div>
 						) : (
 							<>
-								{/* Hero Section with Image */}
-								<div style={{
-									display: 'grid',
-									gridTemplateColumns: service.image ? 'repeat(auto-fit, minmax(350px, 1fr))' : '1fr',
-									gap: 32,
-									alignItems: 'start',
-									marginBottom: 40,
-									borderRadius: 16,
-									overflow: 'hidden'
-								}}>
-									{/* Image Section */}
-									{service.image && (
-										<div style={{
-											borderRadius: 16,
-											overflow: 'hidden',
-											boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-											backgroundColor: '#f8f9fa'
-										}}>
-											<img 
-												src={service.image} 
-												alt={service.name} 
-												style={{ 
-													width: '100%', 
-													height: '100%',
-													minHeight: 400,
-													objectFit: 'cover',
-													display: 'block'
-												}} 
-											/>
-										</div>
-									)}
-
-									{/* Service Info Section */}
-									<div style={{
-										display: 'flex',
-										flexDirection: 'column',
-										gap: 20
-									}}>
-										<div>
-											<h1 style={{
-												fontSize: 36,
-												fontWeight: 700,
-												color: '#1a1a1a',
-												margin: '0 0 12px 0',
-												display: 'flex',
-												gap: 12,
-												alignItems: 'center'
-											}}>
-												<FaTools style={{ color: '#0066cc' }} /> 
-												{service.name}
-											</h1>
-											<p style={{
-												fontSize: 16,
-												color: '#666',
-												lineHeight: 1.6,
-												margin: 0
-											}}>
-												{service.description}
-											</p>
-										</div>
-
-										{/* Price and Date Card */}
-										<div style={{
-											display: 'grid',
-											gridTemplateColumns: '1fr 1fr',
-											gap: 16,
-											padding: 20,
-											backgroundColor: '#f0f4ff',
-											borderRadius: 12,
-											border: '2px solid #e0e8ff'
-										}}>
-											<div>
-												<p style={{
-													fontSize: 12,
-													color: '#666',
-													fontWeight: 600,
-													textTransform: 'uppercase',
-													margin: '0 0 8px 0'
-												}}>Price</p>
-												<p style={{
-													fontSize: 28,
-													fontWeight: 700,
-													color: '#0066cc',
-													margin: 0,
-													display: 'flex',
-													alignItems: 'center',
-													gap: 8
-												}}>
-													<FaRupeeSign style={{ fontSize: 20 }} />
-													{displayPrice ? displayPrice : 'On Request'}
-												</p>
-											</div>
-											<div>
-												<p style={{
-													fontSize: 12,
-													color: '#666',
-													fontWeight: 600,
-													textTransform: 'uppercase',
-													margin: '0 0 8px 0'
-												}}>Preferred Date</p>
-												<p style={{
-													fontSize: 16,
-													fontWeight: 600,
-													color: '#1a1a1a',
-													margin: 0,
-													display: 'flex',
-													alignItems: 'center',
-													gap: 8
-												}}>
-													<FaCalendarAlt style={{ fontSize: 18, color: '#0066cc' }} />
-													{service.availableDates?.length > 0 ? 'Multiple dates available' : 'N/A'}
-												</p>
-											</div>
-										</div>
-
-										{/* CTA Button */}
-										{!showBookingForm && (
-											<button 
-												className="sp-cta-btn sp-cta-btn--primary" 
-												onClick={handleBookClick} 
-												disabled={submitting || !displayPrice}
-												style={{
-													padding: '14px 32px',
-													fontSize: 16,
-													fontWeight: 600,
-													borderRadius: 8,
-													width: '100%'
-												}}
-											>
-												{submitting ? 'Processing...' : 'Book This Service'}
-											</button>
-										)}
-									</div>
-								</div>
-
-								{/* Booking Form Section */}
-								{showBookingForm && (
-									<div style={{
-										backgroundColor: '#f8f9fa',
-										padding: 32,
-										borderRadius: 16,
-										marginBottom: 32
-									}}>
-										<h3 style={{
-											fontSize: 24,
-											fontWeight: 700,
-											marginBottom: 24,
-											color: '#1a1a1a'
-										}}>Complete Your Booking</h3>
-
-										<form className="sp-booking-form" onSubmit={handleSubmit}>
-											<div className="sp-booking-grid">
-												<div className="sp-booking-group">
-													<label>Full Name *</label>
-													<input type="text" name="customerName" value={form.customerName} onChange={handleChange} required />
+								<div className="sp-service-detail-grid">
+									<div>
+										<div id="service-image" className="sp-service-detail-preview">
+											{imageUrl ? (
+												<img src={imageUrl} alt={service?.name || 'Service'} />
+											) : (
+												<div className="sp-service-detail-preview-fallback" role="img" aria-label="No service image">
+													<svg width="96" height="96" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+														<rect x="2" y="4" width="20" height="14" rx="2" fill="#E6EEF9" />
+														<path d="M4 18c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v0H4z" fill="#D6E8FB" />
+														<circle cx="8.5" cy="9.5" r="1.5" fill="#B7D6FF" />
+														<path d="M21 8l-6 5-4-4-6 6" stroke="#8FB9FF" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+													</svg>
+													<div className="sp-no-image-text">No image available</div>
 												</div>
-												<div className="sp-booking-group">
-													<label>Phone Number *</label>
-													<input type="text" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} required />
-												</div>
-											</div>
-
-											<div className="sp-booking-group">
-												<label>Email</label>
-												<input type="email" name="email" value={form.email} onChange={handleChange} />
-											</div>
-
-											<div className="sp-booking-group">
-												<label>Address *</label>
-												<textarea name="address" value={form.address} onChange={handleChange} rows={3} required />
-											</div>
-
-											<div className="sp-booking-grid">
-												<div className="sp-booking-group">
-													<label>Preferred Date *</label>
-													<select name="preferredDate" value={form.preferredDate} onChange={handleChange} required style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd', fontSize: 14 }}>
-														<option value="">-- Select a date --</option>
-														{service.availableDates?.map(date => (
-															<option key={date} value={date}>
-																{new Date(date).toLocaleDateString('en-IN')}
-															</option>
+											)}
+										</div>
+										<div className="sp-service-detail-summary">
+											<div>
+												<span className="sp-section-badge">{service.category || 'Service'}</span>
+												<h1>{service.name}</h1>
+												<p>{service.description}</p>
+												{serviceTags.length > 0 && (
+													<div className="sp-service-tag-list">
+														{serviceTags.map((tag, idx) => (
+															<span key={idx} className="sp-tag">{tag}</span>
 														))}
-													</select>
-												</div>
-												<div className="sp-booking-group">
-													<label>Service Price</label>
-													<input type="text" value={displayPrice ? `Rs. ${displayPrice}` : 'On request'} readOnly />
-												</div>
-											</div>
-
-											<div className="sp-booking-group">
-												<label>Notes</label>
-												<textarea name="notes" value={form.notes} onChange={handleChange} rows={2} />
-											</div>
-
-											{error && <div className="sp-booking-alert sp-booking-alert--error">{error}</div>}
-											{success && <div className="sp-booking-alert sp-booking-alert--success">{success}</div>}
-
-											<div className="sp-booking-actions">
-												<button type="button" className="sp-booking-btn sp-booking-btn--secondary" onClick={() => setShowBookingForm(false)} disabled={submitting}>
-													Cancel
-												</button>
-												<button type="submit" className="sp-booking-btn sp-booking-btn--primary" disabled={submitting}>
-													{submitting ? 'Processing...' : 'Book Service'}
-												</button>
-											</div>
-										</form>
-
-										{success && <div className="sp-booking-alert sp-booking-alert--success" style={{ marginTop: 12 }}>{success}</div>}
-									</div>
-								)}
-
-								{/* Features Section */}
-								{service.features && service.features.length > 0 && (
-									<div style={{ marginTop: 48, marginBottom: 32 }}>
-										<h3 style={{
-											fontSize: 28,
-											fontWeight: 700,
-											marginBottom: 32,
-											color: '#1a1a1a',
-											textAlign: 'center'
-										}}>What's Included</h3>
-										<div style={{
-											display: 'grid',
-											gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-											gap: 24
-										}}>
-											{service.features.map((feature, idx) => (
-												<div key={idx} style={{
-													borderRadius: 16,
-													overflow: 'hidden',
-													backgroundColor: '#fff',
-													boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-													transition: 'transform 0.3s, box-shadow 0.3s'
-												}}>
-													{feature.imageUrl && (
-														<div style={{
-															width: '100%',
-															height: 200,
-															overflow: 'hidden',
-															backgroundColor: '#f0f4ff'
-														}}>
-															<img 
-																src={feature.imageUrl} 
-																alt={feature.title} 
-																style={{ 
-																	width: '100%', 
-																	height: '100%', 
-																	objectFit: 'cover' 
-																}} 
-															/>
-														</div>
-													)}
-													<div style={{ padding: 24 }}>
-														<h4 style={{
-															fontSize: 18,
-															fontWeight: 700,
-															color: '#0066cc',
-															marginBottom: 12,
-															margin: '0 0 12px 0'
-														}}>
-															{feature.title}
-														</h4>
-														<p style={{
-															fontSize: 14,
-															lineHeight: 1.6,
-															color: '#666',
-															margin: 0,
-															whiteSpace: 'pre-wrap'
-														}}>
-															{feature.description}
-														</p>
 													</div>
+												)}
+											</div>
+
+											<div className="sp-service-detail-meta">
+												{detailHighlights.map((item) => (
+													<div key={item.label} className="sp-service-detail-highlight">
+														<strong>{item.label}</strong>
+														<span>{item.value}</span>
+													</div>
+												))}
+											</div>
+
+											<div className="sp-service-detail-card">
+												<h2>Service overview</h2>
+												<p>{overviewText}</p>
+											</div>
+										</div>
+									</div>
+
+									<aside className="sp-booking-panel">
+										<div>
+											<p className="sp-subtitle">Secure your booking with just one click</p>
+											<div className="sp-price">{displayPrice ? `₹${displayPrice}` : 'Price on request'}</div>
+											<p className="sp-booking-note">Professional service booking designed for fast delivery and trusted quality.</p>
+										</div>
+
+										<div className="sp-service-detail-highlights">
+											{detailHighlights.map((item) => (
+												<div key={item.label} className="sp-service-detail-small-card">
+													<strong>{item.label}</strong>
+													<span>{item.value}</span>
 												</div>
 											))}
 										</div>
-									</div>
+
+										{error && <div className="sp-booking-alert sp-booking-alert--error">{error}</div>}
+										{success && <div className="sp-booking-alert sp-booking-alert--success">{success}</div>}
+
+										{!showBookingForm && (
+											<button className="sp-booking-btn sp-booking-btn--primary" onClick={handleBookClick} disabled={submitting || !displayPrice}>
+												{submitting ? 'Processing...' : 'Book this service'}
+											</button>
+										)}
+
+										{showBookingForm && (
+											<form className="sp-booking-form" onSubmit={handleSubmit}>
+												<div className="sp-booking-grid">
+													<div className="sp-booking-group">
+														<label>Full Name *</label>
+														<input type="text" name="customerName" value={form.customerName} onChange={handleChange} required />
+													</div>
+													<div className="sp-booking-group">
+														<label>Phone Number *</label>
+														<input type="text" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} required />
+													</div>
+												</div>
+
+												<div className="sp-booking-group">
+													<label>Email</label>
+													<input type="email" name="email" value={form.email} onChange={handleChange} />
+												</div>
+
+												<div className="sp-booking-group">
+													<label>Address *</label>
+													<textarea name="address" value={form.address} onChange={handleChange} rows={3} required />
+												</div>
+
+												<div className="sp-booking-grid">
+													<div className="sp-booking-group">
+														<label>Preferred Date</label>
+														<select name="preferredDate" value={form.preferredDate} onChange={handleChange} required={availableDates.length > 0}>
+															<option value="">-- Select a date --</option>
+															{availableDates.map((date) => (
+																<option key={date} value={date}>{new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</option>
+															))}
+														</select>
+													</div>
+													<div className="sp-booking-group">
+														<label>Service Price</label>
+														<input type="text" value={displayPrice ? `₹${displayPrice}` : 'On request'} readOnly />
+													</div>
+												</div>
+
+												<div className="sp-booking-group">
+													<label>Notes</label>
+													<textarea name="notes" value={form.notes} onChange={handleChange} rows={3} />
+												</div>
+
+												<div className="sp-booking-actions">
+													<button type="button" className="sp-booking-btn sp-booking-btn--secondary" onClick={() => setShowBookingForm(false)} disabled={submitting}>Cancel</button>
+													<button type="submit" className="sp-booking-btn sp-booking-btn--primary" disabled={submitting}>{submitting ? 'Processing...' : 'Confirm Booking'}</button>
+												</div>
+												{error && <div className="sp-booking-alert sp-booking-alert--error">{error}</div>}
+												{success && <div className="sp-booking-alert sp-booking-alert--success">{success}</div>}
+											</form>
+										)}
+									</aside>
+								</div>
+
+								{service.features && service.features.length > 0 && (
+									<section className="sp-service-detail-section">
+										<h3>What you get</h3>
+										<div className="sp-service-feature-grid">
+											{service.features.map((feature, idx) => (
+												<div key={idx} className="sp-feature-card">
+													{feature.imageUrl && <img src={feature.imageUrl} alt={feature.title || `Feature ${idx + 1}`} />}
+													<h4>{feature.title || `Feature ${idx + 1}`}</h4>
+													<p>{feature.description || feature}</p>
+												</div>
+											))}
+										</div>
+									</section>
 								)}
 							</>
 						)}
 					</div>
 				</section>
-
 				<Footer />
 			</main>
 		</>

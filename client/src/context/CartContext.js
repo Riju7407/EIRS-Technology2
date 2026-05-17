@@ -3,24 +3,47 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
-
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
-        setCartItems([]);
-      }
+  // Use lazy initializer so reading localStorage happens synchronously on mount
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cart');
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.error('Error parsing saved cart from localStorage:', err);
+      return [];
     }
+  });
+
+  // Keep cart in sync across tabs
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'cart') {
+        try {
+          const next = e.newValue ? JSON.parse(e.newValue) : [];
+          setCartItems(Array.isArray(next) ? next : []);
+        } catch (err) {
+          console.error('Error parsing cross-tab cart update:', err);
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
+    try {
+      if (!cartItems || cartItems.length === 0) {
+        // store empty array explicitly
+        localStorage.setItem('cart', JSON.stringify([]));
+      } else {
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+      }
+    } catch (err) {
+      console.error('Error saving cart to localStorage:', err);
+    }
   }, [cartItems]);
 
   const addToCart = (product, quantity = 1) => {

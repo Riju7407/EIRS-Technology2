@@ -25,7 +25,7 @@ const getAllUsers = async (req, res) => {
 //get all contacts
 const contactForm = async (req, res, next) => {
     try {
-        const contacts = await Contact.find();
+        const contacts = await Contact.find().sort({ createdAt: -1 });
         if (!contacts || contacts.length === 0) {
             return res.status(404).json({
                 success: false,

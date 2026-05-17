@@ -79,10 +79,11 @@ const Header = () => {
           {/* Right Actions */}
           <div className="header-actions">
             {!isAdmin && isLoggedIn && (
-              <Link to="/cart" className="action-item cart-item">
-                <FaShoppingCart />
-                {totalItems > 0 && <span className="action-badge">{totalItems}</span>}
-                <span className="action-label">Cart</span>
+              <Link to="/cart" className="action-item cart-item" aria-label={`Cart (${totalItems} items)`}>
+                <div className="cart-icon-wrap">
+                  <FaShoppingCart />
+                  {totalItems > 0 && <span className="action-badge">{totalItems}</span>}
+                </div>
               </Link>
             )}
 

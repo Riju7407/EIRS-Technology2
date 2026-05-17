@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  FaTools, FaHeadset, FaClipboardList, FaAmbulance, FaTimes,
+  FaTools, FaHeadset, FaClipboardList, FaTimes,
   FaCertificate, FaTrophy, FaClock, FaTag, FaShieldAlt, FaWrench,
   FaArrowRight, FaChevronRight, FaPhone, FaCheckCircle,
-  FaUsers, FaStar, FaMapMarkerAlt, FaThumbsUp, FaHandshake
+  FaMapMarkerAlt, FaThumbsUp, FaHandshake
 } from 'react-icons/fa';
 import { serviceService } from '../services/api';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
@@ -62,19 +62,18 @@ const PROCESS_STEPS = [
 
 const STATS = [
   { num: '500+', label: 'Projects Completed' },
-  { num: '15+', label: 'Years Experience' },
+  { num: '7+', label: 'Years Experience' },
   { num: '1000+', label: 'Happy Clients' },
   { num: '24/7', label: 'Support Available' },
 ];
 
 const ServicesPage = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedService] = useState(null);
   const [dbServices, setDbServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [failedImages, setFailedImages] = useState({});
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState('');
@@ -100,7 +99,8 @@ const ServicesPage = () => {
 
   const handleServiceClick = (service) => {
     if (service?._id) {
-      navigate(`/services/${service._id}`);
+      // navigate to service detail and jump to image anchor
+      navigate(`/services/${service._id}#service-image`);
     }
   };
 

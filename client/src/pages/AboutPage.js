@@ -13,7 +13,7 @@ import Footer from '../components/Footer';
 import '../styles/AboutPage.css';
 
 const STATS = [
-  { num: '15+', label: 'Years Experience' },
+  { num: '7+', label: 'Years Experience' },
   { num: '5000+', label: 'Happy Clients' },
   { num: '500+', label: 'Projects Done' },
   { num: '98%', label: 'Satisfaction Rate' },
@@ -46,7 +46,7 @@ const EXPERTISE = [
 ];
 
 const WHY_US = [
-  { icon: <FaClock />, title: '15+ Years Experience', desc: 'Proven track record with thousands of successful deployments across industries.' },
+  { icon: <FaClock />, title: '7+ Years Experience', desc: 'Proven track record with thousands of successful deployments across industries.' },
   { icon: <FaHandshake />, title: 'Trusted Partner', desc: 'Long-term relationships built on transparency, reliability and accountability.' },
   { icon: <FaCheckCircle />, title: 'End-to-End Service', desc: 'From site survey to installation, maintenance and 24/7 after-sales support.' },
   { icon: <FaStar />, title: 'Certified Professionals', desc: 'Our engineers hold industry certifications and undergo regular training.' },
@@ -76,7 +76,7 @@ const AboutPage = () => {
           <div className="ab-hero-inner">
             <span className="ab-hero-badge">About EIRS Technology</span>
             <h1>Securing What Matters Most — Since 2019</h1>
-            <p>We are a leading provider of integrated security and automation solutions, trusted by thousands of homes and businesses across India for over 15 years.</p>
+            <p>We are a leading provider of integrated security and automation solutions, trusted by thousands of homes and businesses across India for over 7 years.</p>
             <div className="ab-hero-actions">
               <Link to="/contact" className="ab-hero-btn ab-hero-btn--primary">Get in Touch <FaArrowRight /></Link>
               <Link to="/services" className="ab-hero-btn ab-hero-btn--outline">Our Services <FaChevronRight /></Link>
@@ -104,7 +104,7 @@ const AboutPage = () => {
                 <span className="ab-section-badge">Our Story</span>
                 <h2>Who We Are</h2>
                 <p>EIRS Technology is a premier provider of security and automation solutions, founded with the mission to protect people, property and data using cutting-edge technology.</p>
-                <p>With over <strong>15 years of hands-on experience</strong>, we have built a comprehensive ecosystem of CCTV, biometric, intercom, fire alarm, and IoT-based systems — all backed by a team of certified professionals.</p>
+                <p>With over <strong>7 years of hands-on experience</strong>, we have built a comprehensive ecosystem of CCTV, biometric, intercom, fire alarm, and IoT-based systems — all backed by a team of certified professionals.</p>
                 <div className="ab-story-pills">
                   <span className="ab-pill"> Residential & Commercial</span>
                   <span className="ab-pill"> Pan-India Coverage</span>

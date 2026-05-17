@@ -40,7 +40,7 @@ const CATEGORY_LINKS = [
 ];
 
 const TRUST_BADGES = [
-  { icon: <FaShieldAlt />, title: '15+ Years Experience', sub: 'Industry trusted experts', color: '#667eea' },
+  { icon: <FaShieldAlt />, title: '7+ Years Experience', sub: 'Industry trusted experts', color: '#667eea' },
   { icon: <FaTruck />, title: 'Fast Delivery', sub: 'Pan India shipping', color: '#43e97b' },
   { icon: <FaHeadset />, title: '24/7 Support', sub: 'Always here for you', color: '#f093fb' },
   { icon: <FaAward />, title: 'Genuine Products', sub: '100% authentic brands', color: '#f6d365' },
@@ -78,7 +78,7 @@ const SERVICE_CARDS = [
 
 const WHY_US = [
   { icon: <FaLock />, title: 'Certified Security Experts', desc: 'Our team holds industry certifications and undergoes regular training on the latest technology.' },
-  { icon: <FaClock />, title: '15+ Years Track Record', desc: 'Thousands of successful deployments across residential, commercial and enterprise segments.' },
+  { icon: <FaClock />, title: '7+ Years Track Record', desc: 'Thousands of successful deployments across residential, commercial and enterprise segments.' },
   { icon: <FaTools />, title: 'End-to-End Solutions', desc: 'Site survey, supply, installation, AMC and 24/7 support — all under one roof.' },
   { icon: <FaLeaf />, title: 'Scalable & Future-Ready', desc: 'Systems designed to grow with your business from a single camera to enterprise-grade networks.' },
 ];
@@ -462,7 +462,7 @@ const HomePage = () => {
           <div className="hp-about-inner">
             <div className="hp-about-text">
               <h2>Who We Are</h2>
-              <p>With over <strong>15 years of proven expertise</strong>, EIRS Technology is a leading provider of integrated security and automation solutions — delivering end-to-end systems tailored to modern needs.</p>
+              <p>With over <strong>7 years of proven expertise</strong>, EIRS Technology is a leading provider of integrated security and automation solutions — delivering end-to-end systems tailored to modern needs.</p>
               <Link to="/about" className="hp-about-btn">Read Our Story <FaArrowRight /></Link>
             </div>
             <div className="hp-about-highlights">

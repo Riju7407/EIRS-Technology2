@@ -19,10 +19,6 @@ exports.addReview = async (req, res) => {
             console.error('❌ Missing rating');
             return res.status(400).json({ message: 'Rating is required' });
         }
-        if (!comment) {
-            console.error('❌ Missing comment');
-            return res.status(400).json({ message: 'Comment is required' });
-        }
 
         // Validate rating range
         const ratingNum = parseInt(rating, 10);
@@ -31,11 +27,11 @@ exports.addReview = async (req, res) => {
             return res.status(400).json({ message: 'Rating must be a number between 1 and 5' });
         }
 
-        // Validate comment length
-        const commentStr = String(comment).trim();
-        if (commentStr.length < 10) {
+        // Validate comment length if provided
+        const commentStr = comment ? String(comment).trim() : '';
+        if (commentStr.length > 0 && commentStr.length < 10) {
             console.error('❌ Comment too short:', commentStr.length);
-            return res.status(400).json({ message: 'Comment must be at least 10 characters' });
+            return res.status(400).json({ message: 'Comment must be at least 10 characters if provided' });
         }
         if (commentStr.length > 500) {
             console.error('❌ Comment too long:', commentStr.length);
@@ -244,13 +240,17 @@ exports.updateReview = async (req, res) => {
             return res.status(400).json({ message: 'Rating must be between 1 and 5' });
         }
 
-        if (comment.length < 10 || comment.length > 500) {
-            return res.status(400).json({ message: 'Comment must be between 10 and 500 characters' });
+        const commentStr = comment ? String(comment).trim() : '';
+        if (commentStr.length > 0 && commentStr.length < 10) {
+            return res.status(400).json({ message: 'Comment must be between 10 and 500 characters if provided' });
+        }
+        if (commentStr.length > 500) {
+            return res.status(400).json({ message: 'Comment must be between 10 and 500 characters if provided' });
         }
 
         // Update review
         review.rating = rating;
-        review.comment = comment;
+        review.comment = commentStr;
         review.updatedAt = new Date();
         await review.save();
 

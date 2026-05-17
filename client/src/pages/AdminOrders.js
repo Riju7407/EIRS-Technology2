@@ -54,6 +54,9 @@ const AdminOrders = () => {
   const getStatusMeta = (status) =>
     STATUS_META[status] || { color: '#6b7280', bg: '#f3f4f6', border: '#d1d5db', label: status };
 
+  const getOrderStatus = (order) => order.status || order.orderStatus || 'Pending';
+  const getOrderTotal = (order) => order.totalPrice ?? order.totalAmount ?? 0;
+
   const getRefundBadge = (refundInfo) => {
     if (!refundInfo || refundInfo.status === 'None') return null;
     const map = {
@@ -65,15 +68,27 @@ const AdminOrders = () => {
     return map[refundInfo.status] || null;
   };
 
+  const getAfterDeliveryBadge = (request) => {
+    if (!request || request.status === 'None') return null;
+    const map = {
+      Requested: { color: '#f59e0b', bg: '#fffbeb', label: `${request.type} Requested` },
+      Approved:  { color: '#3b82f6', bg: '#eff6ff', label: `${request.type} Approved`  },
+      Processed: { color: '#10b981', bg: '#f0fdf4', label: `${request.type} Processed` },
+      Rejected:  { color: '#ef4444', bg: '#fef2f2', label: `${request.type} Rejected`  },
+    };
+    return map[request.status] || null;
+  };
+
   const getStats = () => ({
     total: orders.length,
-    pending: orders.filter(o => o.orderStatus === 'Pending').length,
-    confirmed: orders.filter(o => o.orderStatus === 'Confirmed').length,
-    shipped: orders.filter(o => o.orderStatus === 'Shipped').length,
-    delivered: orders.filter(o => o.orderStatus === 'Delivered').length,
-    cancelled: orders.filter(o => o.orderStatus === 'Cancelled').length,
-    revenue: orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
+    pending: orders.filter(o => getOrderStatus(o) === 'Pending').length,
+    confirmed: orders.filter(o => getOrderStatus(o) === 'Confirmed').length,
+    shipped: orders.filter(o => getOrderStatus(o) === 'Shipped').length,
+    delivered: orders.filter(o => getOrderStatus(o) === 'Delivered').length,
+    cancelled: orders.filter(o => getOrderStatus(o) === 'Cancelled').length,
+    revenue: orders.reduce((sum, o) => sum + getOrderTotal(o), 0),
     pendingRefunds: orders.filter(o => o.refundInfo?.status === 'Requested').length,
+    pendingAfterDeliveryRequests: orders.filter(o => o.afterDeliveryRequest?.status === 'Requested').length,
   });
 
   const handleDeleteOrder = async () => {
@@ -94,7 +109,7 @@ const AdminOrders = () => {
     try {
       await orderService.updateOrderStatus(orderId, newStatus);
       setOrders(prev => prev.map(o =>
-        o._id === orderId ? { ...o, orderStatus: newStatus } : o
+        o._id === orderId ? { ...o, status: newStatus, orderStatus: newStatus } : o
       ));
       setEditingOrderId(null);
       setNewStatus('');
@@ -138,6 +153,51 @@ const AdminOrders = () => {
     }
   };
 
+  const handleApproveAfterDeliveryRequest = async (orderId) => {
+    setRefundActionLoading(orderId + '_afterApprove');
+    try {
+      await orderService.approveAfterDeliveryRequest(orderId, { adminNotes: adminNotes[orderId] || '' });
+      await fetchAllOrders();
+      setAdminNotes(prev => ({ ...prev, [orderId]: '' }));
+      showToast('After-delivery request approved successfully.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to approve after-delivery request', 'error');
+    } finally {
+      setRefundActionLoading(null);
+    }
+  };
+
+  const handleRejectAfterDeliveryRequest = async (orderId) => {
+    if (!adminNotes[orderId]?.trim()) {
+      showToast('Please provide a rejection reason in admin notes.', 'error');
+      return;
+    }
+    setRefundActionLoading(orderId + '_afterReject');
+    try {
+      await orderService.rejectAfterDeliveryRequest(orderId, { adminNotes: adminNotes[orderId] });
+      await fetchAllOrders();
+      setAdminNotes(prev => ({ ...prev, [orderId]: '' }));
+      showToast('After-delivery request rejected.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to reject after-delivery request', 'error');
+    } finally {
+      setRefundActionLoading(null);
+    }
+  };
+
+  const handleProcessAfterDeliveryRequest = async (orderId) => {
+    setRefundActionLoading(orderId + '_afterProcess');
+    try {
+      await orderService.processAfterDeliveryRequest(orderId);
+      await fetchAllOrders();
+      showToast('After-delivery request marked as processed.');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to process after-delivery request', 'error');
+    } finally {
+      setRefundActionLoading(null);
+    }
+  };
+
   const handleProcessRefund = async (orderId) => {
     setRefundActionLoading(orderId + '_process');
     try {
@@ -169,8 +229,10 @@ const AdminOrders = () => {
     let list = orders;
     if (filter === 'Refund Requests') {
       list = list.filter(o => o.refundInfo?.status === 'Requested');
+    } else if (filter === 'After Delivery Requests') {
+      list = list.filter(o => o.afterDeliveryRequest?.status === 'Requested');
     } else if (filter !== 'All') {
-      list = list.filter(o => o.orderStatus === filter);
+      list = list.filter(o => getOrderStatus(o) === filter);
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -183,8 +245,8 @@ const AdminOrders = () => {
     return [...list].sort((a, b) => {
       if (sortBy === 'recent')  return new Date(b.createdAt) - new Date(a.createdAt);
       if (sortBy === 'oldest')  return new Date(a.createdAt) - new Date(b.createdAt);
-      if (sortBy === 'highest') return (b.totalAmount || 0) - (a.totalAmount || 0);
-      if (sortBy === 'lowest')  return (a.totalAmount || 0) - (b.totalAmount || 0);
+      if (sortBy === 'highest') return getOrderTotal(b) - getOrderTotal(a);
+      if (sortBy === 'lowest')  return getOrderTotal(a) - getOrderTotal(b);
       return 0;
     });
   })();
@@ -197,6 +259,7 @@ const AdminOrders = () => {
     { key: 'Delivered',       label: 'Delivered',  count: stats.delivered     },
     { key: 'Cancelled',       label: 'Cancelled',  count: stats.cancelled     },
     { key: 'Refund Requests', label: 'Refunds',    count: stats.pendingRefunds},
+    { key: 'After Delivery Requests', label: 'Return/Replace', count: stats.pendingAfterDeliveryRequests},
   ];
 
   const STAT_CARDS = [
@@ -314,8 +377,9 @@ const AdminOrders = () => {
         ) : (
           <div className="ao-list">
             {filtered.map(order => {
-              const meta = getStatusMeta(order.orderStatus);
+              const meta = getStatusMeta(getOrderStatus(order));
               const refundBadge = getRefundBadge(order.refundInfo);
+              const afterDeliveryBadge = getAfterDeliveryBadge(order.afterDeliveryRequest);
               const isExpanded = expandedOrderId === order._id;
 
               return (
@@ -329,8 +393,8 @@ const AdminOrders = () => {
                         {getInitials(order.userId?.name)}
                       </div>
                       <div>
-                        <p className="ao-customer-name">{order.userId?.name || 'Unknown Customer'}</p>
-                        <p className="ao-customer-email">{order.userId?.email || 'N/A'}</p>
+                        <p className="ao-customer-name">{order.userId?.name || order.shippingAddress?.fullName || 'Unknown Customer'}</p>
+                        <p className="ao-customer-email">{order.userId?.email || order.shippingAddress?.email || 'N/A'}</p>
                       </div>
                     </div>
 
@@ -345,7 +409,7 @@ const AdminOrders = () => {
                     </div>
 
                     <div className="ao-card-right">
-                      <div className="ao-amount">{formatCurrency(order.totalAmount)}</div>
+                      <div className="ao-amount">{formatCurrency(getOrderTotal(order))}</div>
                       <div className="ao-pills">
                         <span className="ao-status-pill"
                           style={{ color: meta.color, background: meta.bg, borderColor: meta.border }}>
@@ -355,6 +419,12 @@ const AdminOrders = () => {
                           <span className="ao-refund-pill"
                             style={{ color: refundBadge.color, background: refundBadge.bg }}>
                             <FaUndo /> {refundBadge.label}
+                          </span>
+                        )}
+                        {afterDeliveryBadge && (
+                          <span className="ao-refund-pill"
+                            style={{ color: afterDeliveryBadge.color, background: afterDeliveryBadge.bg }}>
+                            <FaUndo /> {afterDeliveryBadge.label}
                           </span>
                         )}
                       </div>
@@ -448,7 +518,7 @@ const AdminOrders = () => {
                           <div className="ao-price-box">
                             <div className="ao-price-row">
                               <span>Subtotal ({order.totalItems || order.items?.length} items)</span>
-                              <span>{formatCurrency(order.totalAmount)}</span>
+                              <span>{formatCurrency(getOrderTotal(order))}</span>
                             </div>
                             <div className="ao-price-row">
                               <span>Shipping</span>
@@ -456,7 +526,7 @@ const AdminOrders = () => {
                             </div>
                             <div className="ao-price-row ao-price-row--total">
                               <strong>Total</strong>
-                              <strong>{formatCurrency(order.totalAmount)}</strong>
+                              <strong>{formatCurrency(getOrderTotal(order))}</strong>
                             </div>
                             <div className="ao-price-row">
                               <span>Payment Method</span>
@@ -484,6 +554,15 @@ const AdminOrders = () => {
                         </div>
                       </div>
 
+                      {order.cancellationReason && (
+                        <div className="ao-section">
+                          <h4 className="ao-section-title"><FaBan /> Cancellation Reason</h4>
+                          <div className="ao-addr-box">
+                            <p>{order.cancellationReason}</p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Refund Management */}
                       {order.refundInfo && order.refundInfo.status !== 'None' && (
                         <div className="ao-section ao-section--refund">
@@ -502,12 +581,21 @@ const AdminOrders = () => {
                           </h4>
                           <div className="ao-refund-grid">
                             <div><label>Amount</label>
-                              <p>{formatCurrency(order.refundInfo.refundAmount || order.totalAmount)}</p></div>
+                              <p>{formatCurrency(order.refundInfo.refundAmount || getOrderTotal(order))}</p></div>
                             {order.refundInfo.reason && (
                               <div><label>Customer Reason</label><p>{order.refundInfo.reason}</p></div>
                             )}
+                            {order.refundInfo.returnPaymentMethod && (
+                              <div><label>Return Method</label><p>{order.refundInfo.returnPaymentMethod}</p></div>
+                            )}
+                            {order.refundInfo.returnPaymentDetails && (
+                              <div><label>Payment Details</label><p>{order.refundInfo.returnPaymentDetails}</p></div>
+                            )}
                             {order.refundInfo.requestedAt && (
                               <div><label>Requested</label><p>{formatDate(order.refundInfo.requestedAt)}</p></div>
+                            )}
+                            {order.refundInfo.approvedAt && (
+                              <div><label>Approved</label><p>{formatDate(order.refundInfo.approvedAt)}</p></div>
                             )}
                             {order.refundInfo.processedAt && (
                               <div><label>Processed</label><p>{formatDate(order.refundInfo.processedAt)}</p></div>
@@ -567,6 +655,95 @@ const AdminOrders = () => {
                         </div>
                       )}
 
+                      {order.afterDeliveryRequest && order.afterDeliveryRequest.status !== 'None' && (
+                        <div className="ao-section ao-section--refund">
+                          <h4 className="ao-section-title">
+                            <FaUndo /> {order.afterDeliveryRequest.type} Request Management
+                            <span className="ao-refund-status-chip" style={{
+                              background: order.afterDeliveryRequest.status === 'Requested' ? '#fffbeb' :
+                                          order.afterDeliveryRequest.status === 'Approved'  ? '#eff6ff' :
+                                          order.afterDeliveryRequest.status === 'Processed' ? '#f0fdf4' : '#fef2f2',
+                              color:      order.afterDeliveryRequest.status === 'Requested' ? '#d97706' :
+                                          order.afterDeliveryRequest.status === 'Approved'  ? '#2563eb' :
+                                          order.afterDeliveryRequest.status === 'Processed' ? '#059669' : '#dc2626',
+                            }}>
+                              {order.afterDeliveryRequest.status}
+                            </span>
+                          </h4>
+                          <div className="ao-refund-grid">
+                            {order.afterDeliveryRequest.reason && (
+                              <div><label>Customer Reason</label><p>{order.afterDeliveryRequest.reason}</p></div>
+                            )}
+                            {order.afterDeliveryRequest.type === 'Return' && order.afterDeliveryRequest.returnPaymentMethod && (
+                              <div><label>Return Method</label><p>{order.afterDeliveryRequest.returnPaymentMethod}</p></div>
+                            )}
+                            {order.afterDeliveryRequest.type === 'Return' && order.afterDeliveryRequest.returnPaymentDetails && (
+                              <div><label>Payment Details</label><p>{order.afterDeliveryRequest.returnPaymentDetails}</p></div>
+                            )}
+                            {order.afterDeliveryRequest.requestedAt && (
+                              <div><label>Requested</label><p>{formatDate(order.afterDeliveryRequest.requestedAt)}</p></div>
+                            )}
+                            {order.afterDeliveryRequest.approvedAt && (
+                              <div><label>Approved</label><p>{formatDate(order.afterDeliveryRequest.approvedAt)}</p></div>
+                            )}
+                            {order.afterDeliveryRequest.processedAt && (
+                              <div><label>Processed</label><p>{formatDate(order.afterDeliveryRequest.processedAt)}</p></div>
+                            )}
+                            {order.afterDeliveryRequest.adminNotes && (
+                              <div style={{ gridColumn: '1/-1' }}>
+                                <label>Admin Notes</label><p>{order.afterDeliveryRequest.adminNotes}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {(order.afterDeliveryRequest.status === 'Requested' || order.afterDeliveryRequest.status === 'Approved') && (
+                            <div className="ao-refund-actions">
+                              <div className="ao-notes-field">
+                                <label>
+                                  Admin Notes
+                                  {order.afterDeliveryRequest.status === 'Requested'
+                                    ? <span> (required to reject)</span>
+                                    : <span> (optional)</span>
+                                  }
+                                </label>
+                                <textarea
+                                  value={adminNotes[order._id] || ''}
+                                  onChange={e => setAdminNotes(prev => ({ ...prev, [order._id]: e.target.value }))}
+                                  placeholder="Add a note visible to the customer..."
+                                  rows={2}
+                                />
+                              </div>
+                              <div className="ao-refund-btns">
+                                {order.afterDeliveryRequest.status === 'Requested' && (
+                                  <>
+                                    <button className="ao-btn ao-btn--approve"
+                                      onClick={() => handleApproveAfterDeliveryRequest(order._id)}
+                                      disabled={refundActionLoading === order._id + '_afterApprove'}>
+                                      <FaCheckDouble />{' '}
+                                      {refundActionLoading === order._id + '_afterApprove' ? 'Approving...' : `Approve ${order.afterDeliveryRequest.type}`}
+                                    </button>
+                                    <button className="ao-btn ao-btn--reject"
+                                      onClick={() => handleRejectAfterDeliveryRequest(order._id)}
+                                      disabled={refundActionLoading === order._id + '_afterReject'}>
+                                      <FaBan />{' '}
+                                      {refundActionLoading === order._id + '_afterReject' ? 'Rejecting...' : `Reject ${order.afterDeliveryRequest.type}`}
+                                    </button>
+                                  </>
+                                )}
+                                {order.afterDeliveryRequest.status === 'Approved' && (
+                                  <button className="ao-btn ao-btn--process"
+                                    onClick={() => handleProcessAfterDeliveryRequest(order._id)}
+                                    disabled={refundActionLoading === order._id + '_afterProcess'}>
+                                    <FaMoneyBillWave />{' '}
+                                    {refundActionLoading === order._id + '_afterProcess' ? 'Processing...' : `Mark ${order.afterDeliveryRequest.type} Processed`}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Status Update */}
                       <div className="ao-section">
                         <h4 className="ao-section-title"><FaEdit /> Update Order Status</h4>
@@ -593,7 +770,7 @@ const AdminOrders = () => {
                           </div>
                         ) : (
                           <button className="ao-btn ao-btn--edit-status"
-                            onClick={() => { setEditingOrderId(order._id); setNewStatus(order.orderStatus); }}>
+                            onClick={() => { setEditingOrderId(order._id); setNewStatus(getOrderStatus(order)); }}>
                             <FaEdit /> Change Status
                           </button>
                         )}

@@ -5,7 +5,6 @@ import {
   FaChevronDown, FaFilter, FaBoxOpen
 } from 'react-icons/fa';
 import { productService } from '../services/api';
-import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
 import CheckoutModal from '../components/CheckoutModal';

@@ -77,7 +77,7 @@ const orderSchema = new Schema({
     },
     paymentStatus: {
         type: String,
-        enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
+        enum: ['Pending', 'Completed', 'Failed', 'Refunded', 'Cancelled'],
         default: 'Pending'
     },
     razorpayOrderId: {
@@ -112,6 +112,10 @@ const orderSchema = new Schema({
     cancellationReason: {
         type: String
     },
+    deliveredAt: {
+        type: Date,
+        default: null
+    },
     refundInfo: {
         status: {
             type: String,
@@ -124,6 +128,49 @@ const orderSchema = new Schema({
         refundAmount: {
             type: Number,
             default: 0
+        },
+        requestedAt: {
+            type: Date
+        },
+        approvedAt: {
+            type: Date
+        },
+        processedAt: {
+            type: Date
+        },
+        returnPaymentMethod: {
+            type: String,
+            enum: ['UPI', 'Bank Transfer', 'Net Banking'],
+            default: null
+        },
+        returnPaymentDetails: {
+            type: String
+        },
+        adminNotes: {
+            type: String
+        }
+    },
+    afterDeliveryRequest: {
+        type: {
+            type: String,
+            enum: ['None', 'Return', 'Replace'],
+            default: 'None'
+        },
+        status: {
+            type: String,
+            enum: ['None', 'Requested', 'Approved', 'Rejected', 'Processed'],
+            default: 'None'
+        },
+        reason: {
+            type: String
+        },
+        returnPaymentMethod: {
+            type: String,
+            enum: ['UPI', 'Bank Transfer', 'Net Banking'],
+            default: null
+        },
+        returnPaymentDetails: {
+            type: String
         },
         requestedAt: {
             type: Date

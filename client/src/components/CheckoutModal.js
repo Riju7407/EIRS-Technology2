@@ -13,6 +13,7 @@ import {
   FaExclamationTriangle
 } from 'react-icons/fa';
 import paymentService from '../services/paymentService';
+import { orderService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import '../styles/CheckoutModal.css';
 
@@ -382,6 +383,18 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
             setLoading(false);
           }
         },
+        modal: {
+          ondismiss: async () => {
+            if (mongoOrderId) {
+              try {
+                await orderService.deleteUserOrder(mongoOrderId);
+              } catch (delErr) {
+                console.error('Failed to delete pending order after checkout dismiss:', delErr);
+              }
+            }
+            window.location.href = '/';
+          }
+        },
         prefill: {
           name: shippingAddress.fullName,
           email: shippingAddress.email,
@@ -403,11 +416,18 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
       console.log('Opening Razorpay checkout with options:', options);
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-
-      razorpay.on('payment.failed', (response) => {
+      razorpay.on('payment.failed', async (response) => {
         console.error('❌ Payment failed:', response.error);
-        setError('Payment failed: ' + (response.error?.description || 'Unknown reason'));
+        // delete user pending order created earlier (mongoOrderId)
+        try {
+          if (mongoOrderId) {
+            await orderService.deleteUserOrder(mongoOrderId);
+          }
+        } catch (delErr) {
+          console.error('Failed to delete pending order after payment failure:', delErr);
+        }
         setLoading(false);
+        window.location.href = '/';
       });
     } catch (err) {
       console.error('❌ Payment initialization error:', err);

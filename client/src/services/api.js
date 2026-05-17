@@ -485,6 +485,14 @@ export const serviceService = {
       throw error.response?.data || error.message;
     }
   },
+  deleteBooking: async (id) => {
+    try {
+      const response = await api.delete(`/auth/service-bookings/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 
   getMyBookings: async () => {
     try {
@@ -671,6 +679,15 @@ export const orderService = {
       throw error.response?.data || error.message;
     }
   },
+  // Allow users to delete their own pending/failed orders
+  deleteUserOrder: async (orderId) => {
+    try {
+      const response = await api.delete(`/auth/orders/user/${orderId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 
   cancelOrder: async (orderId, data) => {
     try {
@@ -684,6 +701,15 @@ export const orderService = {
   requestRefund: async (orderId, data) => {
     try {
       const response = await api.post(`/auth/orders/${orderId}/refund`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  requestAfterDeliveryAction: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/orders/${orderId}/after-delivery-request`, data);
       return response.data;
     } catch (error) {
       throw error;
@@ -712,6 +738,33 @@ export const orderService = {
   processRefund: async (orderId) => {
     try {
       const response = await api.post(`/auth/refunds/${orderId}/process`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  approveAfterDeliveryRequest: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/after-delivery-requests/${orderId}/approve`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  rejectAfterDeliveryRequest: async (orderId, data) => {
+    try {
+      const response = await api.post(`/auth/after-delivery-requests/${orderId}/reject`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  processAfterDeliveryRequest: async (orderId) => {
+    try {
+      const response = await api.post(`/auth/after-delivery-requests/${orderId}/process`);
       return response.data;
     } catch (error) {
       throw error;

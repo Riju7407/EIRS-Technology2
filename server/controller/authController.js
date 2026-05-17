@@ -708,19 +708,6 @@ const sendPhoneLoginOTP = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number' });
         }
 
-        // Check if phone number is registered BEFORE sending OTP
-        const existingUser = await userSchema.findOne({
-            phoneNumber: { $in: [rawDigits, '91' + rawDigits, '+91' + rawDigits] }
-        });
-
-        if (!existingUser) {
-            return res.status(404).json({
-                success:       false,
-                notRegistered: true,
-                message:       'This mobile number is not registered. Please sign up first.'
-            });
-        }
-
         // Rate-limit: allow resend only after 30 seconds
         const existing = phoneOTPStore.get(rawDigits);
         if (existing && existing.expiresAt > Date.now() && (Date.now() - existing.createdAt < 30000)) {
@@ -778,46 +765,49 @@ const verifyPhoneLoginOTP = async (req, res) => {
         phoneOTPStore.delete(rawDigits);
 
         // Check if user already exists with this phone number
-        const user = await userSchema.findOne({
+        let user = await userSchema.findOne({
             phoneNumber: { $in: [rawDigits, '91' + rawDigits, '+91' + rawDigits] }
         });
 
-        if (user) {
-            // Returning user – issue full auth token, log them in
-            const token = user.jwtToken();
-            res.cookie('token', token, {
-                maxAge:   24 * 60 * 60 * 1000,
-                httpOnly: true,
-                secure:   process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
+        if (!user) {
+            // Auto-create a new phone-only user for seamless login
+            const randomPwd = require('crypto').randomBytes(16).toString('hex');
+            const placeholderEmail = `user${rawDigits}@phone-login.eirs.local`;
+            const placeholderName = `User ${rawDigits.slice(-4)}`;
+            user = new userSchema({
+                name: placeholderName,
+                email: placeholderEmail,
+                phoneNumber: rawDigits,
+                address: 'Not provided',
+                password: randomPwd
             });
-            return res.status(200).json({
-                success:   true,
-                isNewUser: false,
-                token,
-                data: {
-                    _id:     user._id,
-                    id:      user._id,
-                    name:    user.name,
-                    email:   user.email,
-                    isAdmin: user.isAdmin
-                },
-                message: `Welcome back, ${user.name}!`
-            });
+            const savedUser = await user.save();
+            fireAndForget(
+                () => syncUserToCrm(savedUser),
+                `phone-login:${savedUser._id}`
+            );
+            user = savedUser;
         }
 
-        // New user – issue a short-lived phone-verified token for the registration step
-        const phoneToken = jwt.sign(
-            { phone: rawDigits, verified: true },
-            process.env.PHONE_JWT_SECRET || 'phone_otp_secret',
-            { expiresIn: '15m' }
-        );
-
+        const token = user.jwtToken();
+        res.cookie('token', token, {
+            maxAge:   24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure:   process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+        });
         return res.status(200).json({
-            success:    true,
-            isNewUser:  true,
-            phoneToken,
-            message:    'Phone verified. Complete your profile to continue.'
+            success:   true,
+            isNewUser: false,
+            token,
+            data: {
+                _id:     user._id,
+                id:      user._id,
+                name:    user.name,
+                email:   user.email,
+                isAdmin: user.isAdmin
+            },
+            message: `Welcome! You are now signed in.`
         });
     } catch (err) {
         console.error('[verifyPhoneLoginOTP]', err.message);

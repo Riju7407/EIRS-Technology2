@@ -10,7 +10,7 @@ const CategorySidebar = ({
   onPriceRangeChange = () => {}
 }) => {
   const navigate = useNavigate();
-  const { categories = [], subcategories = [], filters = {}, loading, closeSidebar } = useCategoryFilter();
+  const { closeSidebar } = useCategoryFilter();
   
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [hoveredSubcategory, setHoveredSubcategory] = useState(null);

@@ -5,7 +5,7 @@ const { services, getAllServices, deleteService, addService, updateService, getS
 const { getAllUsers, contactForm: getContacts, deleteUserById, promoteToAdmin, checkAdminStatus } = require('../controller/adminController');
 const { contactForm: submitContact, deleteContact } = require('../controller/contactController');
 const { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getFeaturedProducts, toggleFeatured } = require('../controller/productController');
-const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder, cancelOrder, requestRefund, approveRefund, rejectRefund, processRefund } = require('../controller/orderController');
+const { createOrder, getUserOrders, getOrderById, updateOrderStatus, getAllOrders, deleteOrder, cancelOrder, requestRefund, approveRefund, rejectRefund, processRefund, requestAfterDeliveryAction, approveAfterDeliveryRequest, rejectAfterDeliveryRequest, processAfterDeliveryRequest } = require('../controller/orderController');
 const { createServiceBooking, getUserServiceBookings, getAllServiceBookings } = require('../controller/serviceBookingController');
 const { createSubcategory, getAllSubcategories, getSubcategoriesByCategory, getSubcategoryById, updateSubcategory, deleteSubcategory } = require('../controller/subcategoryController');
 const { addReview, getProductReviews, getUserProductReview, updateReview, deleteReview } = require('../controller/reviewController');
@@ -114,6 +114,12 @@ authRouter.delete('/services/delete/:id', jwtAuth, adminMiddleware, deleteServic
 authRouter.post('/service-bookings', jwtAuth, createServiceBooking);
 authRouter.get('/service-bookings/my', jwtAuth, getUserServiceBookings);
 authRouter.get('/service-bookings/admin/all', jwtAuth, adminMiddleware, getAllServiceBookings);
+// Allow users to delete their own pending/failed bookings
+authRouter.delete('/service-bookings/:id', jwtAuth, async (req, res, next) => {
+  // Lazy require to avoid circular deps
+  const { deleteServiceBooking } = require('../controller/serviceBookingController');
+  return deleteServiceBooking(req, res, next);
+});
 
 authRouter.get('/products/featured', getFeaturedProducts);
 authRouter.get('/products', getAllProducts);
@@ -138,13 +144,24 @@ authRouter.get('/orders', jwtAuth, getUserOrders);
 authRouter.get('/orders/:orderId', jwtAuth, getOrderById);
 authRouter.post('/orders/:orderId/cancel', jwtAuth, cancelOrder);
 authRouter.post('/orders/:orderId/refund', jwtAuth, requestRefund);
+authRouter.post('/orders/:orderId/after-delivery-request', jwtAuth, requestAfterDeliveryAction);
 authRouter.put('/orders/:orderId/status', jwtAuth, adminMiddleware, updateOrderStatus);
 authRouter.delete('/orders/:orderId', jwtAuth, adminMiddleware, deleteOrder);
+// User delete for own pending/failed order
+authRouter.delete('/orders/user/:orderId', jwtAuth, async (req, res, next) => {
+  const { deleteUserOrder } = require('../controller/orderController');
+  return deleteUserOrder(req, res, next);
+});
 
 // Admin Refund Management Routes
 authRouter.post('/refunds/:orderId/approve', jwtAuth, adminMiddleware, approveRefund);
 authRouter.post('/refunds/:orderId/reject', jwtAuth, adminMiddleware, rejectRefund);
 authRouter.post('/refunds/:orderId/process', jwtAuth, adminMiddleware, processRefund);
+
+// Admin After-Delivery Request Management Routes
+authRouter.post('/after-delivery-requests/:orderId/approve', jwtAuth, adminMiddleware, approveAfterDeliveryRequest);
+authRouter.post('/after-delivery-requests/:orderId/reject', jwtAuth, adminMiddleware, rejectAfterDeliveryRequest);
+authRouter.post('/after-delivery-requests/:orderId/process', jwtAuth, adminMiddleware, processAfterDeliveryRequest);
 
 // Review Routes
 authRouter.post('/reviews/add', jwtAuth, addReview);

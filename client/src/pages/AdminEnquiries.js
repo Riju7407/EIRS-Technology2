@@ -33,7 +33,10 @@ const AdminEnquiries = () => {
   const fetchEnquiries = async () => {
     try {
       const r = await adminService.getContacts();
-      setEnquiries(r.data || r || []);
+      const contacts = r.data || r || [];
+      setEnquiries(
+        [...contacts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      );
     } catch (e) {
       if (e.status === 401 || e.response?.status === 401) navigate('/signin');
     } finally {

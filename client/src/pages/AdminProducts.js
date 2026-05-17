@@ -417,10 +417,11 @@ const AdminProducts = () => {
     {
       name: 'Intercom System',
       subcategories: [
-        'Landline Phones',
-        'Intercom Devices',
-        'EPABX System',
-        'PBX System'
+        'Intercom',
+        'EPABX',
+        'PBX',
+        'Landline Phone',
+        'IP Phone'
       ]
     },
     {

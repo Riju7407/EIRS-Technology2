@@ -118,3 +118,27 @@ exports.getAllServiceBookings = async (req, res) => {
         });
     }
 };
+
+// Delete a service booking (user may delete their own pending/failed bookings)
+exports.deleteServiceBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const booking = await ServiceBooking.findById(id);
+        if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+
+        // Only owner can delete
+        if (booking.userId.toString() !== req.user.id.toString()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        // Allow delete only if payment not completed
+        if (booking.paymentStatus === 'Completed') {
+            return res.status(400).json({ success: false, message: 'Cannot delete a completed booking' });
+        }
+
+        await ServiceBooking.findByIdAndDelete(id);
+        return res.json({ success: true, message: 'Booking deleted' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

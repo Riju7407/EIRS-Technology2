@@ -56,17 +56,18 @@ const AdminDashboard = () => {
       const contacts = enquiriesRes.status === 'fulfilled' ? (enquiriesRes.value?.data || []) : [];
       const users = usersRes.status === 'fulfilled' ? (usersRes.value?.data || usersRes.value || []) : [];
       const products = productsRes.status === 'fulfilled' ? (productsRes.value?.data || productsRes.value || []) : [];
+      const sortedContacts = [...contacts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       const today = new Date().toDateString();
-      const todayCount = contacts.filter(c => new Date(c.createdAt).toDateString() === today).length;
+      const todayCount = sortedContacts.filter(c => new Date(c.createdAt).toDateString() === today).length;
       setStats({
-        totalEnquiries: contacts.length,
+        totalEnquiries: sortedContacts.length,
         todayEnquiries: todayCount,
         totalProducts: Array.isArray(products) ? products.length : 0,
         activeCategories: 7,
         totalUsers: Array.isArray(users) ? users.length : 0,
         totalOrders: 0,
       });
-      setRecentEnquiries(contacts.slice(0, 6));
+      setRecentEnquiries(sortedContacts.slice(0, 6));
 
       const crmData = crmRes.status === 'fulfilled' ? crmRes.value?.overview : null;
       if (crmData) {

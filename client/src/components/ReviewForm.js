@@ -21,12 +21,13 @@ const ReviewForm = ({ productId, onReviewAdded, existingReview }) => {
       return;
     }
 
-    if (comment.trim().length < 10) {
-      setError('Comment must be at least 10 characters');
+    const trimmedComment = comment.trim();
+    if (trimmedComment.length > 0 && trimmedComment.length < 10) {
+      setError('Comment must be at least 10 characters or left empty');
       return;
     }
 
-    if (comment.trim().length > 500) {
+    if (trimmedComment.length > 500) {
       setError('Comment cannot exceed 500 characters');
       return;
     }
@@ -132,7 +133,7 @@ const ReviewForm = ({ productId, onReviewAdded, existingReview }) => {
         {/* Comment Section */}
         <div className="comment-section">
           <label htmlFor="comment" className="comment-label">
-            Your Review:
+            Your Review (optional):
             <span className="char-count">
               {comment.length}/500
             </span>
@@ -140,13 +141,13 @@ const ReviewForm = ({ productId, onReviewAdded, existingReview }) => {
           <textarea
             id="comment"
             className="comment-textarea"
-            placeholder="Share your experience with this product... (minimum 10 characters)"
+            placeholder="Share your experience with this product... (optional, 10-500 chars if entered)"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             maxLength="500"
             rows="5"
           />
-          {comment.length < 10 && comment.length > 0 && (
+          {comment.length > 0 && comment.length < 10 && (
             <p className="char-warning">Minimum 10 characters required</p>
           )}
         </div>

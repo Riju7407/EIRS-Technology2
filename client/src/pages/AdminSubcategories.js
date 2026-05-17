@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes, FaChartBar, FaUsers, FaPhone, FaBox, FaTools, FaSignOutAlt, FaEdit, FaTrash, FaPlus, FaTags } from 'react-icons/fa';
 import { authService } from '../services/api';
@@ -40,20 +40,7 @@ const AdminSubcategories = () => {
 
   const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
   const API_BASE = `${API_ROOT}/api`;
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setAdminUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [categoriesRes, subcategoriesRes] = await Promise.all([
@@ -69,7 +56,19 @@ const AdminSubcategories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setAdminUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    fetchData();
+  }, [fetchData]);
 
   // Category Management Functions
   const handleAddCategory = () => {

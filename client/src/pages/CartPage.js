@@ -43,7 +43,7 @@ const CartPage = () => {
             </div>
 
             {cartItems.map((item) => (
-              <div key={item._id} className="cart-item">
+              <div key={item._id} className="cart-row">
                 <div className="item-product">
                   {item.image && (
                     <img src={item.image} alt={item.name} className="item-image" />

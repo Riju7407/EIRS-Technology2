@@ -14,12 +14,8 @@ import {
   FaSignOutAlt,
   FaStore,
   FaBell,
-  FaSearch,
-  FaCog,
-  FaUserCircle,
   FaChevronDown,
-  FaMoon,
-  FaSun,
+  
 } from 'react-icons/fa';
 import '../styles/AdminLayout.css';
 

@@ -184,7 +184,21 @@ const orderSchema = new Schema({
         adminNotes: {
             type: String
         }
+    },
+
+    invoice: {
+    invoiceNumber: {
+        type: String,
+        unique: true
+    },
+    invoiceDate: {
+        type: Date,
+        default: Date.now
+    },
+    billUrl: {
+        type: String // PDF link (S3/local)
     }
+}
 }, {
     timestamps: true
 });

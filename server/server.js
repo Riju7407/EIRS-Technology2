@@ -196,11 +196,16 @@ app.use((err, req, res, next) => {
 });
 
 // Only listen in development/local environment
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(port, () => {
-        console.log(`Server is running at http://localhost:${port}`);
-    });
-}
+
+// if (process.env.NODE_ENV !== 'production') {
+//     app.listen(port, () => {
+//         console.log(`Server is running at http://localhost:${port}`);
+//     });
+// }
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`✅ Server running at http://0.0.0.0:${port}`);
+});
 
 module.exports = app;
 

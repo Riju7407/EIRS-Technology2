@@ -8,19 +8,27 @@ const subcategorySchema = new Schema({
         unique: true,
         trim: true
     },
+
     category: {
-        type: String,
-        required: [true, 'Category is required'],
-        trim: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        required: [true, 'Category is required']
     },
+
     description: {
         type: String,
         trim: true
     },
+
     icon: {
         type: String,
         trim: true
-    }
+    },
+    isActive: {
+    type: Boolean,
+    default: true
+}
+
 }, {
     timestamps: true
 });

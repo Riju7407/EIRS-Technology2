@@ -6,6 +6,7 @@ exports.createProduct = async (req, res) => {
         console.log('📌 ModelNo value:', req.body.modelNo);
         
         const product = new Product(req.body);
+        
         await product.save();
         
         console.log('✅ Product saved:', JSON.stringify(product, null, 2));
@@ -66,7 +67,7 @@ exports.getAllProducts = async (req, res) => {
         
         // Fetch products with optimized fields - truncate description for list view
         const products = await Product.find()
-            .select('_id productName category subcategory submenu channels brand price image stock modelNo isFeatured discount')
+            .select('_id productName category subcategory submenu channels brand price image stock modelNo hsn isFeatured discount')
             .lean() // Returns plain JavaScript objects, not Mongoose documents
             .limit(limit)
             .skip(skip)

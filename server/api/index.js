@@ -110,9 +110,17 @@ app.get('/health', (req, res) => {
 });
 
 // Health check endpoints
+// app.get('/', (req, res) => {
+//     res.set('Cache-Control', 'public, max-age=300');
+//     res.json({ message: 'EIRS Technology API', status: 'running' });\n});
+
 app.get('/', (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
-    res.json({ message: 'EIRS Technology API', status: 'running' });\n});
+    res.json({ 
+        message: 'EIRS Technology API', 
+        status: 'running' 
+    });
+});
 
 // Handle the Vercel rewrite: /api/(.*) → /api/index.js?__path=/$1
 app.use((req, res, next) => {

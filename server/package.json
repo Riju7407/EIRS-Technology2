@@ -25,6 +25,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^8.0.1",
     "nodemon": "^3.1.11",
+    "pdfkit": "^0.18.0",
     "razorpay": "^2.9.6",
     "textflow.js": "^0.1.4",
     "twilio": "^5.12.2",

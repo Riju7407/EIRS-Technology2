@@ -5,6 +5,7 @@ const Order = require('../model/orderSchema');
 const ServiceBooking = require('../model/serviceBookingSchema');
 const Service = require('../model/serviceSchema');
 const jwtAuth = require('../middleware/jwtAuth');
+const orderController = require('../controller/orderController');
 
 const router = express.Router();
 
@@ -377,6 +378,11 @@ router.get('/payment-history', jwtAuth, async (req, res) => {
 /* 
    GET /payment/orders/:orderId
  */
+router.get(
+  '/orders/:orderId/bill',
+  jwtAuth,
+  orderController.getBill
+);
 router.get('/orders/:orderId', jwtAuth, async (req, res) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, userId: req.user.id }).populate('items.productId');
@@ -386,6 +392,20 @@ router.get('/orders/:orderId', jwtAuth, async (req, res) => {
     console.error('/orders/:id error:', err.message);
     return res.status(500).json({ success: false, message: 'Failed to fetch order' });
   }
+});
+
+router.get('/orders/:orderId/bill/download', jwtAuth, async (req, res) => {
+  const order = await Order.findOne({
+    _id: req.params.orderId,
+    userId: req.user.id
+  });
+
+  if (!order || !order.invoice?.billUrl) {
+    return res.status(404).json({ success: false, message: 'Bill not found' });
+  }
+
+  // redirect to actual file (fastest way)
+  return res.redirect(order.invoice.billUrl);
 });
 
 /* 

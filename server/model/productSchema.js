@@ -7,6 +7,11 @@ const productSchema = new Schema({
         required: [true, 'Product name is required'],
         trim: true
     },
+    hsn: {
+    type: String,
+    trim: true,
+    default: ""
+},
     category: {
         type: String,
         required: [true, 'Product category is required'],

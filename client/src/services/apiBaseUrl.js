@@ -9,6 +9,7 @@ const getRawApiBaseUrl = () => {
 };
 
 export const getApiBaseUrl = () => {
+
   const raw = String(getRawApiBaseUrl()).trim().replace(/\/+$/, '');
 
   // Guard against env values like https://host/api so auth routes stay at /auth/*.
@@ -16,5 +17,8 @@ export const getApiBaseUrl = () => {
     return raw.slice(0, -4);
   }
 
+
   return raw;
+  
+   
 };

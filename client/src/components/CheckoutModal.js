@@ -392,7 +392,8 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
                 console.error('Failed to delete pending order after checkout dismiss:', delErr);
               }
             }
-            window.location.href = '/';
+           setError("Payment fail hua hai, dubara try karo ya COD use karo");
+setLoading(false);
           }
         },
         prefill: {
@@ -416,19 +417,25 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, totalAmount, userId, userNa
       console.log('Opening Razorpay checkout with options:', options);
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-      razorpay.on('payment.failed', async (response) => {
-        console.error('❌ Payment failed:', response.error);
-        // delete user pending order created earlier (mongoOrderId)
-        try {
-          if (mongoOrderId) {
-            await orderService.deleteUserOrder(mongoOrderId);
-          }
-        } catch (delErr) {
-          console.error('Failed to delete pending order after payment failure:', delErr);
-        }
-        setLoading(false);
-        window.location.href = '/';
-      });
+     razorpay.on('payment.failed', async (response) => {
+  console.log('❌ FULL PAYMENT ERROR:', response);
+
+  if (mongoOrderId) {
+    try {
+      await orderService.deleteUserOrder(mongoOrderId);
+    } catch (delErr) {
+      console.error('Order delete error:', delErr);
+    }
+  }
+
+  setError(
+    response?.error?.description ||
+    response?.error?.reason ||
+    'Payment fail hua hai'
+  );
+
+  setLoading(false);
+});
     } catch (err) {
       console.error('❌ Payment initialization error:', err);
       setError(err.message || 'Payment initialization failed. Please try again.');

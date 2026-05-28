@@ -2,17 +2,31 @@ import React from 'react';
 import { FaWifi, FaCamera, FaLightbulb, FaPhone, FaLock, FaRobot } from 'react-icons/fa';
 import '../styles/CategoryGrid.css';
 
+
+
+const fetchCategories = async () => {
+  try {
+
+    const response =
+      await api.get('/categories');
+
+    setCategories(
+      response.data.data || []
+    );
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+useEffect(() => {
+  fetchCategories();
+}, []);
+
 const CategoryGrid = () => {
-  const categories = [
-    { id: 1, name: 'CCTV & Surveillance', icon: FaCamera, link: '/products?category=cctv' },
-    { id: 2, name: 'Wireless Devices', icon: FaWifi, link: '/products?category=wireless' },
-    { id: 3, name: 'IoT Solutions', icon: FaLightbulb, link: '/products?category=iot' },
-    { id: 4, name: 'Intercom Systems', icon: FaPhone, link: '/products?category=intercom' },
-    { id: 5, name: 'Security Systems', icon: FaLock, link: '/products?category=security' },
-    { id: 6, name: 'Automation', icon: FaRobot, link: '/products?category=automation' },
-    { id: 7, name: 'Networking', icon: FaWifi, link: '/products?category=networking' },
-    { id: 8, name: 'Access Control', icon: FaLock, link: '/products?category=access' }
-  ];
+  const [categories, setCategories] =
+  useState([]);
+
 
   return (
     <section className="category-grid-section">
@@ -22,7 +36,7 @@ const CategoryGrid = () => {
           {categories.map((category) => {
             const Icon = category.icon;
             return (
-              <a key={category.id} href={category.link} className="category-card">
+              <a key={category.id} href={`/products?category=${category._id}`} className="category-card">
                 <div className="category-icon">
                   <Icon />
                 </div>

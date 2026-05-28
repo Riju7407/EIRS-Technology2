@@ -9,7 +9,9 @@ export const CartProvider = ({ children }) => {
       const saved = localStorage.getItem('cart');
       if (!saved) return [];
       const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed)
+  ? parsed.filter(item => item && item._id)
+  : [];
     } catch (err) {
       console.error('Error parsing saved cart from localStorage:', err);
       return [];
@@ -82,16 +84,21 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
 
-  const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
+ const getTotalItems = () => {
+  return cartItems.reduce((total, item) => {
+    return total + (item?.quantity || 0);
+  }, 0);
+};
 
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.price) || 0;
-      return total + (price * item.quantity);
-    }, 0);
-  };
+const getTotalPrice = () => {
+  return cartItems.reduce((total, item) => {
+    if (!item) return total;
+
+    const price = parseFloat(item.price) || 0;
+
+    return total + (price * (item.quantity || 0));
+  }, 0);
+};
 
   return (
     <CartContext.Provider

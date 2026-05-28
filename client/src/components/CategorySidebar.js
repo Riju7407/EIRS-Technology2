@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaChevronRight } from 'react-icons/fa';
 import { useCategoryFilter } from '../context/CategoryFilterContext';
 import '../styles/CategorySidebar.css';
+import api from '../services/api';
 
 // Category Sidebar with hierarchical menu
 const CategorySidebar = ({ 
@@ -11,6 +12,8 @@ const CategorySidebar = ({
 }) => {
   const navigate = useNavigate();
   const { closeSidebar } = useCategoryFilter();
+  const [mainCategories, setMainCategories] =
+  useState([]);
   
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [hoveredSubcategory, setHoveredSubcategory] = useState(null);
@@ -18,113 +21,45 @@ const CategorySidebar = ({
   const [clickedSubcategory, setClickedSubcategory] = useState(null);
 
   // Main categories structure with detailed subcategories
-  const mainCategories = [
-    {
-      id: 'cctv',
-      name: 'CCTV Cameras',
-      subcategories: [
-        {
-          name: 'IP Camera Solutions',
-          submenus: [
-            {
-              name: 'Camera'
-            },
-            {
-              name: 'NVR'
-            },
-            {
-              name: 'POE'
-            }
-          ]
-        },
-        {
-          name: 'HD Camera (Analog CCTV)',
-          submenus: [
-            {
-              name: 'Camera'
-            },
-            {
-              name: 'SMPS'
-            },
-            {
-              name: 'DVR'
-            }
-          ]
-        },
-        {
-          name: 'Wi-Fi / 4G Camera',
+ useEffect(() => {
+  fetchSidebarCategories();
+}, []);
+
+
+const fetchSidebarCategories = async () => {
+  try {
+
+    const [catRes, subRes] = await Promise.all([
+      api.get('/categories'),
+      api.get('/subcategories')
+    ]);
+
+    const categories =
+      catRes.data.data || [];
+
+    const subcategories =
+      subRes.data.data || [];
+
+    const formatted = categories.map(cat => ({
+      id: cat._id,
+      name: cat.name,
+
+      subcategories: subcategories
+        .filter(
+          sub => sub.category === cat._id
+        )
+        .map(sub => ({
+          name: sub.name,
           redirect: true
-        },
-        {
-          name: 'CCTV Bundle Packs',
-          redirect: true
-        }
-      ]
-    },
-    {
-      id: 'biometric',
-      name: 'Biometric Devices',
-      redirect: true
-    },
-    {
-      id: 'intercom',
-      name: 'Intercom System',
-      subcategories: [
-        {
-          name: 'EPBX',
-          displayName: 'EPBX',
-          redirect: true,
-          actualSubcategory: 'EPABX System'
-        },
-        {
-          name: 'IPBX',
-          displayName: 'IPBX',
-          redirect: true,
-          actualSubcategory: 'PBX System'
-        }
-      ]
-    },
-    {
-      id: 'home-office',
-      name: 'Home & Office Security',
-      redirect: true
-    },
-    {
-      id: 'fire',
-      name: 'Fire Alarm Systems',
-      redirect: true
-    },
-    {
-      id: 'networking',
-      name: 'Networking Device',
-      subcategories: [
-        {
-          name: 'Routers',
-          redirect: true
-        },
-        {
-          name: 'Switches',
-          redirect: true
-        },
-        {
-          name: 'Access Points',
-          redirect: true
-        },
-        {
-          name: 'Patch Panels',
-          redirect: true
-        },
-        {
-          name: 'Network Cables & Accessories',
-          redirect: true
-        },
-        {
-          name: 'Modems',
-          redirect: true
-        }
-      ]
-    }
-  ];
+        }))
+    }));
+
+    setMainCategories(formatted);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const handleCategoryClick = (categoryName) => {
     console.log('🔗 Navigating to category:', categoryName);

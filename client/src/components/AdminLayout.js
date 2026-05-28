@@ -15,6 +15,8 @@ import {
   FaStore,
   FaBell,
   FaChevronDown,
+  FaTags,
+  FaLayerGroup,
   
 } from 'react-icons/fa';
 import '../styles/AdminLayout.css';
@@ -26,13 +28,35 @@ const NAV_ITEMS = [
       { label: 'Dashboard', to: '/admin/dashboard', icon: <FaTachometerAlt /> },
     ],
   },
-  {
-    section: 'Catalogue',
-    items: [
-      { label: 'Products', to: '/admin/products', icon: <FaBox /> },
-      { label: 'Services', to: '/admin/services', icon: <FaConciergeBell /> },
-    ],
-  },
+ {
+  section: 'Catalogue',
+  items: [
+    {
+      label: 'Products',
+      to: '/admin/products',
+      icon: <FaBox />,
+    },
+
+    {
+      label: 'Categories',
+      to: '/admin/categories',
+      icon: <FaTags />,
+    },
+
+    // ✅ SUBCATEGORIES PAGE
+    {
+      label: 'Subcategories',
+      to: '/admin/subcategories',
+      icon: <FaTags />,
+    },
+
+    {
+      label: 'Services',
+      to: '/admin/services',
+      icon: <FaConciergeBell />,
+    },
+  ],
+},
   {
     section: 'Sales',
     items: [

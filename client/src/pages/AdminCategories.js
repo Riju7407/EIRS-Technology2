@@ -1,23 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+
+import AdminLayout from '../components/AdminLayout';
+
 import './AdminCategories.css';
 
 const AdminCategories = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
+
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
     const [showForm, setShowForm] = useState(false);
+
     const [editingId, setEditingId] = useState(null);
+
     const [formData, setFormData] = useState({
         name: '',
         description: ''
     });
 
-    const API_ROOT = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    const API_ROOT = (
+        process.env.REACT_APP_API_URL ||
+        'http://localhost:5000'
+    ).replace(/\/$/, '');
+
     const API_BASE = `${API_ROOT}/api`;
 
-    // Fetch all categories
+    // ================= FETCH =================
+
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -25,39 +37,64 @@ const AdminCategories = () => {
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_BASE}/categories`);
+
+            const response = await axios.get(
+                `${API_BASE}/categories`
+            );
+
             setCategories(response.data.data || []);
+
             setError('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Error fetching categories');
+            setError(
+                err.response?.data?.message ||
+                'Error fetching categories'
+            );
+
             console.error('Fetch error:', err);
         } finally {
             setLoading(false);
         }
     };
 
+    // ================= INPUT =================
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+
+        setFormData((prev) => ({
             ...prev,
             [name]: value
         }));
     };
 
+    // ================= ADD =================
+
     const handleAddClick = () => {
         setEditingId(null);
-        setFormData({ name: '', description: '' });
+
+        setFormData({
+            name: '',
+            description: ''
+        });
+
         setShowForm(true);
     };
 
+    // ================= EDIT =================
+
     const handleEditClick = (category) => {
         setEditingId(category._id);
+
         setFormData({
             name: category.name,
             description: category.description || ''
         });
+
         setShowForm(true);
     };
+
+    // ================= SUBMIT =================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -69,181 +106,339 @@ const AdminCategories = () => {
 
         try {
             setLoading(true);
+
             setError('');
 
             const token = localStorage.getItem('token');
-            const headers = { Authorization: `Bearer ${token}` };
 
-            let response;
+            const headers = {
+                Authorization: `Bearer ${token}`
+            };
+
             if (editingId) {
-                response = await axios.put(
+                await axios.put(
                     `${API_BASE}/categories/${editingId}`,
                     formData,
                     { headers }
                 );
-                setSuccess('Category updated successfully');
+
+                setSuccess(
+                    'Category updated successfully'
+                );
             } else {
-                response = await axios.post(
+                await axios.post(
                     `${API_BASE}/categories`,
                     formData,
                     { headers }
                 );
-                setSuccess('Category created successfully');
+
+                setSuccess(
+                    'Category created successfully'
+                );
             }
 
-            setFormData({ name: '', description: '' });
+            setFormData({
+                name: '',
+                description: ''
+            });
+
             setShowForm(false);
+
             fetchCategories();
 
-            setTimeout(() => setSuccess(''), 3000);
+            setTimeout(() => {
+                setSuccess('');
+            }, 3000);
+
         } catch (err) {
-            setError(err.response?.data?.message || 'Error saving category');
+            setError(
+                err.response?.data?.message ||
+                'Error saving category'
+            );
+
             console.error('Submit error:', err);
+
         } finally {
             setLoading(false);
         }
     };
 
+    // ================= DELETE =================
+
     const handleDelete = async (id, name) => {
-        if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('token');
-                const headers = { Authorization: `Bearer ${token}` };
+        const confirmDelete = window.confirm(
+            `Are you sure you want to delete "${name}"?`
+        );
 
-                await axios.delete(`${API_BASE}/categories/${id}`, { headers });
+        if (!confirmDelete) return;
 
-                setSuccess('Category deleted successfully');
-                fetchCategories();
-                setTimeout(() => setSuccess(''), 3000);
-            } catch (err) {
-                setError(err.response?.data?.message || 'Error deleting category');
-                console.error('Delete error:', err);
-            } finally {
-                setLoading(false);
-            }
+        try {
+            setLoading(true);
+
+            const token = localStorage.getItem('token');
+
+            const headers = {
+                Authorization: `Bearer ${token}`
+            };
+
+            await axios.delete(
+                `${API_BASE}/categories/${id}`,
+                { headers }
+            );
+
+            setSuccess(
+                'Category deleted successfully'
+            );
+
+            fetchCategories();
+
+            setTimeout(() => {
+                setSuccess('');
+            }, 3000);
+
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                'Error deleting category'
+            );
+
+            console.error('Delete error:', err);
+
+        } finally {
+            setLoading(false);
         }
     };
 
+    // ================= CANCEL =================
+
     const handleCancel = () => {
         setShowForm(false);
+
         setEditingId(null);
-        setFormData({ name: '', description: '' });
+
+        setFormData({
+            name: '',
+            description: ''
+        });
+
         setError('');
     };
 
     return (
-        <div className="admin-categories-container">
-            <div className="admin-categories-header">
-                <h1>Manage Categories</h1>
-                <button 
-                    className="btn-add-category"
-                    onClick={handleAddClick}
-                    disabled={loading}
-                >
-                    + Add Category
-                </button>
-            </div>
+        <AdminLayout
+            pageTitle="Categories"
+            breadcrumbs={[
+                {
+                    label: 'Categories'
+                }
+            ]}
+        >
+            <div className="admin-categories-container">
 
-            {error && <div className="alert alert-error">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
+                {/* HEADER */}
 
-            {showForm && (
-                <div className="category-form">
-                    <h2>{editingId ? 'Edit Category' : 'Add New Category'}</h2>
-                    <form onSubmit={handleSubmit}>
-                        <div className="form-group">
-                            <label htmlFor="name">Category Name *</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                placeholder="Enter category name"
-                                required
-                            />
-                        </div>
+                <div className="admin-categories-header">
+                    <div>
+                        <h1>Manage Categories</h1>
 
-                        <div className="form-group">
-                            <label htmlFor="description">Description</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                placeholder="Enter category description"
-                                rows="4"
-                            />
-                        </div>
+                        <p>
+                            Create and manage product categories
+                        </p>
+                    </div>
 
-                        <div className="form-actions">
-                            <button 
-                                type="submit" 
-                                className="btn-submit"
-                                disabled={loading}
-                            >
-                                {loading ? 'Saving...' : 'Save Category'}
-                            </button>
-                            <button 
-                                type="button" 
-                                className="btn-cancel"
-                                onClick={handleCancel}
-                                disabled={loading}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
+                    <button
+                        className="btn-add-category"
+                        onClick={handleAddClick}
+                        disabled={loading}
+                    >
+                        + Add Category
+                    </button>
                 </div>
-            )}
 
-            {loading && !showForm ? <p className="loading">Loading...</p> : null}
+                {/* ALERTS */}
 
-            <div className="categories-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Category Name</th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {categories.length > 0 ? (
-                            categories.map(category => (
-                                <tr key={category._id}>
-                                    <td className="category-name">{category.name}</td>
-                                    <td className="category-description">
-                                        {category.description || '-'}
-                                    </td>
-                                    <td className="category-actions">
-                                        <button
-                                            className="btn-edit"
-                                            onClick={() => handleEditClick(category)}
-                                            disabled={loading}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="btn-delete"
-                                            onClick={() => handleDelete(category._id, category.name)}
-                                            disabled={loading}
-                                        >
-                                            Delete
-                                        </button>
+                {error && (
+                    <div className="alert alert-error">
+                        {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div className="alert alert-success">
+                        {success}
+                    </div>
+                )}
+
+                {/* FORM */}
+
+                {showForm && (
+                    <div className="category-form">
+
+                        <h2>
+                            {editingId
+                                ? 'Edit Category'
+                                : 'Add New Category'}
+                        </h2>
+
+                        <form onSubmit={handleSubmit}>
+
+                            {/* NAME */}
+
+                            <div className="form-group">
+                                <label htmlFor="name">
+                                    Category Name *
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter category name"
+                                    required
+                                />
+                            </div>
+
+                            {/* DESCRIPTION */}
+
+                            <div className="form-group">
+                                <label htmlFor="description">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter category description"
+                                    rows="4"
+                                />
+                            </div>
+
+                            {/* BUTTONS */}
+
+                            <div className="form-actions">
+
+                                <button
+                                    type="submit"
+                                    className="btn-submit"
+                                    disabled={loading}
+                                >
+                                    {loading
+                                        ? 'Saving...'
+                                        : editingId
+                                            ? 'Update Category'
+                                            : 'Save Category'}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="btn-cancel"
+                                    onClick={handleCancel}
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </button>
+
+                            </div>
+
+                        </form>
+                    </div>
+                )}
+
+                {/* LOADING */}
+
+                {loading && !showForm ? (
+                    <p className="loading">
+                        Loading categories...
+                    </p>
+                ) : null}
+
+                {/* TABLE */}
+
+                <div className="categories-table">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Category Name</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {categories.length > 0 ? (
+                                categories.map(
+                                    (category, index) => (
+                                        <tr key={category._id}>
+
+                                            <td>
+                                                {index + 1}
+                                            </td>
+
+                                            <td className="category-name">
+                                                {category.name}
+                                            </td>
+
+                                            <td className="category-description">
+                                                {category.description || '-'}
+                                            </td>
+
+                                            <td className="category-actions">
+
+                                                <button
+                                                    className="btn-edit"
+                                                    onClick={() =>
+                                                        handleEditClick(category)
+                                                    }
+                                                    disabled={loading}
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    className="btn-delete"
+                                                    onClick={() =>
+                                                        handleDelete(
+                                                            category._id,
+                                                            category.name
+                                                        )
+                                                    }
+                                                    disabled={loading}
+                                                >
+                                                    Delete
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+                                    )
+                                )
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan="4"
+                                        className="no-data"
+                                    >
+                                        No categories found
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="3" className="no-data">No categories found</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
             </div>
-        </div>
+        </AdminLayout>
     );
 };
 

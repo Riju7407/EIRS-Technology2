@@ -6,6 +6,7 @@ const ServiceBooking = require('../model/serviceBookingSchema');
 const Service = require('../model/serviceSchema');
 const jwtAuth = require('../middleware/jwtAuth');
 const orderController = require('../controller/orderController');
+const { generateBill } = require('../services/billService');
 
 const router = express.Router();
 
@@ -166,11 +167,28 @@ router.post('/verify-payment', jwtAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
 
     order.paymentStatus = 'Completed';
-    order.razorpayPaymentId = razorpay_payment_id;
-    order.razorpaySignature = razorpay_signature;
-    order.status = 'Confirmed';
-    order.paidAt = new Date();
-    await order.save();
+order.razorpayPaymentId = razorpay_payment_id;
+order.razorpaySignature = razorpay_signature;
+order.status = 'Confirmed';
+order.paidAt = new Date();
+
+// Generate invoice number if missing
+if (!order.invoice) {
+  order.invoice = {};
+}
+
+if (!order.invoice.invoiceNumber) {
+  order.invoice.invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+order.invoice.invoiceDate = new Date();
+
+// ✅ Generate bill
+const billUrl = await generateBill(order);
+
+order.invoice.billUrl = billUrl;
+
+await order.save();
 
     console.log('Payment verified, order confirmed:', order._id);
     return res.json({ success: true, message: 'Payment verified successfully', order });
@@ -332,16 +350,38 @@ router.post('/webhook', async (req, res) => {
     const entity = event?.payload?.payment?.entity;
 
     if (event.event === 'payment.captured' && entity) {
-      const order = await Order.findOne({ razorpayOrderId: entity.order_id });
-      if (order && order.paymentStatus !== 'Completed') {
-        order.paymentStatus = 'Completed';
-        order.razorpayPaymentId = entity.id;
-        order.status = 'Confirmed';
-        order.paidAt = new Date();
-        await order.save();
-        console.log('Webhook: order confirmed via payment.captured:', order._id);
-      }
+  const order = await Order.findOne({ razorpayOrderId: entity.order_id });
+
+  if (order && order.paymentStatus !== 'Completed') {
+
+    order.paymentStatus = 'Completed';
+    order.razorpayPaymentId = entity.id;
+    order.status = 'Confirmed';
+    order.paidAt = new Date();
+
+    // invoice
+    if (!order.invoice) {
+      order.invoice = {};
     }
+
+    if (!order.invoice.invoiceNumber) {
+      order.invoice.invoiceNumber =
+        `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+
+    order.invoice.invoiceDate = new Date();
+
+    // bill
+    if (!order.invoice.billUrl) {
+      const billUrl = await generateBill(order);
+      order.invoice.billUrl = billUrl;
+    }
+
+    await order.save();
+
+    console.log('Webhook: order confirmed via payment.captured:', order._id);
+  }
+}
 
     if (event.event === 'payment.failed' && entity) {
       const order = await Order.findOne({ razorpayOrderId: entity.order_id });
@@ -394,19 +434,54 @@ router.get('/orders/:orderId', jwtAuth, async (req, res) => {
   }
 });
 
-router.get('/orders/:orderId/bill/download', jwtAuth, async (req, res) => {
-  const order = await Order.findOne({
-    _id: req.params.orderId,
-    userId: req.user.id
-  });
+router.get(
+  '/orders/:orderId/bill/download',
+  async (req, res) => {
+    try {
 
-  if (!order || !order.invoice?.billUrl) {
-    return res.status(404).json({ success: false, message: 'Bill not found' });
+      const token = req.query.token;
+
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: 'Token missing'
+        });
+      }
+
+      const jwt = require('jsonwebtoken');
+
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET
+      );
+
+      const order = await Order.findOne({
+        _id: req.params.orderId,
+        userId: decoded.id
+      });
+
+      if (!order || !order.invoice?.billUrl) {
+        return res.status(404).json({
+          success: false,
+          message: 'Bill not found'
+        });
+      }
+
+      // redirect to cloudinary/s3/live pdf
+      return res.redirect(order.invoice.billUrl);
+
+    } catch (error) {
+
+      console.error('Invoice download error:', error);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to download invoice'
+      });
+
+    }
   }
-
-  // redirect to actual file (fastest way)
-  return res.redirect(order.invoice.billUrl);
-});
+);
 
 /* 
    POST /payment/buy-now

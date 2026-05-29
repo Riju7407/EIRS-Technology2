@@ -39,36 +39,41 @@ const verifyToken = (req, res, next) => {
 // Verify Admin Role
 const verifyAdmin = async (req, res, next) => {
     try {
-        // Check if user is already verified by verifyToken
+
+        // verifyToken middleware pehle hi req.user set kar chuka hai
         if (!req.user) {
             return res.status(401).json({
                 success: false,
-                message: "Unauthorized: No user data"
+                message: "Unauthorized"
             });
         }
 
-        // Quick check using token data
-        if (req.user.isAdmin) {
-            // Verify user still exists in database for security
-            const user = await User.findById(req.user.id);
-            if (!user || !user.isAdmin) {
-                return res.status(403).json({
-                    success: false,
-                    message: "Forbidden: User is not an admin"
-                });
-            }
-            next();
-        } else {
+        // Direct token data check
+        if (!req.user.isAdmin) {
             return res.status(403).json({
                 success: false,
                 message: "Forbidden: Admin access required"
             });
         }
+
+        // Optional DB verification
+        const user = await User.findById(req.user.id);
+
+        if (!user || !user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: Admin not found"
+            });
+        }
+
+        next();
+
     } catch (error) {
-        console.error('Admin verification error:', error);
-        return res.status(403).json({
+        console.error("verifyAdmin error:", error);
+
+        return res.status(500).json({
             success: false,
-            message: "Forbidden: Error verifying admin status"
+            message: "Admin verification failed"
         });
     }
 };

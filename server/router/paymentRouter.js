@@ -418,22 +418,8 @@ router.get('/payment-history', jwtAuth, async (req, res) => {
 /* 
    GET /payment/orders/:orderId
  */
-router.get(
-  '/orders/:orderId/bill',
-  jwtAuth,
-  orderController.getBill
-);
-router.get('/orders/:orderId', jwtAuth, async (req, res) => {
-  try {
-    const order = await Order.findOne({ _id: req.params.orderId, userId: req.user.id }).populate('items.productId');
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-    return res.json({ success: true, order });
-  } catch (err) {
-    console.error('/orders/:id error:', err.message);
-    return res.status(500).json({ success: false, message: 'Failed to fetch order' });
-  }
-});
 
+   // DOWNLOAD BILL
 router.get(
   '/orders/:orderId/bill/download',
   async (req, res) => {
@@ -467,7 +453,6 @@ router.get(
         });
       }
 
-      // redirect to cloudinary/s3/live pdf
       return res.redirect(order.invoice.billUrl);
 
     } catch (error) {
@@ -482,6 +467,51 @@ router.get(
     }
   }
 );
+
+// GET BILL
+router.get(
+  '/orders/:orderId/bill',
+  jwtAuth,
+  orderController.getBill
+);
+
+// GET ORDER
+router.get(
+  '/orders/:orderId',
+  jwtAuth,
+  async (req, res) => {
+    try {
+      const order = await Order.findOne({
+        _id: req.params.orderId,
+        userId: req.user.id
+      }).populate('items.productId');
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        order
+      });
+
+    } catch (err) {
+
+      console.error('/orders/:id error:', err.message);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch order'
+      });
+
+    }
+  }
+);
+
+
 
 /* 
    POST /payment/buy-now

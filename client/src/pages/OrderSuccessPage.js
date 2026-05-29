@@ -13,6 +13,7 @@ import '../styles/OrderSuccessPage.css';
 
 const OrderSuccessPage = () => {
   const [searchParams] = useSearchParams();
+
   const orderId = searchParams.get('orderId');
   const paymentId = searchParams.get('paymentId');
   const isCod = searchParams.get('type') === 'cod';
@@ -24,47 +25,43 @@ const OrderSuccessPage = () => {
   useEffect(() => {
     if (!orderId) return;
 
-    setLoading(true);
+    const fetchOrder = async () => {
+      try {
+        setLoading(true);
 
-    paymentService
-      .getOrder(orderId)
-      .then((res) => {
+        const res = await paymentService.getOrder(orderId);
+
         if (res.success) {
           setOrder(res.order);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Order fetch error:', err);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
   }, [orderId]);
 
-  // ✅ BILL DOWNLOAD
   const downloadBill = async () => {
     if (!order?._id) return;
 
     try {
       setDownloading(true);
 
-      const API_BASE = process.env.REACT_APP_API || 'http://localhost:5000';
+      const API_BASE =
+        process.env.REACT_APP_API || 'http://localhost:5000';
 
       const token = localStorage.getItem('token');
 
-      const url = `${API_BASE}/payment/orders/${order._id}/bill/download`;
+      let url = `${API_BASE}/payment/orders/${order._id}/bill/download`;
 
-      // simplest & most reliable way
-      const link = document.createElement('a');
-      link.href = url;
-
-      // optional token support (if backend supports query token)
       if (token) {
-        link.href = `${url}?token=${token}`;
+        url += `?token=${token}`;
       }
 
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      window.open(url, '_blank');
 
     } catch (err) {
       console.error('Bill download failed:', err);
@@ -75,34 +72,44 @@ const OrderSuccessPage = () => {
 
   return (
     <div className="order-success-page">
+
       <div className="success-card">
 
-        {/* ICON */}
+        {/* SUCCESS ICON */}
         <div className="check-wrapper">
           <FaCheckCircle className="check-icon" />
         </div>
 
         {/* TITLE */}
-        <h1>{isCod ? 'Order Placed!' : 'Payment Successful!'}</h1>
+        <h1>
+          {isCod ? 'Order Placed Successfully' : 'Payment Successful'}
+        </h1>
 
         {/* SUBTITLE */}
         <p className="success-tagline">
           {isCod
-            ? 'Your order has been confirmed. Pay on delivery.'
-            : 'Your payment has been received and your order is confirmed!'}
+            ? 'Your order has been confirmed. Please pay during delivery.'
+            : 'Your payment has been received successfully and your order is now confirmed.'}
         </p>
 
         {/* PAYMENT ID */}
         {paymentId && !isCod && (
-          <div className="detail-row">
-            <span className="label">Payment ID</span>
-            <span className="value mono">{paymentId}</span>
+          <div className="order-details-box">
+            <div className="detail-row">
+              <span className="label">Payment ID</span>
+
+              <span className="value mono">
+                {paymentId}
+              </span>
+            </div>
           </div>
         )}
 
         {/* LOADING */}
         {loading && (
-          <p className="loading-text">Loading order details…</p>
+          <p className="loading-text">
+            Loading order details...
+          </p>
         )}
 
         {/* ORDER DETAILS */}
@@ -111,84 +118,118 @@ const OrderSuccessPage = () => {
 
             <div className="detail-row">
               <span className="label">Order ID</span>
-              <span className="value mono">{order._id}</span>
+
+              <span className="value mono">
+                {order._id}
+              </span>
             </div>
 
             <div className="detail-row">
-              <span className="label">Status</span>
-              <span className={`value status-badge status-${order.status?.toLowerCase()}`}>
+              <span className="label">Order Status</span>
+
+              <span
+                className={`status-badge status-${order.status?.toLowerCase()}`}
+              >
                 {order.status}
               </span>
             </div>
 
             <div className="detail-row">
-              <span className="label">Total</span>
-              <span className="value">₹{order.totalPrice?.toLocaleString()}</span>
+              <span className="label">Payment Status</span>
+
+              <span
+                className={`status-badge status-${order.paymentStatus?.toLowerCase()}`}
+              >
+                {order.paymentStatus}
+              </span>
             </div>
 
             <div className="detail-row">
-              <span className="label">Items</span>
-              <span className="value">{order.totalItems} item(s)</span>
+              <span className="label">Total Amount</span>
+
+              <span className="value">
+                ₹{order.totalPrice?.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            <div className="detail-row">
+              <span className="label">Total Items</span>
+
+              <span className="value">
+                {order.totalItems} Item(s)
+              </span>
             </div>
 
             {order.estimatedDelivery && (
               <div className="detail-row">
-                <span className="label">Est. Delivery</span>
+                <span className="label">
+                  Estimated Delivery
+                </span>
+
                 <span className="value">
-                  {new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                  {new Date(
+                    order.estimatedDelivery
+                  ).toLocaleDateString('en-IN', {
                     day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   })}
                 </span>
               </div>
             )}
 
-            {/* BILL DOWNLOAD */}
-            <div className="detail-row" style={{ marginTop: '15px' }}>
-              <span className="label">Invoice</span>
+            {/* DOWNLOAD BILL */}
+            <div className="detail-row">
+
+              <span className="label">
+                Invoice Bill
+              </span>
 
               <button
                 onClick={downloadBill}
                 disabled={downloading}
-                className="btn btn-success"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="invoice-btn"
               >
                 <FaFilePdf />
-                {downloading ? 'Preparing...' : 'Download Bill'}
+
+                {downloading
+                  ? 'Preparing...'
+                  : 'Download PDF'}
               </button>
+
             </div>
 
           </div>
         )}
 
-        {/* BRAND NOTE */}
+        {/* BRAND */}
         <p className="brand-note">
-          Thank you for shopping with <strong>EIRS Technology</strong>
+          Thank you for shopping with{' '}
+          <strong>EIRS Technology</strong>
         </p>
 
         {/* ACTION BUTTONS */}
         <div className="action-buttons">
 
           <Link to="/orders" className="btn btn-primary">
-            <FaShoppingBag /> View My Orders
+            <FaShoppingBag />
+            View My Orders
           </Link>
 
           <Link to="/products" className="btn btn-secondary">
-            <FaShoppingCart /> Continue Shopping
+            <FaShoppingCart />
+            Continue Shopping
           </Link>
 
           <Link to="/" className="btn btn-ghost">
-            <FaHome /> Go Home
+            <FaHome />
+            Go Home
           </Link>
 
         </div>
 
       </div>
+
     </div>
   );
 };

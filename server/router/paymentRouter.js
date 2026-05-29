@@ -18,6 +18,26 @@ console.log("BILL DOWNLOAD ROUTE HIT");
 
    
  */
+
+
+   const ensureInvoice = async (order) => {
+  if (!order.invoice) order.invoice = {};
+
+  if (!order.invoice.invoiceNumber) {
+    order.invoice.invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  }
+
+  order.invoice.invoiceDate = new Date();
+
+  if (!order.invoice.billUrl) {
+    const billUrl = await generateBill(order);
+    order.invoice.billUrl = billUrl;
+  }
+
+  await order.save();
+};
+
+
 let razorpay = null;
 const getRazorpay = () => {
   if (!razorpay) {
@@ -221,22 +241,15 @@ router.post("/verify-payment", jwtAuth, async (req, res) => {
         .status(404)
         .json({ success: false, message: "Order not found" });
 
-    order.paymentStatus = "Completed";
-    order.razorpayPaymentId = razorpay_payment_id;
-    order.razorpaySignature = razorpay_signature;
-    order.status = "Confirmed";
-    order.paidAt = new Date();
+   order.paymentStatus = "Completed";
+order.razorpayPaymentId = razorpay_payment_id;
+order.razorpaySignature = razorpay_signature;
+order.status = "Confirmed";
+order.paidAt = new Date();
 
+await ensureInvoice(order);
     // Generate invoice number if missing
-    if (!order.invoice) {
-      order.invoice = {};
-    }
-
-    if (!order.invoice.invoiceNumber) {
-      order.invoice.invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    }
-
-    order.invoice.invoiceDate = new Date();
+    
 
     await order.save(); // ✅ FIRST SAVE
 
@@ -488,21 +501,7 @@ router.post("/webhook", async (req, res) => {
         order.paidAt = new Date();
 
         // invoice
-        if (!order.invoice) {
-          order.invoice = {};
-        }
-
-        if (!order.invoice.invoiceNumber) {
-          order.invoice.invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        }
-
-        order.invoice.invoiceDate = new Date();
-
-        // bill
-        if (!order.invoice.billUrl) {
-          const billUrl = await generateBill(order);
-          order.invoice.billUrl = billUrl;
-        }
+       await ensureInvoice(order);
 
         await order.save();
 

@@ -212,5 +212,3 @@ app.listen(port, '0.0.0.0', () => {
 });
 
 module.exports = app;
-
-module.exports = app;

@@ -19,6 +19,8 @@ const { getCrmSyncStatus } = require('./services/crmSyncService');
 
 const path = require('path');
 
+
+
 // Start database connection immediately (non-blocking)
 let dbConnected = false;
 databaseconnect().then(() => {
@@ -122,6 +124,10 @@ app.use(express.json({
         req.rawBody = buf;
     }
 }));
+app.use((req, res, next) => {
+    console.log("🔥 GLOBAL HIT:", req.method, req.originalUrl);
+    next();
+});
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
@@ -141,6 +147,7 @@ app.use('/auth/', authRouter);
 app.use('/api/auth', authRouter);
 
 app.use('/payment', paymentRouter);
+
 app.use('/api/payment', paymentRouter);
 
 app.use('/api/clients', clientRouter);

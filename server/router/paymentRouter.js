@@ -13,6 +13,15 @@ const router = express.Router();
 console.log("PAYMENT ROUTER FILE LOADED");
 console.log("BILL DOWNLOAD ROUTE HIT");
 
+router.use((req, res, next) => {
+  console.log("🔥 PAYMENT ROUTER HIT:", req.method, req.originalUrl);
+  next();
+});
+
+router.get("/test-route", (req, res) => {
+  res.json({ ok: true });
+});
+
 /* 
    Razorpay singleton initialisation (live keys)
 

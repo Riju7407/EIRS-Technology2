@@ -148,6 +148,8 @@ app.use('/api', crmOpsRouter);
 
 // Geospatial location routes – POST /api/location, GET /api/location/nearby
 app.use('/api', locationRouter);
+app.use('/invoices', express.static('invoices'));
+app.use(cookieParser());
 
 // Health check endpoints - Critical for Render to keep server awake
 app.get('/health', (req, res) => {

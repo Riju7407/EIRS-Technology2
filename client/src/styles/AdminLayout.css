@@ -333,6 +333,11 @@
   border-color: rgba(239,68,68,0.3);
 }
 
+/* Remove weird browser transparency */
+table {
+  isolation: isolate;
+}
+
 .al-collapsed .al-sidebar-user { display: none; }
 
 /* ────────────────────────────────────────────

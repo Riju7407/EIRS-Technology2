@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
 import AdminLayout from '../components/AdminLayout';
-
-import '../styles/AdminPages.css';
 
 const AdminSubcategories = () => {
     const [categories, setCategories] = useState([]);
@@ -35,52 +32,57 @@ const AdminSubcategories = () => {
         fetchData();
     }, []);
 
-   const fetchData = async () => {
-    try {
-        setLoading(true);
+    // FETCH DATA
 
-        const [catRes, subRes] = await Promise.all([
-            axios.get(`${API_BASE}/categories`),
-            axios.get(`${API_BASE}/subcategories`)
-        ]);
+    const fetchData = async () => {
+        try {
+            setLoading(true);
 
-        console.log("CATEGORY RESPONSE:", catRes.data);
-        console.log("SUBCATEGORY RESPONSE:", subRes.data);
+            const [catRes, subRes] = await Promise.all([
+                axios.get(`${API_BASE}/categories`),
+                axios.get(`${API_BASE}/subcategories`)
+            ]);
 
-        setCategories(catRes.data.data || []);
+            console.log('CATEGORY RESPONSE:', catRes.data);
+            console.log('SUBCATEGORY RESPONSE:', subRes.data);
 
-        setSubcategories(subRes.data.data || []);
+            setCategories(
+                Array.isArray(catRes.data)
+                    ? catRes.data
+                    : catRes.data.data || []
+            );
 
-        console.log("FINAL SUBCATEGORIES:", subRes.data.data);
+            setSubcategories(
+                Array.isArray(subRes.data)
+                    ? subRes.data
+                    : subRes.data.data || []
+            );
 
-        setError('');
+            setError('');
 
-    } catch (err) {
-        console.error(err);
+        } catch (err) {
+            console.error(err);
 
-        setError(
-            err.response?.data?.message ||
-            'Error fetching data'
-        );
+            setError(
+                err.response?.data?.message ||
+                'Error fetching data'
+            );
 
-    } finally {
-        setLoading(false);
-    }
-};;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // INPUT
+    // INPUT CHANGE
 
     const handleInputChange = (e) => {
-    const { name, value } = e.target;
+        const { name, value } = e.target;
 
-    console.log("FIELD:", name);
-    console.log("VALUE:", value);
-
-    setFormData((prev) => ({
-        ...prev,
-        [name]: value
-    }));
-};
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
     // ADD
 
@@ -103,7 +105,12 @@ const AdminSubcategories = () => {
 
         setFormData({
             name: subcategory.name,
-            category: subcategory.category,
+
+            category:
+                typeof subcategory.category === 'object'
+                    ? subcategory.category._id
+                    : subcategory.category,
+
             description: subcategory.description || ''
         });
 
@@ -113,7 +120,6 @@ const AdminSubcategories = () => {
     // SUBMIT
 
     const handleSubmit = async (e) => {
-        console.log("SUBMIT DATA:", formData);
         e.preventDefault();
 
         if (!formData.name || !formData.category) {
@@ -131,6 +137,7 @@ const AdminSubcategories = () => {
             };
 
             if (editingId) {
+
                 await axios.put(
                     `${API_BASE}/subcategories/${editingId}`,
                     formData,
@@ -142,6 +149,7 @@ const AdminSubcategories = () => {
                 );
 
             } else {
+
                 await axios.post(
                     `${API_BASE}/subcategories`,
                     formData,
@@ -168,12 +176,12 @@ const AdminSubcategories = () => {
             }, 3000);
 
         } catch (err) {
+            console.error(err);
+
             setError(
                 err.response?.data?.message ||
                 'Error saving subcategory'
             );
-
-            console.error(err);
 
         } finally {
             setLoading(false);
@@ -183,6 +191,7 @@ const AdminSubcategories = () => {
     // DELETE
 
     const handleDelete = async (id, name) => {
+
         const confirmDelete = window.confirm(
             `Delete "${name}" ?`
         );
@@ -190,6 +199,7 @@ const AdminSubcategories = () => {
         if (!confirmDelete) return;
 
         try {
+
             setLoading(true);
 
             const token = localStorage.getItem('token');
@@ -214,12 +224,13 @@ const AdminSubcategories = () => {
             }, 3000);
 
         } catch (err) {
+
+            console.error(err);
+
             setError(
                 err.response?.data?.message ||
                 'Error deleting subcategory'
             );
-
-            console.error(err);
 
         } finally {
             setLoading(false);
@@ -229,6 +240,7 @@ const AdminSubcategories = () => {
     // CANCEL
 
     const handleCancel = () => {
+
         setShowForm(false);
 
         setEditingId(null);
@@ -244,23 +256,21 @@ const AdminSubcategories = () => {
 
     // CATEGORY NAME
 
-  const getCategoryName = (categoryData) => {
+    const getCategoryName = (categoryData) => {
 
-    if (
-        typeof categoryData === 'object' &&
-        categoryData !== null
-    ) {
-        return categoryData.name || '-';
-    }
+        if (
+            typeof categoryData === 'object' &&
+            categoryData !== null
+        ) {
+            return categoryData.name || '-';
+        }
 
-    const category = categories.find(
-        (c) => c._id === categoryData
-    );
+        const category = categories.find(
+            (c) => c._id === categoryData
+        );
 
-    return category?.name || '-';
-};
-    console.log(categories)
-    console.log(formData);
+        return category?.name || '-';
+    };
 
     return (
         <AdminLayout
@@ -271,27 +281,41 @@ const AdminSubcategories = () => {
                 }
             ]}
         >
-            <div className="admin-subcategories-container">
+            <div className="min-h-screen bg-gray-100 p-6">
 
                 {/* HEADER */}
 
-                <div className="admin-subcategories-header">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
                     <div>
-                        <h1>Manage Subcategories</h1>
+                        <h1 className="text-4xl font-bold text-gray-800">
+                            Manage Subcategories
+                        </h1>
 
-                        <p>
+                        <p className="text-gray-500 mt-2">
                             Create and manage product subcategories
                         </p>
                     </div>
 
                     <button
-                        className="btn-add-subcategory"
                         onClick={handleAddClick}
                         disabled={
                             loading ||
                             categories.length === 0
                         }
+                        className="
+                            bg-indigo-600
+                            hover:bg-indigo-700
+                            text-white
+                            px-6
+                            py-3
+                            rounded-xl
+                            font-semibold
+                            shadow-lg
+                            transition-all
+                            duration-200
+                            disabled:opacity-50
+                        "
                     >
                         + Add Subcategory
                     </button>
@@ -301,13 +325,13 @@ const AdminSubcategories = () => {
                 {/* ALERTS */}
 
                 {error && (
-                    <div className="alert alert-error">
+                    <div className="bg-red-100 text-red-700 border border-red-300 px-4 py-3 rounded-xl mb-5">
                         {error}
                     </div>
                 )}
 
                 {success && (
-                    <div className="alert alert-success">
+                    <div className="bg-green-100 text-green-700 border border-green-300 px-4 py-3 rounded-xl mb-5">
                         {success}
                     </div>
                 )}
@@ -315,18 +339,25 @@ const AdminSubcategories = () => {
                 {/* FORM */}
 
                 {showForm && (
-                    <div className="subcategory-form">
+                    <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
 
-                        <h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+
                             {editingId
                                 ? 'Edit Subcategory'
                                 : 'Add New Subcategory'}
+
                         </h2>
 
-                        <form onSubmit={handleSubmit}>
+                        <form
+                            onSubmit={handleSubmit}
+                            className="grid grid-cols-1 md:grid-cols-2 gap-5"
+                        >
 
-                            <div className="form-group">
-                                <label>
+                            {/* CATEGORY */}
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Category *
                                 </label>
 
@@ -335,6 +366,17 @@ const AdminSubcategories = () => {
                                     value={formData.category}
                                     onChange={handleInputChange}
                                     required
+                                    className="
+                                        w-full
+                                        border
+                                        border-gray-300
+                                        rounded-xl
+                                        px-4
+                                        py-3
+                                        focus:ring-2
+                                        focus:ring-indigo-500
+                                        outline-none
+                                    "
                                 >
                                     <option value="">
                                         Select Category
@@ -348,11 +390,14 @@ const AdminSubcategories = () => {
                                             {cat.name}
                                         </option>
                                     ))}
+
                                 </select>
                             </div>
 
-                            <div className="form-group">
-                                <label>
+                            {/* NAME */}
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Subcategory Name *
                                 </label>
 
@@ -363,11 +408,25 @@ const AdminSubcategories = () => {
                                     onChange={handleInputChange}
                                     placeholder="Enter subcategory"
                                     required
+                                    className="
+                                        w-full
+                                        border
+                                        border-gray-300
+                                        rounded-xl
+                                        px-4
+                                        py-3
+                                        focus:ring-2
+                                        focus:ring-indigo-500
+                                        outline-none
+                                    "
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label>
+                            {/* DESCRIPTION */}
+
+                            <div className="md:col-span-2">
+
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Description
                                 </label>
 
@@ -377,15 +436,39 @@ const AdminSubcategories = () => {
                                     value={formData.description}
                                     onChange={handleInputChange}
                                     placeholder="Enter description"
+                                    className="
+                                        w-full
+                                        border
+                                        border-gray-300
+                                        rounded-xl
+                                        px-4
+                                        py-3
+                                        focus:ring-2
+                                        focus:ring-indigo-500
+                                        outline-none
+                                    "
                                 />
                             </div>
 
-                            <div className="form-actions">
+                            {/* BUTTONS */}
+
+                            <div className="md:col-span-2 flex gap-4 mt-2">
 
                                 <button
                                     type="submit"
-                                    className="btn-submit"
                                     disabled={loading}
+                                    className="
+                                        bg-indigo-600
+                                        hover:bg-indigo-700
+                                        text-white
+                                        px-6
+                                        py-3
+                                        rounded-xl
+                                        font-semibold
+                                        shadow-md
+                                        transition-all
+                                        duration-200
+                                    "
                                 >
                                     {loading
                                         ? 'Saving...'
@@ -396,8 +479,18 @@ const AdminSubcategories = () => {
 
                                 <button
                                     type="button"
-                                    className="btn-cancel"
                                     onClick={handleCancel}
+                                    className="
+                                        bg-gray-200
+                                        hover:bg-gray-300
+                                        text-gray-700
+                                        px-6
+                                        py-3
+                                        rounded-xl
+                                        font-semibold
+                                        transition-all
+                                        duration-200
+                                    "
                                 >
                                     Cancel
                                 </button>
@@ -411,87 +504,148 @@ const AdminSubcategories = () => {
 
                 {/* TABLE */}
 
-                <div className="subcategories-table">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
 
-                    <table>
+                    <div className="overflow-x-auto">
 
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Subcategory</th>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+                        <table className="w-full">
 
-                        <tbody>
+                            <thead className="bg-indigo-600 text-white">
 
-                            {subcategories.length > 0 ? (
-                                subcategories.map(
-                                    (item, index) => (
-                                        <tr key={item._id}>
+                                <tr>
 
-                                            <td>
+                                    <th className="px-6 py-4 text-left">
+                                        #
+                                    </th>
+
+                                    <th className="px-6 py-4 text-left">
+                                        Subcategory
+                                    </th>
+
+                                    <th className="px-6 py-4 text-left">
+                                        Category
+                                    </th>
+
+                                    <th className="px-6 py-4 text-left">
+                                        Description
+                                    </th>
+
+                                    <th className="px-6 py-4 text-left">
+                                        Actions
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {subcategories.length > 0 ? (
+
+                                    subcategories.map((item, index) => (
+
+                                        <tr
+                                            key={item._id}
+                                            className="
+                                                border-b
+                                                hover:bg-gray-50
+                                                transition-all
+                                            "
+                                        >
+
+                                            <td className="px-6 py-4">
                                                 {index + 1}
                                             </td>
 
-                                            <td>
+                                            <td className="px-6 py-4 font-semibold text-gray-800">
                                                 {item.name}
                                             </td>
 
-                                            <td>
+                                            <td className="px-6 py-4 text-gray-600">
                                                 {getCategoryName(
                                                     item.category
                                                 )}
                                             </td>
 
-                                            <td>
+                                            <td className="px-6 py-4 text-gray-500">
                                                 {item.description || '-'}
                                             </td>
 
-                                            <td className="subcategory-actions">
+                                            <td className="px-6 py-4">
 
-                                                <button
-                                                    className="btn-edit"
-                                                    onClick={() =>
-                                                        handleEditClick(item)
-                                                    }
-                                                >
-                                                    Edit
-                                                </button>
+                                                <div className="flex gap-3">
 
-                                                <button
-                                                    className="btn-delete"
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            item._id,
-                                                            item.name
-                                                        )
-                                                    }
-                                                >
-                                                    Delete
-                                                </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleEditClick(item)
+                                                        }
+                                                        className="
+                                                            bg-blue-500
+                                                            hover:bg-blue-600
+                                                            text-white
+                                                            px-4
+                                                            py-2
+                                                            rounded-lg
+                                                            font-medium
+                                                            transition-all
+                                                        "
+                                                    >
+                                                        Edit
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                item._id,
+                                                                item.name
+                                                            )
+                                                        }
+                                                        className="
+                                                            bg-red-500
+                                                            hover:bg-red-600
+                                                            text-white
+                                                            px-4
+                                                            py-2
+                                                            rounded-lg
+                                                            font-medium
+                                                            transition-all
+                                                        "
+                                                    >
+                                                        Delete
+                                                    </button>
+
+                                                </div>
 
                                             </td>
 
                                         </tr>
-                                    )
-                                )
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan="5"
-                                        className="no-data"
-                                    >
-                                        No subcategories found
-                                    </td>
-                                </tr>
-                            )}
 
-                        </tbody>
+                                    ))
 
-                    </table>
+                                ) : (
+
+                                    <tr>
+
+                                        <td
+                                            colSpan="5"
+                                            className="
+                                                text-center
+                                                py-10
+                                                text-gray-500
+                                            "
+                                        >
+                                            No subcategories found
+                                        </td>
+
+                                    </tr>
+
+                                )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
 
                 </div>
 

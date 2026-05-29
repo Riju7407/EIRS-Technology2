@@ -17,6 +17,8 @@ const User = require('./model/userSchema');
 const bcrypt = require('bcrypt');
 const { getCrmSyncStatus } = require('./services/crmSyncService');
 
+const path = require('path');
+
 // Start database connection immediately (non-blocking)
 let dbConnected = false;
 databaseconnect().then(() => {
@@ -148,7 +150,7 @@ app.use('/api', crmOpsRouter);
 
 // Geospatial location routes – POST /api/location, GET /api/location/nearby
 app.use('/api', locationRouter);
-app.use('/invoices', express.static('invoices'));
+app.use('/invoices', express.static(path.join(__dirname, 'invoices')));
 app.use(cookieParser());
 
 // Health check endpoints - Critical for Render to keep server awake

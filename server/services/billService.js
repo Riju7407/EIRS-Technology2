@@ -164,8 +164,7 @@ const generateBill = async (order) => {
 
                 console.log('Invoice generated successfully:', filePath);
 
-                const publicUrl =
-                    `${process.env.BASE_URL}/invoices/${fileName}`;
+                const publicUrl = `/invoices/${fileName}`;
 
                 resolve(publicUrl);
             });

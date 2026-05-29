@@ -61,12 +61,10 @@ router.post("/orders", jwtAuth, async (req, res) => {
       !shippingAddress.address ||
       !shippingAddress.phone
     )
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Complete shipping address is required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Complete shipping address is required",
+      });
 
     const normMap = {
       upi: "UPI",
@@ -164,12 +162,10 @@ router.post("/orders", jwtAuth, async (req, res) => {
     console.error("/orders error:", err.message);
     const isVal =
       err.message?.includes("validation") || err.message?.includes("missing");
-    return res
-      .status(isVal ? 400 : 500)
-      .json({
-        success: false,
-        message: err.message || "Failed to create order",
-      });
+    return res.status(isVal ? 400 : 500).json({
+      success: false,
+      message: err.message || "Failed to create order",
+    });
   }
 });
 
@@ -213,12 +209,10 @@ router.post("/verify-payment", jwtAuth, async (req, res) => {
 
     if (expectedSig !== razorpay_signature) {
       console.warn("Signature mismatch");
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Payment verification failed - invalid signature",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Payment verification failed - invalid signature",
+      });
     }
 
     const order = await Order.findById(orderId);
@@ -244,16 +238,16 @@ router.post("/verify-payment", jwtAuth, async (req, res) => {
 
     order.invoice.invoiceDate = new Date();
 
-    // save invoice first
-    await order.save();
+    await order.save(); // ✅ FIRST SAVE
 
-    // generate pdf
     const billUrl = await generateBill(order);
 
-    // save pdf url
     order.invoice.billUrl = billUrl;
 
-    await order.save();
+    await order.save(); // final save
+
+    // generate pdf
+    
 
     console.log("Payment verified, order confirmed:", order._id);
     return res.json({
@@ -263,13 +257,11 @@ router.post("/verify-payment", jwtAuth, async (req, res) => {
     });
   } catch (err) {
     console.error("/verify-payment error:", err.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Payment verification failed",
-        error: err.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Payment verification failed",
+      error: err.message,
+    });
   }
 });
 
@@ -300,12 +292,10 @@ router.post("/service-bookings/order", jwtAuth, async (req, res) => {
     }
 
     if (booking.paymentStatus === "Completed") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Payment already completed for this booking",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Payment already completed for this booking",
+      });
     }
 
     // Ensure we have a valid price
@@ -314,12 +304,10 @@ router.post("/service-bookings/order", jwtAuth, async (req, res) => {
     );
     const price = Number(booking.servicePrice ?? service?.price ?? 0);
     if (!Number.isFinite(price) || price <= 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Service price is invalid for payment",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Service price is invalid for payment",
+      });
     }
 
     const amountInPaise = Math.round(price * 100);
@@ -368,12 +356,10 @@ router.post("/service-bookings/order", jwtAuth, async (req, res) => {
     });
   } catch (err) {
     console.error("/service-bookings/order error:", err.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: err.message || "Failed to create service payment order",
-      });
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to create service payment order",
+    });
   }
 });
 
@@ -393,12 +379,10 @@ router.post("/service-bookings/verify", jwtAuth, async (req, res) => {
       !razorpay_payment_id ||
       !razorpay_signature
     ) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Missing required payment verification fields",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Missing required payment verification fields",
+      });
     }
 
     const booking = await ServiceBooking.findById(bookingId);
@@ -412,12 +396,10 @@ router.post("/service-bookings/verify", jwtAuth, async (req, res) => {
       booking.razorpayOrderId &&
       booking.razorpayOrderId !== razorpay_order_id
     ) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Order ID mismatch for this booking",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Order ID mismatch for this booking",
+      });
     }
 
     const secret = process.env.RAZORPAY_KEY_SECRET;
@@ -429,12 +411,10 @@ router.post("/service-bookings/verify", jwtAuth, async (req, res) => {
     if (expectedSig !== razorpay_signature) {
       booking.paymentStatus = "Failed";
       await booking.save();
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Payment verification failed - invalid signature",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Payment verification failed - invalid signature",
+      });
     }
 
     booking.paymentStatus = "Completed";
@@ -452,13 +432,11 @@ router.post("/service-bookings/verify", jwtAuth, async (req, res) => {
     });
   } catch (err) {
     console.error("/service-bookings/verify error:", err.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Payment verification failed",
-        error: err.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Payment verification failed",
+      error: err.message,
+    });
   }
 });
 

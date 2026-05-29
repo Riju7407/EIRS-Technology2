@@ -45,32 +45,31 @@ const OrderSuccessPage = () => {
     fetchOrder();
   }, [orderId]);
 
-  const downloadBill = async () => {
-    if (!order?._id) return;
+ const downloadBill = async () => {
+  if (!order?._id) return;
 
-    try {
-      setDownloading(true);
+  try {
+    setDownloading(true);
 
-      const API_BASE = getApiBaseUrl();
+    const API_BASE = getApiBaseUrl();
+    const token = localStorage.getItem('token');
 
-      const token = localStorage.getItem('token');
+    let url = `${API_BASE}/payment/orders/${order._id}/bill/download`;
 
-     const url = `${API_BASE}/payment/orders/${order._id}/bill/download?token=${token}`;
-window.open(url, "_blank");
-  console.log("🔥 BILL DOWNLOAD HIT");
-
-      if (token) {
-        url += `?token=${token}`;
-      }
-
-      window.open(url, '_blank');
-
-    } catch (err) {
-      console.error('Bill download failed:', err);
-    } finally {
-      setDownloading(false);
+    if (token) {
+      url += `?token=${token}`;
     }
-  };
+
+    console.log("🔥 BILL DOWNLOAD HIT");
+
+    window.open(url, "_blank");
+
+  } catch (err) {
+    console.error('Bill download failed:', err);
+  } finally {
+    setDownloading(false);
+  }
+};
 
   return (
     <div className="order-success-page">

@@ -55,7 +55,9 @@ const OrderSuccessPage = () => {
 
       const token = localStorage.getItem('token');
 
-     let url = `${API_BASE}/payment/orders/${order._id}/bill/download`;
+     const url = `${API_BASE}/payment/orders/${order._id}/bill/download?token=${token}`;
+window.open(url, "_blank");
+  console.log("🔥 BILL DOWNLOAD HIT");
 
       if (token) {
         url += `?token=${token}`;

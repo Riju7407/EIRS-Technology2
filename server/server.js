@@ -17,6 +17,9 @@ const User = require('./model/userSchema');
 const bcrypt = require('bcrypt');
 const { getCrmSyncStatus } = require('./services/crmSyncService');
 
+
+console.log("PAYMENT ROUTER LOADED");
+
 // Start database connection immediately (non-blocking)
 let dbConnected = false;
 databaseconnect().then(() => {
@@ -139,7 +142,7 @@ app.use('/auth/', authRouter);
 app.use('/api/auth', authRouter);
 
 app.use('/payment', paymentRouter);
-app.use('/api/payment', paymentRouter);
+
 
 app.use('/api/clients', clientRouter);
 app.use('/api', categoryRouter);
@@ -208,7 +211,5 @@ app.use((err, req, res, next) => {
 app.listen(port, '0.0.0.0', () => {
     console.log(`✅ Server running at http://0.0.0.0:${port}`);
 });
-
-module.exports = app;
 
 module.exports = app;

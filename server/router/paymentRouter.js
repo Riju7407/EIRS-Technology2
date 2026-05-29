@@ -10,8 +10,13 @@ const { generateBill } = require("../services/billService");
 
 const router = express.Router();
 
+console.log("PAYMENT ROUTER FILE LOADED");
+console.log("BILL DOWNLOAD ROUTE HIT");
+
 /* 
    Razorpay singleton initialisation (live keys)
+
+   
  */
 let razorpay = null;
 const getRazorpay = () => {

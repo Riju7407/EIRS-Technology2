@@ -7,6 +7,7 @@ import {
   FaShoppingCart,
   FaFilePdf
 } from 'react-icons/fa';
+import { getApiBaseUrl } from '../services/apiBaseUrl';
 
 import paymentService from '../services/paymentService';
 import '../styles/OrderSuccessPage.css';
@@ -50,8 +51,7 @@ const OrderSuccessPage = () => {
     try {
       setDownloading(true);
 
-      const API_BASE =
-        process.env.REACT_APP_API || 'http://localhost:5000';
+      const API_BASE = getApiBaseUrl();
 
       const token = localStorage.getItem('token');
 

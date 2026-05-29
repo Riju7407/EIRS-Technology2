@@ -55,7 +55,7 @@ const OrderSuccessPage = () => {
 
       const token = localStorage.getItem('token');
 
-      let url = `${API_BASE}/payment/orders/${order._id}/bill/download`;
+      let url = `${API_BASE}/api/payment/orders/${order._id}/bill/download`;
 
       if (token) {
         url += `?token=${token}`;

@@ -125,6 +125,15 @@ app.use(express.json({
         req.rawBody = buf;
     }
 }));
+
+app.use((req, res, next) => {
+    console.log("🔥 REQUEST:", {
+        method: req.method,
+        url: req.originalUrl,
+        auth: req.headers.authorization
+    });
+    next();
+});
 app.use((req, res, next) => {
     console.log("🔥 GLOBAL HIT:", req.method, req.originalUrl);
     next();
@@ -218,6 +227,38 @@ app.use((err, req, res, next) => {
 //         console.log(`Server is running at http://localhost:${port}`);
 //     });
 // }
+setTimeout(() => {
+    console.log("========== ROUTES ==========");
+
+    const stack = app.router?.stack || app._router?.stack;
+
+    if (!stack) {
+        console.log("❌ Router stack not found");
+        return;
+    }
+
+    stack.forEach((middleware) => {
+        if (middleware.route) {
+            console.log(
+                middleware.route.path,
+                Object.keys(middleware.route.methods)
+            );
+        }
+
+        if (middleware.name === "router" && middleware.handle.stack) {
+            middleware.handle.stack.forEach((handler) => {
+                if (handler.route) {
+                    console.log(
+                        handler.route.path,
+                        Object.keys(handler.route.methods)
+                    );
+                }
+            });
+        }
+    });
+
+    console.log("========== END ROUTES ==========");
+}, 3000);
 
 app.listen(port, '0.0.0.0', () => {
     console.log(`✅ Server running at http://0.0.0.0:${port}`);

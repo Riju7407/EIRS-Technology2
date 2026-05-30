@@ -10,8 +10,7 @@ const { generateBill } = require("../services/billService");
 
 const router = express.Router();
 
-console.log("PAYMENT ROUTER FILE LOADED");
-console.log("BILL DOWNLOAD ROUTE HIT");
+
 
 router.use((req, res, next) => {
   console.log("🔥 PAYMENT ROUTER HIT:", req.method, req.originalUrl);
@@ -558,48 +557,106 @@ router.get(
   "/orders/:orderId/bill/download",
   jwtAuth,
   async (req, res) => {
+
+    console.log("=================================");
     console.log("🔥 BILL DOWNLOAD ROUTE HIT");
+    console.log("ORDER ID:", req.params.orderId);
+    console.log("USER:", req.user);
+    console.log("QUERY:", req.query);
+    console.log("=================================");
 
     try {
       const path = require("path");
       const fs = require("fs");
 
+      // Find order
       const order = await Order.findOne({
         _id: req.params.orderId,
-        userId: req.user._id,
+        userId: req.user.id || req.user._id,
       });
 
+      console.log("📦 ORDER FOUND:", order?._id);
+
       if (!order) {
+        console.log("❌ ORDER NOT FOUND");
+
         return res.status(404).json({
           success: false,
           message: "Order not found",
         });
       }
 
+      const invoicesDir = path.join(
+        process.cwd(),
+        "invoices"
+      );
+
       const fileName = `invoice_${order._id}.pdf`;
 
-      const filePath = path.resolve(
-        process.cwd(),
-        "invoices",
+      const filePath = path.join(
+        invoicesDir,
         fileName
       );
 
-      // invoice missing ho to regenerate
+      console.log("📄 FILE PATH:", filePath);
+
+      // Create invoice if missing
       if (!fs.existsSync(filePath)) {
-        console.log("⚠️ Invoice missing, regenerating...");
+
+        console.log(
+          "⚠️ Invoice file missing, generating again..."
+        );
+
         await generateBill(order);
+
+        // Double check
+        if (!fs.existsSync(filePath)) {
+          console.log("❌ Invoice generation failed");
+
+          return res.status(404).json({
+            success: false,
+            message: "Invoice file not found",
+          });
+        }
       }
 
-      console.log("✅ Downloading invoice:", filePath);
+      console.log("✅ DOWNLOADING PDF");
 
-      return res.download(filePath, fileName);
+      return res.download(
+        filePath,
+        fileName,
+        (err) => {
+          if (err) {
+            console.error(
+              "❌ DOWNLOAD ERROR:",
+              err
+            );
+
+            if (!res.headersSent) {
+              res.status(500).json({
+                success: false,
+                message: "Failed to download invoice",
+              });
+            }
+          } else {
+            console.log(
+              "✅ PDF DOWNLOADED SUCCESSFULLY"
+            );
+          }
+        }
+      );
 
     } catch (error) {
-      console.error("❌ Invoice download error:", error);
+
+      console.error(
+        "❌ BILL DOWNLOAD ERROR:",
+        error
+      );
 
       return res.status(500).json({
         success: false,
-        message: error.message || "Failed to download invoice",
+        message: "Failed to download invoice",
+        error: error.message,
       });
     }
   }

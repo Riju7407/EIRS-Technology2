@@ -260,13 +260,7 @@ await ensureInvoice(order);
     // Generate invoice number if missing
     
 
-    await order.save(); // ✅ FIRST SAVE
-
-    const billUrl = await generateBill(order);
-
-    order.invoice.billUrl = billUrl;
-
-    await order.save(); // final save
+    
 
     // generate pdf
     
@@ -561,6 +555,7 @@ router.get("/payment-history", jwtAuth, async (req, res) => {
 
 // DOWNLOAD BILL
 router.get("/orders/:orderId/bill/download", async (req, res) => {
+  console.log("🔥 BILL DOWNLOAD ROUTE HIT");
   try {
     const token = req.query.token;
 
@@ -572,28 +567,48 @@ router.get("/orders/:orderId/bill/download", async (req, res) => {
     }
 
     const jwt = require("jsonwebtoken");
+    const path = require("path");
+    const fs = require("fs");
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
     const order = await Order.findOne({
       _id: req.params.orderId,
       userId: decoded.id,
     });
 
-    if (!order || !order.invoice?.billUrl) {
+    if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Bill not found",
+        message: "Order not found",
       });
     }
 
-    const fileUrl = order.invoice.billUrl.startsWith("http")
-      ? order.invoice.billUrl
-      : `${process.env.BASE_URL}${order.invoice.billUrl}`;
+    const fileName = `invoice_${order._id}.pdf`;
 
-    return res.redirect(fileUrl);
+    const filePath = path.resolve(
+      process.cwd(),
+      "invoices",
+      fileName
+    );
+
+    if (!fs.existsSync(filePath)) {
+      // Generate again if missing
+      await generateBill(order);
+    }
+
+    res.download(
+      filePath,
+      fileName
+    );
   } catch (error) {
-    console.error("Invoice download error:", error);
+    console.error(
+      "Invoice download error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -606,26 +621,20 @@ router.get("/generate-invoice/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
-    if (!order.invoice) {
-      order.invoice = {};
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
     }
 
-    order.invoice.invoiceNumber = `INV-${Date.now()}`;
-
-    order.invoice.invoiceDate = new Date();
-
-    await order.save();
-
-    const billUrl = await generateBill(order);
-
-    order.invoice.billUrl = billUrl;
-
-    await order.save();
+    await ensureInvoice(order);
 
     res.json({
       success: true,
-      billUrl,
+      billUrl: order.invoice?.billUrl,
     });
+
   } catch (err) {
     res.status(500).json({
       success: false,
@@ -639,6 +648,7 @@ router.get("/orders/:orderId/bill", jwtAuth, orderController.getBill);
 
 // GET ORDER
 router.get("/orders/:orderId", jwtAuth, async (req, res) => {
+   
   try {
     const order = await Order.findOne({
       _id: req.params.orderId,

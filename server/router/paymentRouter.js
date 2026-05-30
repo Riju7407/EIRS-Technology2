@@ -554,68 +554,56 @@ router.get("/payment-history", jwtAuth, async (req, res) => {
  */
 
 // DOWNLOAD BILL
-router.get("/orders/:orderId/bill/download", async (req, res) => {
-  console.log("🔥 BILL DOWNLOAD ROUTE HIT");
-  try {
-    const token = req.query.token;
+router.get(
+  "/orders/:orderId/bill/download",
+  jwtAuth,
+  async (req, res) => {
+    console.log("🔥 BILL DOWNLOAD ROUTE HIT");
 
-    if (!token) {
-      return res.status(401).json({
+    try {
+      const path = require("path");
+      const fs = require("fs");
+
+      const order = await Order.findOne({
+        _id: req.params.orderId,
+        userId: req.user._id,
+      });
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+
+      const fileName = `invoice_${order._id}.pdf`;
+
+      const filePath = path.resolve(
+        process.cwd(),
+        "invoices",
+        fileName
+      );
+
+      // invoice missing ho to regenerate
+      if (!fs.existsSync(filePath)) {
+        console.log("⚠️ Invoice missing, regenerating...");
+        await generateBill(order);
+      }
+
+      console.log("✅ Downloading invoice:", filePath);
+
+      return res.download(filePath, fileName);
+
+    } catch (error) {
+      console.error("❌ Invoice download error:", error);
+
+      return res.status(500).json({
         success: false,
-        message: "Token missing",
+        message: error.message || "Failed to download invoice",
       });
     }
-
-    const jwt = require("jsonwebtoken");
-    const path = require("path");
-    const fs = require("fs");
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    const order = await Order.findOne({
-      _id: req.params.orderId,
-      userId: decoded.id,
-    });
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
-    }
-
-    const fileName = `invoice_${order._id}.pdf`;
-
-    const filePath = path.resolve(
-      process.cwd(),
-      "invoices",
-      fileName
-    );
-
-    if (!fs.existsSync(filePath)) {
-      // Generate again if missing
-      await generateBill(order);
-    }
-
-    res.download(
-      filePath,
-      fileName
-    );
-  } catch (error) {
-    console.error(
-      "Invoice download error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to download invoice",
-    });
   }
-});
+);
 
 router.get("/generate-invoice/:id", async (req, res) => {
   try {

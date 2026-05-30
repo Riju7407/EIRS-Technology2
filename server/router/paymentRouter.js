@@ -630,13 +630,13 @@ router.get("/generate-invoice/:id", async (req, res) => {
 
     await ensureInvoice(order);
 
-    res.json({
+    return res.json({
       success: true,
       billUrl: order.invoice?.billUrl,
     });
 
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: err.message,
     });

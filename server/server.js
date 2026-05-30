@@ -5,6 +5,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const {authRouter} = require('./router/authRouter.js');
 const paymentRouter = require('./router/paymentRouter.js');
+console.log("🔥 PAYMENT ROUTER DEBUG:", paymentRouter);
 const categoryRouter = require('./router/categoryRouter.js');
 const locationRouter = require('./router/locationRouter.js');
 const websiteSyncRouter = require('./router/websiteSyncRouter.js');
@@ -146,9 +147,13 @@ app.use((req, res, next) => {
 app.use('/auth/', authRouter);
 app.use('/api/auth', authRouter);
 
+
+console.log("🔥 MOUNTING PAYMENT ROUTER");
+
 app.use('/payment', paymentRouter);
 
 app.use('/api/payment', paymentRouter);
+console.log("✅ PAYMENT ROUTER MOUNTED");
 
 app.use('/api/clients', clientRouter);
 app.use('/api', categoryRouter);

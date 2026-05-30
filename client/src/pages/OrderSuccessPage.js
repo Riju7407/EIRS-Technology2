@@ -52,20 +52,30 @@ const OrderSuccessPage = () => {
     setDownloading(true);
 
     const API_BASE = getApiBaseUrl();
-    const token = localStorage.getItem('token');
 
-   let url = `${API_BASE}/api/payment/orders/${order._id}/bill/download`;
+    // token get
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
 
-    if (token) {
-      url += `?token=${token}`;
+    console.log("🔥 DOWNLOAD BILL CLICKED");
+    console.log("ORDER ID:", order._id);
+    console.log("TOKEN:", token);
+
+    if (!token) {
+      alert("Login token not found. Please login again.");
+      return;
     }
 
-    console.log("🔥 BILL DOWNLOAD HIT");
+    const url =
+      `${API_BASE}/api/payment/orders/${order._id}/bill/download?token=${encodeURIComponent(token)}`;
+
+    console.log("🔥 DOWNLOAD URL:", url);
 
     window.open(url, "_blank");
 
   } catch (err) {
-    console.error('Bill download failed:', err);
+    console.error("Bill download failed:", err);
   } finally {
     setDownloading(false);
   }

@@ -17,8 +17,11 @@ router.use((req, res, next) => {
   next();
 });
 
-router.get("/test-route", (req, res) => {
-  res.json({ ok: true });
+router.get("/test-jwt", jwtAuth, (req, res) => {
+  res.json({
+    query: req.query,
+    user: req.user
+  });
 });
 
 /* 

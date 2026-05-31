@@ -1,0 +1,68 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="headsetGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#bgGradient)"/>
+  
+  <!-- Light circle background -->
+  <circle cx="200" cy="150" r="120" fill="#ffffff" opacity="0.1"/>
+  
+  <!-- Headset Left Ear Cup -->
+  <ellipse cx="120" cy="100" rx="25" ry="35" fill="url(#headsetGradient)" stroke="#1e3a8a" stroke-width="2"/>
+  
+  <!-- Headset Right Ear Cup -->
+  <ellipse cx="280" cy="100" rx="25" ry="35" fill="url(#headsetGradient)" stroke="#1e3a8a" stroke-width="2"/>
+  
+  <!-- Headset Band -->
+  <path d="M 145 65 Q 200 40 255 65" fill="none" stroke="url(#headsetGradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Headset Left Speaker -->
+  <circle cx="120" cy="100" r="15" fill="#3b82f6" opacity="0.8"/>
+  <circle cx="120" cy="100" r="10" fill="#1e3a8a"/>
+  
+  <!-- Headset Right Speaker -->
+  <circle cx="280" cy="100" r="15" fill="#3b82f6" opacity="0.8"/>
+  <circle cx="280" cy="100" r="10" fill="#1e3a8a"/>
+  
+  <!-- Microphone Boom Left -->
+  <path d="M 120 130 Q 100 160 95 190" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Microphone Tip Left -->
+  <circle cx="95" cy="190" r="8" fill="#60a5fa" stroke="#1e3a8a" stroke-width="2"/>
+  
+  <!-- Microphone Boom Right -->
+  <path d="M 280 130 Q 300 160 305 190" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Microphone Tip Right -->
+  <circle cx="305" cy="190" r="8" fill="#60a5fa" stroke="#1e3a8a" stroke-width="2"/>
+  
+  <!-- Chat Bubble -->
+  <rect x="140" y="200" width="120" height="60" rx="10" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Chat Bubble Triangle -->
+  <polygon points="150,260 140,280 160,270" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Chat Text Lines -->
+  <line x1="155" y1="215" x2="245" y2="215" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="155" y1="235" x2="230" y2="235" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="155" y1="255" x2="210" y2="255" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Decorative stars -->
+  <circle cx="80" cy="50" r="4" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="320" cy="60" r="4" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="50" cy="150" r="3" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="350" cy="180" r="3" fill="#fbbf24" opacity="0.6"/>
+  
+  <!-- Support text -->
+  <text x="200" y="290" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.9">24/7 Support</text>
+</svg>

@@ -45,41 +45,44 @@ const OrderSuccessPage = () => {
     fetchOrder();
   }, [orderId]);
 
- const downloadBill = async () => {
-  if (!order?._id) return;
-
+const downloadBill = async () => {
   try {
-    setDownloading(true);
+    const token = localStorage.getItem("token");
 
-    const API_BASE = getApiBaseUrl();
+    const response = await fetch(
+      `${API_BASE}/api/payment/orders/${order._id}/bill/download`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    // token get
-    const token =
-      localStorage.getItem("token") ||
-      sessionStorage.getItem("token");
-
-    console.log("🔥 DOWNLOAD BILL CLICKED");
-    console.log("ORDER ID:", order._id);
-    console.log("TOKEN:", token);
-
-    if (!token) {
-      alert("Login token not found. Please login again.");
-      return;
+    if (!response.ok) {
+      throw new Error("Download failed");
     }
 
-    const url =
-      `${API_BASE}/api/payment/orders/${order._id}/bill/download?token=${encodeURIComponent(token)}`;
+    const blob = await response.blob();
 
-    console.log("🔥 DOWNLOAD URL:", url);
+    const url = window.URL.createObjectURL(blob);
 
-    window.open(url, "_blank");
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = `invoice_${order._id}.pdf`;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
 
   } catch (err) {
-    console.error("Bill download failed:", err);
-  } finally {
-    setDownloading(false);
+    console.error(err);
   }
-};
+};;
 
   return (
     <div className="order-success-page">

@@ -20,10 +20,7 @@ const subcategorySchema = new Schema({
         trim: true
     },
 
-    icon: {
-        type: String,
-        trim: true
-    },
+   
     isActive: {
     type: Boolean,
     default: true

@@ -177,7 +177,9 @@ exports.getAllSubcategories = async (req, res) => {
   try {
     const { categoryId } = req.query;
 
-    let query = Subcategory.find({ isActive: true });
+    let query = Subcategory.find({
+      isActive: { $ne: false }
+    }).populate('category', 'name');
 
     if (categoryId) {
       query = query.where("category").equals(categoryId);
@@ -233,6 +235,8 @@ exports.createSubcategory = async (req, res) => {
       name: name.trim(),
       category: category,
       description: description?.trim() || "",
+       
+  isActive: true   // 🔥 ADD THIS
     });
 
     await newSubcategory.save();

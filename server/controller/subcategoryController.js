@@ -4,6 +4,7 @@ const Subcategory = require('../model/subcategorySchema.js');
 exports.createSubcategory = async (req, res) => {
     try {
         const { name, category, description, icon } = req.body;
+         console.log("CREATE BODY:", req.body);
 
         if (!name || !category) {
             return res.status(400).json({
@@ -38,11 +39,16 @@ exports.createSubcategory = async (req, res) => {
 exports.getAllSubcategories = async (req, res) => {
     try {
         const subcategories = await Subcategory.find()
+        
     .populate('category', 'name');
         res.json({
             success: true,
             data: subcategories
         });
+        console.log(
+    "TOTAL SUBCATEGORIES:",
+    subcategories.length
+  );
     } catch (error) {
         res.status(500).json({
             success: false,

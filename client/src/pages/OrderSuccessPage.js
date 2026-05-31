@@ -47,6 +47,10 @@ const OrderSuccessPage = () => {
 
 const downloadBill = async () => {
   try {
+    setDownloading(true);
+
+    const API_BASE = getApiBaseUrl();
+
     const token = localStorage.getItem("token");
 
     const response = await fetch(
@@ -67,20 +71,19 @@ const downloadBill = async () => {
     const url = window.URL.createObjectURL(blob);
 
     const a = document.createElement("a");
-
     a.href = url;
     a.download = `invoice_${order._id}.pdf`;
 
     document.body.appendChild(a);
-
     a.click();
 
     a.remove();
-
     window.URL.revokeObjectURL(url);
 
   } catch (err) {
-    console.error(err);
+    console.error("Bill download failed:", err);
+  } finally {
+    setDownloading(false);
   }
 };;
 

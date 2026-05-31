@@ -45,47 +45,38 @@ const OrderSuccessPage = () => {
     fetchOrder();
   }, [orderId]);
 
-const downloadBill = async () => {
+ const downloadBill = async () => {
+  if (!order?._id) return;
+
   try {
     setDownloading(true);
 
     const API_BASE = getApiBaseUrl();
 
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
 
-    const response = await fetch(
-      `${API_BASE}/api/payment/orders/${order._id}/bill/download`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    console.log("TOKEN:", token);
 
-    if (!response.ok) {
-      throw new Error("Download failed");
+    if (!token) {
+      alert("Please login again.");
+      return;
     }
 
-    const blob = await response.blob();
+    const downloadUrl =
+      `${API_BASE}/api/payment/orders/${order._id}/bill/download?token=${encodeURIComponent(token)}`;
 
-    const url = window.URL.createObjectURL(blob);
+    console.log("DOWNLOAD URL:", downloadUrl);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `invoice_${order._id}.pdf`;
+    window.open(downloadUrl, "_blank");
 
-    document.body.appendChild(a);
-    a.click();
-
-    a.remove();
-    window.URL.revokeObjectURL(url);
-
-  } catch (err) {
-    console.error("Bill download failed:", err);
+  } catch (error) {
+    console.error("Bill download failed:", error);
   } finally {
     setDownloading(false);
   }
-};;
+};
 
   return (
     <div className="order-success-page">

@@ -5,6 +5,7 @@ exports.createSubcategory = async (req, res) => {
     try {
         const { name, category, description, icon } = req.body;
          console.log("CREATE BODY:", req.body);
+         console.log("SUBCATEGORY CONTROLLER HIT");
 
         if (!name || !category) {
             return res.status(400).json({
@@ -39,13 +40,15 @@ exports.createSubcategory = async (req, res) => {
 // Get all subcategories
 exports.getAllSubcategories = async (req, res) => {
   try {
-    const subcategories = await Subcategory.find({ isActive: true })
+    const subcategories = await Subcategory.find({})
       .populate('category', 'name')
       .sort("name");
 
+    const safeData = subcategories.filter(item => item.isActive !== false);
+
     res.status(200).json({
       success: true,
-      data: subcategories,
+      data: safeData,
     });
 
   } catch (error) {

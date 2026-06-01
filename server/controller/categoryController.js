@@ -175,22 +175,17 @@ exports.deleteCategory = async (req, res) => {
 // GET all subcategories
 exports.getAllSubcategories = async (req, res) => {
   try {
-    const { categoryId } = req.query;
+    const subcategories = await Subcategory.find({})
+      .populate('category', 'name')
+      .sort("name");
 
-    let query = Subcategory.find({
-      isActive: { $ne: false }
-    }).populate('category', 'name');
-
-    if (categoryId) {
-      query = query.where("category").equals(categoryId);
-    }
-
-    const subcategories = await query.sort("name");
+    const safeData = subcategories.filter(item => item.isActive !== false);
 
     res.status(200).json({
       success: true,
-      data: subcategories,
+      data: safeData,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -204,6 +199,7 @@ exports.getAllSubcategories = async (req, res) => {
 exports.createSubcategory = async (req, res) => {
   try {
     const { name, category, description } = req.body;
+    console.log("SUBCATEGORY CONTROLLER HIT");
 
     if (!name || name.trim() === "") {
       return res.status(400).json({

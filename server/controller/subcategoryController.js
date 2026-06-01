@@ -17,6 +17,7 @@ exports.createSubcategory = async (req, res) => {
             name: name.trim(),
             category: category.trim(),
             description: description || '',
+            isActive: true,
             icon: icon || ''
         });
 
@@ -37,24 +38,23 @@ exports.createSubcategory = async (req, res) => {
 
 // Get all subcategories
 exports.getAllSubcategories = async (req, res) => {
-    try {
-        const subcategories = await Subcategory.find()
-        
-    .populate('category', 'name');
-        res.json({
-            success: true,
-            data: subcategories
-        });
-        console.log(
-    "TOTAL SUBCATEGORIES:",
-    subcategories.length
-  );
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+  try {
+    const subcategories = await Subcategory.find({ isActive: true })
+      .populate('category', 'name')
+      .sort("name");
+
+    res.status(200).json({
+      success: true,
+      data: subcategories,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching subcategories",
+      error: error.message,
+    });
+  }
 };
 
 // Get subcategories by category

@@ -1,86 +1,101 @@
 const JWT = require("jsonwebtoken");
 
 const jwtAuth = (req, res, next) => {
+    try {
+        console.log("\n================ JWT AUTH DEBUG ================");
+        console.log("METHOD:", req.method);
+        console.log("URL:", req.originalUrl);
+        console.log("HEADERS:", JSON.stringify(req.headers, null, 2));
+console.log("AUTH HEADER RAW:", req.headers.authorization);
 
-    
+        let token = null;
 
-    let token = null;
+        // Request Info
+        console.log("QUERY:", req.query);
+        console.log("COOKIES:", req.cookies || {});
+        console.log("AUTH HEADER:", req.headers.authorization || "NOT PROVIDED");
 
-    // 1. Cookie Token
-    token = req.cookies?.token || null;
-
-    if (token) {
-        console.log("✅ Token found from COOKIE");
-    }
-
-    // 2. Authorization Header
-    if (!token) {
-        const authHeader = req.headers.authorization;
-
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            console.log("✅ Token found from HEADER");
+        // 1. Cookie Token
+        if (req.cookies?.token) {
+            token = req.cookies.token;
+            console.log("✅ Token Source: COOKIE");
         }
-    }
 
-    // 3. Query Token (IMPORTANT FOR BILL DOWNLOAD)
-    if (!token && req.query?.token) {
-        token = req.query.token;
-        console.log("✅ Token found from QUERY PARAM");
-    }
+        // 2. Authorization Header
+        if (!token) {
+            const authHeader = req.headers.authorization;
 
-    console.log("FINAL TOKEN:", token ? "FOUND" : "NOT FOUND");
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+                console.log("✅ Token Source: AUTH HEADER");
+            }
+        }
 
-    // No Token
-    if (!token) {
-        console.warn(
-            `[jwtAuth] No token provided for ${req.method} ${req.originalUrl}`
+        // 3. Query Param
+        if (!token && req.query?.token) {
+            token = req.query.token;
+            console.log("✅ Token Source: QUERY PARAM");
+        }
+
+        console.log(
+            "TOKEN PREVIEW:",
+            token ? `${token.substring(0, 20)}...` : "NO TOKEN"
         );
 
-        return res.status(401).json({
-            success: false,
-            message: "Unauthorized: No token provided",
-        });
-    }
+        // No Token
+        if (!token) {
+            console.log("❌ NO TOKEN FOUND");
 
-    const secret = process.env.JWT_SECRET;
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized: No token provided"
+            });
+        }
 
-    if (!secret) {
-        console.error("❌ JWT_SECRET missing in env");
+        // JWT Secret Check
+        if (!process.env.JWT_SECRET) {
+            console.log("❌ JWT_SECRET NOT FOUND");
 
-        return res.status(500).json({
-            success: false,
-            message: "Server configuration error",
-        });
-    }
+            return res.status(500).json({
+                success: false,
+                message: "JWT_SECRET missing"
+            });
+        }
 
-    try {
-        const payload = JWT.verify(token, secret);
+        // Verify Token
+        const payload = JWT.verify(
+            token,
+            process.env.JWT_SECRET
+        );
 
-        console.log("✅ JWT VERIFIED");
-        console.log("USER:", payload.email);
+        console.log("✅ TOKEN VERIFIED");
+        console.log("USER ID:", payload.id);
+        console.log("EMAIL:", payload.email);
 
         req.user = {
             _id: payload.id,
             id: payload.id,
             email: payload.email,
             isAdmin: payload.isAdmin,
-            name: payload.name,
+            name: payload.name
         };
+
+        console.log("✅ AUTH SUCCESS");
+        console.log("================================================\n");
 
         next();
 
     } catch (error) {
-
-        console.log("❌ JWT VERIFY FAILED:", error.message);
+        console.log("❌ JWT VERIFY ERROR");
+        console.log("ERROR NAME:", error.name);
+        console.log("ERROR MESSAGE:", error.message);
 
         return res.status(401).json({
             success: false,
             message:
-                "Unauthorized: " +
-                (error.name === "TokenExpiredError"
-                    ? "Token expired, please sign in again"
-                    : "Invalid token"),
+                error.name === "TokenExpiredError"
+                    ? "Token expired, please login again"
+                    : "Invalid token"
         });
     }
 };

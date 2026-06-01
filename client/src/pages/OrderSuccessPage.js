@@ -8,6 +8,7 @@ import {
   FaFilePdf
 } from 'react-icons/fa';
 import { getApiBaseUrl } from '../services/apiBaseUrl';
+import axios from 'axios';
 
 import paymentService from '../services/paymentService';
 import '../styles/OrderSuccessPage.css';
@@ -54,21 +55,51 @@ const downloadBill = async () => {
     const API_BASE = getApiBaseUrl();
 
     const token =
-      localStorage.getItem("authToken") ||
-      sessionStorage.getItem("authToken");
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
+
+    console.log("🔥 DOWNLOAD BILL CLICKED");
+    console.log("ORDER ID:", order._id);
+    console.log("TOKEN FOUND:", !!token);
 
     if (!token) {
-      alert("Please login again.");
+      alert("Login token not found. Please login again.");
       return;
     }
 
-    const downloadUrl =
-      `${API_BASE}/api/payment/orders/${order._id}/bill/download?token=${encodeURIComponent(token)}`;
+    const response = await axios.get(
+      `${API_BASE}/api/payment/orders/${order._id}/bill/download`,
+      {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    window.open(downloadUrl, "_blank");
+    const blob = new Blob([response.data], {
+      type: "application/pdf",
+    });
 
-  } catch (error) {
-    console.error("Download error:", error);
+    const fileURL = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = fileURL;
+    link.download = `invoice-${order._id}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(fileURL);
+
+  } catch (err) {
+    console.error("❌ Bill download failed:", err);
+
+    alert(
+      err?.response?.data?.message ||
+      "Failed to download invoice"
+    );
   } finally {
     setDownloading(false);
   }

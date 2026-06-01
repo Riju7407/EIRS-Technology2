@@ -2,12 +2,7 @@ const JWT = require("jsonwebtoken");
 
 const jwtAuth = (req, res, next) => {
 
-    console.log("\n🔥 ===== JWT AUTH HIT =====");
-    console.log("METHOD:", req.method);
-    console.log("PATH:", req.originalUrl);
-    console.log("QUERY:", req.query);
-    console.log("AUTH HEADER:", req.headers.authorization);
-    console.log("COOKIE TOKEN:", req.cookies?.token ? "FOUND" : "NOT FOUND");
+    
 
     let token = null;
 

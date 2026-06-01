@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const {authRouter} = require('./router/authRouter.js');
 const paymentRouter = require('./router/paymentRouter.js');
-console.log("🔥 PAYMENT ROUTER DEBUG:", paymentRouter);
+
 const categoryRouter = require('./router/categoryRouter.js');
 const locationRouter = require('./router/locationRouter.js');
 const websiteSyncRouter = require('./router/websiteSyncRouter.js');

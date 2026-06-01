@@ -105,16 +105,17 @@ exports.updateSubcategory = async (req, res) => {
         const { id } = req.params;
         const { name, category, description, icon } = req.body;
 
-        const subcategory = await Subcategory.findByIdAndUpdate(
-            id,
-            {
-                name: name || undefined,
-                category: category || undefined,
-                description: description || undefined,
-                icon: icon || undefined
-            },
-            { new: true, runValidators: true }
-        );
+       const subcategory = await Subcategory.findByIdAndUpdate(
+  id,
+  {
+    name: name || undefined,
+    category: category || undefined,
+    description: description || undefined,
+    icon: icon || undefined,
+    isActive: true   // 🔥 ADD THIS
+  },
+  { new: true, runValidators: true }
+);
 
         if (!subcategory) {
             return res.status(404).json({

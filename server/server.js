@@ -98,7 +98,7 @@ const corsOptions = {
             'http://192.168.0.147:3000',
             'http://192.168.0.147:3001',
             'https://eirs-technology.vercel.app',
-            "https://eirs-technology-git-main-technologyeirs-netizens-projects.vercel.app",
+           
             ...envOrigins
         ];
 

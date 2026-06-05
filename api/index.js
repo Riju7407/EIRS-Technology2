@@ -1,4 +1,9 @@
 const path = require('path');
+console.log("=================================");
+console.log("RAILWAY DEPLOY TEST V1");
+console.log("CURRENT DIR:", process.cwd());
+console.log("FILE:", __filename);
+console.log("=================================");
 
 // Load environment variables — try server/.env first (has all credentials),
 // then fall back to root .env. dotenv won't overwrite vars already set by

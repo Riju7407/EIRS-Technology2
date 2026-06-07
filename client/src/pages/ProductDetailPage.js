@@ -1,13 +1,28 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaBolt, FaStar, FaStarHalfAlt, FaRegStar, FaShieldAlt, FaTruck, FaUndo, FaTag, FaChevronRight, FaHome, FaDownload, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { productService, reviewService } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
-import CheckoutModal from '../components/CheckoutModal';
-import ReviewForm from '../components/ReviewForm';
-import ReviewList from '../components/ReviewList';
-import '../styles/ProductDetailPage.css';
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  FaShoppingCart,
+  FaBolt,
+  FaStar,
+  FaStarHalfAlt,
+  FaRegStar,
+  FaShieldAlt,
+  FaTruck,
+  FaUndo,
+  FaTag,
+  FaChevronRight,
+  FaHome,
+  FaDownload,
+  FaCheckCircle,
+  FaTimesCircle,
+} from "react-icons/fa";
+import { productService, reviewService } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import CheckoutModal from "../components/CheckoutModal";
+import ReviewForm from "../components/ReviewForm";
+import ReviewList from "../components/ReviewList";
+import "../styles/ProductDetailPage.css";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -15,10 +30,10 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [activeTab, setActiveTab] = useState('description');
+  const [activeTab, setActiveTab] = useState("description");
   const [addedToCart, setAddedToCart] = useState(false);
   const { user } = useAuth();
   const { addToCart } = useCart();
@@ -36,12 +51,12 @@ const ProductDetailPage = () => {
 
   useLayoutEffect(() => {
     // Force reset to the top product details section on every product id change.
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     setSelectedImageIndex(0);
     setImageZoom(false);
-    setActiveTab('description');
+    setActiveTab("description");
     setQuantity(1);
   }, [id]);
 
@@ -51,9 +66,9 @@ const ProductDetailPage = () => {
         const response = await productService.getProductById(id);
         const productData = response.data ? response.data : response;
         setProduct(productData);
-        setError('');
+        setError("");
       } catch (err) {
-        setError('Failed to load product details. Please refresh the page.');
+        setError("Failed to load product details. Please refresh the page.");
       } finally {
         setLoading(false);
       }
@@ -62,26 +77,41 @@ const ProductDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
-    const fetchRelatedProducts = async () => {
-      if (product) {
-        const categoryToSearch = product.category || product.mainCategory;
-        if (categoryToSearch) {
-          try {
-            const response = await productService.getProductsByCategory(categoryToSearch);
-            let products = Array.isArray(response) ? response : (response.data || []);
-            const related = products.filter(p => p._id !== product._id).slice(0, 5);
-            setRelatedProducts(related);
-          } catch (err) {
-            console.error('Error fetching related products:', err);
-            setRelatedProducts([]);
-          }
-        } else {
-          setRelatedProducts([]);
-        }
-      }
-    };
-    if (product) fetchRelatedProducts();
-  }, [product]);
+  const fetchRelatedProducts = async () => {
+    if (!product) return;
+
+    const categoryToSearch =
+      product?.category?.name || product?.category || product?.mainCategory;
+
+    if (!categoryToSearch) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    try {
+      const response = await productService.getProductsByCategory(categoryToSearch);
+
+      const products = Array.isArray(response)
+        ? response
+        : response?.data || [];
+
+      const related = products
+        .filter(p => p._id !== product._id)
+        .slice(0, 5);
+
+      setRelatedProducts(related);
+    } catch (err) {
+      console.error("Error fetching related products:", err);
+      setRelatedProducts([]);
+    }
+  };
+
+  fetchRelatedProducts();
+}, [product]);
+  const categoryName =
+    typeof product?.category === "object"
+      ? product?.category?.name
+      : product?.category;
 
   const fetchReviews = async () => {
     try {
@@ -96,8 +126,10 @@ const ProductDetailPage = () => {
           setEditingReview(userReviewData.review);
         } catch (err) {}
       }
-    } catch (err) {}
-    finally { setReviewsLoading(false); }
+    } catch (err) {
+    } finally {
+      setReviewsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -107,7 +139,10 @@ const ProductDetailPage = () => {
   const handleAddToCart = () => {
     if (product && product.stock > 0) {
       const disc = product.discount > 0 ? product.discount : 0;
-      const sp = disc > 0 ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100)) : parseFloat(product.price || 0);
+      const sp =
+        disc > 0
+          ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100))
+          : parseFloat(product.price || 0);
       addToCart({ ...product, price: sp }, quantity);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2500);
@@ -115,10 +150,16 @@ const ProductDetailPage = () => {
   };
 
   const handleBuyNow = () => {
-    if (!user) { navigate('/signin'); return; }
+    if (!user) {
+      navigate("/signin");
+      return;
+    }
     if (product && product.stock > 0) {
       const disc = product.discount > 0 ? product.discount : 0;
-      const sp = disc > 0 ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100)) : parseFloat(product.price || 0);
+      const sp =
+        disc > 0
+          ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100))
+          : parseFloat(product.price || 0);
       addToCart({ ...product, price: sp }, quantity);
       setShowCheckout(true);
     }
@@ -130,7 +171,8 @@ const ProductDetailPage = () => {
     const half = rating % 1 >= 0.5;
     for (let i = 1; i <= 5; i++) {
       if (i <= full) stars.push(<FaStar key={i} className="star filled" />);
-      else if (i === full + 1 && half) stars.push(<FaStarHalfAlt key={i} className="star half" />);
+      else if (i === full + 1 && half)
+        stars.push(<FaStarHalfAlt key={i} className="star half" />);
       else stars.push(<FaRegStar key={i} className="star empty" />);
     }
     return stars;
@@ -159,8 +201,10 @@ const ProductDetailPage = () => {
         <div className="pdp-error">
           <FaTimesCircle size={48} color="#ef4444" />
           <h2>Product Not Found</h2>
-          <p>{error || 'The product you are looking for does not exist.'}</p>
-          <Link to="/products" className="pdp-btn-primary">Browse Products</Link>
+          <p>{error || "The product you are looking for does not exist."}</p>
+          <Link to="/products" className="pdp-btn-primary">
+            Browse Products
+          </Link>
         </div>
       </div>
     );
@@ -169,36 +213,43 @@ const ProductDetailPage = () => {
   const images = getImageList();
   const inStock = product.stock > 0;
   const discountPct = product.discount > 0 ? product.discount : 0;
-  const sellingPrice = discountPct > 0
-    ? Math.round(parseFloat(product.price || 0) * (1 - discountPct / 100))
-    : parseFloat(product.price || 0);
+  const sellingPrice =
+    discountPct > 0
+      ? Math.round(parseFloat(product.price || 0) * (1 - discountPct / 100))
+      : parseFloat(product.price || 0);
   const mrpPrice = discountPct > 0 ? parseFloat(product.price || 0) : null;
   const totalPrice = sellingPrice * quantity;
 
   return (
     <div className="pdp-page">
-
       {/* Breadcrumb */}
       <div className="pdp-breadcrumb">
         <div className="pdp-container">
-          <Link to="/" className="pdp-bc-link"><FaHome /> Home</Link>
+          <Link to="/" className="pdp-bc-link">
+            <FaHome /> Home
+          </Link>
           <FaChevronRight className="pdp-bc-sep" />
-          <Link to="/products" className="pdp-bc-link">Products</Link>
+          <Link to="/products" className="pdp-bc-link">
+            Products
+          </Link>
           <FaChevronRight className="pdp-bc-sep" />
-          {product.category && (
+          {categoryName && (
             <>
-              <Link to="/products" className="pdp-bc-link">{product.category}</Link>
+              <Link to="/products" className="pdp-bc-link">
+                {categoryName}
+              </Link>
               <FaChevronRight className="pdp-bc-sep" />
             </>
           )}
-          <span className="pdp-bc-current">{product.productName || product.name}</span>
+          <span className="pdp-bc-current">
+            {product.productName || product.name}
+          </span>
         </div>
       </div>
 
       {/* Main Product Section */}
       <div className="pdp-container">
         <div className="pdp-main">
-
           {/* LEFT: Image Gallery */}
           <div className="pdp-gallery">
             {/* Thumbnails */}
@@ -207,7 +258,7 @@ const ProductDetailPage = () => {
                 {images.map((img, i) => (
                   <button
                     key={i}
-                    className={`pdp-thumb ${selectedImageIndex === i ? 'active' : ''}`}
+                    className={`pdp-thumb ${selectedImageIndex === i ? "active" : ""}`}
                     onClick={() => setSelectedImageIndex(i)}
                   >
                     <img src={img} alt={`View ${i + 1}`} />
@@ -219,7 +270,7 @@ const ProductDetailPage = () => {
             {/* Main Image */}
             <div className="pdp-main-image-wrap">
               <div
-                className={`pdp-main-image ${imageZoom ? 'zoomed' : ''}`}
+                className={`pdp-main-image ${imageZoom ? "zoomed" : ""}`}
                 onClick={() => setImageZoom(!imageZoom)}
                 title="Click to zoom"
               >
@@ -231,21 +282,39 @@ const ProductDetailPage = () => {
                 ) : (
                   <div className="pdp-no-image">No Image</div>
                 )}
-                {inStock && <span className="pdp-in-stock-badge">In Stock</span>}
-                {!inStock && <span className="pdp-out-stock-badge">Out of Stock</span>}
+                {inStock && (
+                  <span className="pdp-in-stock-badge">In Stock</span>
+                )}
+                {!inStock && (
+                  <span className="pdp-out-stock-badge">Out of Stock</span>
+                )}
               </div>
 
               {images.length > 1 && (
                 <div className="pdp-img-nav">
                   <button
                     className="pdp-img-btn"
-                    onClick={() => setSelectedImageIndex(p => p === 0 ? images.length - 1 : p - 1)}
-                  >&#8592;</button>
-                  <span className="pdp-img-count">{selectedImageIndex + 1} / {images.length}</span>
+                    onClick={() =>
+                      setSelectedImageIndex((p) =>
+                        p === 0 ? images.length - 1 : p - 1,
+                      )
+                    }
+                  >
+                    &#8592;
+                  </button>
+                  <span className="pdp-img-count">
+                    {selectedImageIndex + 1} / {images.length}
+                  </span>
                   <button
                     className="pdp-img-btn"
-                    onClick={() => setSelectedImageIndex(p => p === images.length - 1 ? 0 : p + 1)}
-                  >&#8594;</button>
+                    onClick={() =>
+                      setSelectedImageIndex((p) =>
+                        p === images.length - 1 ? 0 : p + 1,
+                      )
+                    }
+                  >
+                    &#8594;
+                  </button>
                 </div>
               )}
             </div>
@@ -255,8 +324,12 @@ const ProductDetailPage = () => {
           <div className="pdp-info">
             {/* Category & Brand */}
             <div className="pdp-tags">
-              {product.category && <span className="pdp-cat-tag">{product.category}</span>}
-              {product.brand && <span className="pdp-brand-tag">By {product.brand}</span>}
+              {categoryName && (
+                <span className="pdp-cat-tag">{categoryName}</span>
+              )}
+              {product.brand && (
+                <span className="pdp-brand-tag">By {product.brand}</span>
+              )}
             </div>
 
             {/* Product Name */}
@@ -264,14 +337,22 @@ const ProductDetailPage = () => {
 
             {/* Model No */}
             {product.modelNo && (
-              <p className="pdp-model">Model: <strong>{product.modelNo}</strong></p>
+              <p className="pdp-model">
+                Model: <strong>{product.modelNo}</strong>
+              </p>
             )}
 
             {/* Star Rating Row */}
             <div className="pdp-rating-row">
               <div className="pdp-stars">{renderStars(averageRating)}</div>
-              <span className="pdp-rating-val">{averageRating > 0 ? averageRating.toFixed(1) : 'No ratings'}</span>
-              {totalReviews > 0 && <span className="pdp-rating-count">({totalReviews} reviews)</span>}
+              <span className="pdp-rating-val">
+                {averageRating > 0 ? averageRating.toFixed(1) : "No ratings"}
+              </span>
+              {totalReviews > 0 && (
+                <span className="pdp-rating-count">
+                  ({totalReviews} reviews)
+                </span>
+              )}
             </div>
 
             <div className="pdp-divider"></div>
@@ -285,25 +366,33 @@ const ProductDetailPage = () => {
                 <span className="pdp-price-label">Price</span>
                 <div className="pdp-price-value">
                   <span className="pdp-currency">₹</span>
-                  <span className="pdp-amount">{sellingPrice.toLocaleString('en-IN')}</span>
+                  <span className="pdp-amount">
+                    {sellingPrice.toLocaleString("en-IN")}
+                  </span>
                   {mrpPrice && (
-                    <span className="pdp-mrp">MRP <s>₹{mrpPrice.toLocaleString('en-IN')}</s></span>
+                    <span className="pdp-mrp">
+                      MRP <s>₹{mrpPrice.toLocaleString("en-IN")}</s>
+                    </span>
                   )}
                 </div>
               </div>
               {discountPct > 0 && (
-                <p className="pdp-saving-note">You save ₹{(mrpPrice - sellingPrice).toLocaleString('en-IN')} ({discountPct}%)</p>
+                <p className="pdp-saving-note">
+                  You save ₹{(mrpPrice - sellingPrice).toLocaleString("en-IN")}{" "}
+                  ({discountPct}%)
+                </p>
               )}
               <p className="pdp-tax-note">Inclusive of all taxes</p>
             </div>
 
             {/* Stock Status */}
-            <div className={`pdp-stock-row ${inStock ? 'in' : 'out'}`}>
+            <div className={`pdp-stock-row ${inStock ? "in" : "out"}`}>
               {inStock ? (
                 <>
                   <FaCheckCircle className="pdp-stock-icon" />
                   <span className="pdp-stock-text">
-                    Only <strong>{product.stock}</strong> Left In Stock – Order Soon!
+                    Only <strong>{product.stock}</strong> Left In Stock – Order
+                    Soon!
                   </span>
                 </>
               ) : (
@@ -323,18 +412,26 @@ const ProductDetailPage = () => {
                 <div className="pdp-qty-control">
                   <button
                     className="pdp-qty-btn"
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
-                  >−</button>
+                  >
+                    −
+                  </button>
                   <span className="pdp-qty-val">{quantity}</span>
                   <button
                     className="pdp-qty-btn"
-                    onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                    onClick={() =>
+                      setQuantity((q) => Math.min(product.stock, q + 1))
+                    }
                     disabled={quantity >= product.stock}
-                  >+</button>
+                  >
+                    +
+                  </button>
                 </div>
                 {quantity > 1 && (
-                  <span className="pdp-qty-total">Total: ₹{totalPrice.toLocaleString('en-IN')}</span>
+                  <span className="pdp-qty-total">
+                    Total: ₹{totalPrice.toLocaleString("en-IN")}
+                  </span>
                 )}
               </div>
             )}
@@ -344,12 +441,12 @@ const ProductDetailPage = () => {
               {user ? (
                 <>
                   <button
-                    className={`pdp-btn-cart ${addedToCart ? 'added' : ''}`}
+                    className={`pdp-btn-cart ${addedToCart ? "added" : ""}`}
                     onClick={handleAddToCart}
                     disabled={!inStock}
                   >
                     <FaShoppingCart />
-                    {addedToCart ? 'Added to Cart!' : 'Add to Cart'}
+                    {addedToCart ? "Added to Cart!" : "Add to Cart"}
                   </button>
                   <button
                     className="pdp-btn-buy"
@@ -374,7 +471,12 @@ const ProductDetailPage = () => {
 
             {/* Datasheet */}
             {product.datasheet && (
-              <a href={product.datasheet} target="_blank" rel="noopener noreferrer" className="pdp-datasheet">
+              <a
+                href={product.datasheet}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pdp-datasheet"
+              >
                 <FaDownload /> Download Datasheet
               </a>
             )}
@@ -405,33 +507,45 @@ const ProductDetailPage = () => {
         <div className="pdp-tabs-section">
           <div className="pdp-tabs-header">
             <button
-              className={`pdp-tab ${activeTab === 'description' ? 'active' : ''}`}
-              onClick={() => setActiveTab('description')}
-            >Description</button>
-            {product.specifications && Object.keys(product.specifications).length > 0 && (
-              <button
-                className={`pdp-tab ${activeTab === 'specs' ? 'active' : ''}`}
-                onClick={() => setActiveTab('specs')}
-              >Specifications</button>
-            )}
+              className={`pdp-tab ${activeTab === "description" ? "active" : ""}`}
+              onClick={() => setActiveTab("description")}
+            >
+              Description
+            </button>
+            {product.specifications &&
+              Object.keys(product.specifications).length > 0 && (
+                <button
+                  className={`pdp-tab ${activeTab === "specs" ? "active" : ""}`}
+                  onClick={() => setActiveTab("specs")}
+                >
+                  Specifications
+                </button>
+              )}
           </div>
 
           <div className="pdp-tabs-body">
-            {activeTab === 'description' && (
+            {activeTab === "description" && (
               <div className="pdp-description">
-                <p>{product.description || 'No description available for this product.'}</p>
+                <p>
+                  {product.description ||
+                    "No description available for this product."}
+                </p>
               </div>
             )}
-            {activeTab === 'specs' && (
+            {activeTab === "specs" && (
               <div className="pdp-specs">
                 <table className="pdp-specs-table">
                   <tbody>
-                    {Object.entries(product.specifications || {}).map(([key, value]) => (
-                      <tr key={key}>
-                        <td className="pdp-spec-key">{key.replace(/([A-Z])/g, ' $1').trim()}</td>
-                        <td className="pdp-spec-val">{value}</td>
-                      </tr>
-                    ))}
+                    {Object.entries(product.specifications || {}).map(
+                      ([key, value]) => (
+                        <tr key={key}>
+                          <td className="pdp-spec-key">
+                            {key.replace(/([A-Z])/g, " $1").trim()}
+                          </td>
+                          <td className="pdp-spec-val">{value}</td>
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -447,8 +561,12 @@ const ProductDetailPage = () => {
           {totalReviews > 0 && (
             <div className="pdp-rating-summary">
               <div className="pdp-rating-big">
-                <span className="pdp-rating-number">{averageRating.toFixed(1)}</span>
-                <div className="pdp-stars pdp-stars-lg">{renderStars(averageRating)}</div>
+                <span className="pdp-rating-number">
+                  {averageRating.toFixed(1)}
+                </span>
+                <div className="pdp-stars pdp-stars-lg">
+                  {renderStars(averageRating)}
+                </div>
                 <span className="pdp-rating-total">{totalReviews} Reviews</span>
               </div>
             </div>
@@ -476,7 +594,9 @@ const ProductDetailPage = () => {
             <div className="pdp-login-review">
               <FaStar size={32} color="#fbbf24" />
               <p>Share your experience with this product</p>
-              <Link to="/signin" className="pdp-btn-primary">Login to Write a Review</Link>
+              <Link to="/signin" className="pdp-btn-primary">
+                Login to Write a Review
+              </Link>
             </div>
           )}
         </div>
@@ -492,30 +612,50 @@ const ProductDetailPage = () => {
                   key={p._id}
                   className="pdp-related-card"
                   onClick={() => {
-                    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+                    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
                     document.documentElement.scrollTop = 0;
                     document.body.scrollTop = 0;
                   }}
                 >
                   <div className="pdp-related-img">
-                    <img src={p.image || (p.images && p.images[0])} alt={p.productName || p.name} />
+                    <img
+                      src={p.image || (p.images && p.images[0])}
+                      alt={p.productName || p.name}
+                    />
                   </div>
                   <div className="pdp-related-info">
-                    <p className="pdp-related-name">{p.productName || p.name}</p>
+                    <p className="pdp-related-name">
+                      {p.productName || p.name}
+                    </p>
                     {p.brand && <p className="pdp-related-brand">{p.brand}</p>}
                     <div className="pdp-related-price-row">
                       <p className="pdp-related-price">
-                        ₹{(p.discount > 0 ? Math.round(parseFloat(p.price || 0) * (1 - p.discount / 100)) : parseFloat(p.price || 0)).toLocaleString('en-IN')}
+                        ₹
+                        {(p.discount > 0
+                          ? Math.round(
+                              parseFloat(p.price || 0) * (1 - p.discount / 100),
+                            )
+                          : parseFloat(p.price || 0)
+                        ).toLocaleString("en-IN")}
                       </p>
                       {p.discount > 0 && (
                         <>
-                          <span className="pdp-related-mrp"><s>₹{parseFloat(p.price || 0).toLocaleString('en-IN')}</s></span>
-                          <span className="pdp-related-badge">{p.discount}% OFF</span>
+                          <span className="pdp-related-mrp">
+                            <s>
+                              ₹
+                              {parseFloat(p.price || 0).toLocaleString("en-IN")}
+                            </s>
+                          </span>
+                          <span className="pdp-related-badge">
+                            {p.discount}% OFF
+                          </span>
                         </>
                       )}
                     </div>
-                    <span className={`pdp-related-stock ${p.stock > 0 ? 'in' : 'out'}`}>
-                      {p.stock > 0 ? '✓ In Stock' : 'Out of Stock'}
+                    <span
+                      className={`pdp-related-stock ${p.stock > 0 ? "in" : "out"}`}
+                    >
+                      {p.stock > 0 ? "✓ In Stock" : "Out of Stock"}
                     </span>
                   </div>
                 </Link>
@@ -523,7 +663,6 @@ const ProductDetailPage = () => {
             </div>
           </div>
         )}
-
       </div>
 
       {/* Checkout Modal */}

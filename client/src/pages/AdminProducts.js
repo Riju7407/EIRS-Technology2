@@ -343,6 +343,7 @@ return subCategoryId?.toString() === categoryId?.toString();
     console.log("📤 Submitting product data:", submitData);
     console.log("📌 ModelNo being sent:", submitData.modelNo);
 
+    console.log("CATEGORY BEING SENT:", formData.category);
     try {
       if (editingId) {
         await productService.updateProduct(editingId, submitData);
@@ -361,6 +362,7 @@ return subCategoryId?.toString() === categoryId?.toString();
       alert("Error saving product: " + (error.message || "Unknown error"));
     }
   };
+  console.log("CATEGORY BEING SENT:", formData.category);
 
   const handleEdit = async (product) => {
     try {

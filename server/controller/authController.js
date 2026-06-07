@@ -8,11 +8,31 @@ const { syncUserToCrm, fireAndForget } = require('../services/crmSyncService');
 
 const signup = async (req, res, next) => {
     try {
-        const {name, phoneNumber, address, email, password, confirmPassword} = req.body;
+       const {
+  name,
+  phoneNumber,
+  address,
+  city,
+  state,
+  pincode,
+  email,
+  password,
+  confirmPassword
+} = req.body;
 
         console.log('Signup attempt:', {name, email, phoneNumber});
 
-        if(!name || !phoneNumber || !address || !email || !password || !confirmPassword){
+       if(
+  !name ||
+  !phoneNumber ||
+  !address ||
+  !city ||
+  !state ||
+  !pincode ||
+  !email ||
+  !password ||
+  !confirmPassword
+) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
@@ -34,13 +54,16 @@ const signup = async (req, res, next) => {
         }
 
         // Prepare user data
-        const userData = {
-            name: name.trim(),
-            email: email.toLowerCase().trim(),
-            phoneNumber: phoneNumber.toString().trim(),
-            address: address.trim(),
-            password: password
-        };
+       const userData = {
+  name: name.trim(),
+  email: email.toLowerCase().trim(),
+  phoneNumber: phoneNumber.toString().trim(),
+  address: address.trim(),
+  city: city.trim(),
+  state: state.trim(),
+  pincode: pincode.toString().trim(),
+  password: password
+};
 
         const userInfo = new userSchema(userData);
         const savedUser = await userInfo.save();
@@ -124,13 +147,18 @@ const signin = async (req, res, next) => {
             success: true,
             message: "Signed in successfully",
             token: token,
-            data: {
-                _id: user._id,
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                isAdmin: user.isAdmin
-            }
+           data: {
+  _id: user._id,
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  phoneNumber: user.phoneNumber,
+  address: user.address,
+  city: user.city,
+  state: user.state,
+  pincode: user.pincode,
+  isAdmin: user.isAdmin
+}
         });
     } catch (error) {
         console.error('Signin error:', error);

@@ -35,6 +35,7 @@ import PhoneSignUp from './pages/PhoneSignUp';
 import './App.css';
 import AdminCategories from './pages/AdminCategories';
 import AdminSubcategories from './pages/AdminSubcategories';
+import CheckoutModal from './components/CheckoutModal';
 
 
 function AppContent() {
@@ -43,7 +44,7 @@ function AppContent() {
   useKeepServerAwake();
 
   // Hide Footer on orders page, account page, phone signup page, product detail pages, about page, contact page, and services page
-  const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup', '/about', '/contact', '/services'];
+  const hideFooterPaths = ['/', '/orders', '/account', '/phonesignup', '/checkout','/about', '/contact', '/services'];
   const isProductDetailPage = location.pathname.startsWith('/products/') || location.pathname.startsWith('/product/');
   const isServiceDetailPage = location.pathname.startsWith('/services/');
   const isAdminPage = location.pathname.startsWith('/admin');
@@ -51,6 +52,7 @@ function AppContent() {
 
   return (
     <div className="App">
+      
       {!isAdminPage && <Header />}
       <Routes>
         {/* Public Routes */}
@@ -62,6 +64,7 @@ function AppContent() {
         <Route path="/products/:id" element={<ProductDetailPage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutModal />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />

@@ -17,6 +17,9 @@ const SignUpPage = () => {
     email: '',
     phoneNumber: '',
     address: '',
+     city: '',
+  state: '',
+  pincode: '',
     password: '',
     confirmPassword: '',
   });
@@ -46,7 +49,13 @@ const SignUpPage = () => {
             p.postcode,
           ].filter(Boolean);
           const resolved = parts.join(', ') || data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-          setFormData(prev => ({ ...prev, address: resolved }));
+          setFormData(prev => ({
+  ...prev,
+  address: resolved,
+  city: p.city || p.town || p.village || p.county || '',
+  state: p.state || '',
+  pincode: p.postcode || '',
+}));
         } catch {
           setGeoError('Could not fetch address. Please type it manually.');
         } finally {
@@ -80,6 +89,23 @@ const SignUpPage = () => {
     setLoading(true);
 
     // Basic client-side validation
+    if (!formData.city.trim()) {
+  setError('City is required');
+  setLoading(false);
+  return;
+}
+
+if (!formData.state.trim()) {
+  setError('State is required');
+  setLoading(false);
+  return;
+}
+
+if (!/^\d{6}$/.test(formData.pincode)) {
+  setError('Pincode must be 6 digits');
+  setLoading(false);
+  return;
+}
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -212,6 +238,43 @@ const SignUpPage = () => {
                 placeholder="Or type your address manually"
               />
             </div>
+
+            <div className="form-group">
+  <label htmlFor="city">City</label>
+  <input
+    type="text"
+    id="city"
+    name="city"
+    value={formData.city}
+    onChange={handleInputChange}
+    required
+    placeholder="Enter city"
+  />
+</div>
+<div className="form-group">
+  <label htmlFor="state">State</label>
+  <input
+    type="text"
+    id="state"
+    name="state"
+    value={formData.state}
+    onChange={handleInputChange}
+    required
+    placeholder="Enter state"
+  />
+</div>
+<div className="form-group">
+  <label htmlFor="pincode">Pincode</label>
+  <input
+    type="text"
+    id="pincode"
+    name="pincode"
+    value={formData.pincode}
+    onChange={handleInputChange}
+    required
+    placeholder="Enter pincode"
+  />
+</div>
 
             <div className="form-group">
               <label htmlFor="password">Password</label>

@@ -34,7 +34,19 @@ const orderSchema = new Schema({
         },
         image: {
             type: String
-        }
+        },
+         hsn: {
+        type: String,
+        default: ""
+    },
+    modelNo: {
+        type: String,
+        default: ""
+    },
+    discount: {
+        type: Number,
+        default: 0
+    },
     }],
     totalPrice: {
         type: Number,

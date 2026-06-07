@@ -2,18 +2,11 @@ const JWT = require("jsonwebtoken");
 
 const jwtAuth = (req, res, next) => {
     try {
-        console.log("\n================ JWT AUTH DEBUG ================");
-        console.log("METHOD:", req.method);
-        console.log("URL:", req.originalUrl);
-        console.log("HEADERS:", JSON.stringify(req.headers, null, 2));
-console.log("AUTH HEADER RAW:", req.headers.authorization);
+        
 
         let token = null;
 
-        // Request Info
-        console.log("QUERY:", req.query);
-        console.log("COOKIES:", req.cookies || {});
-        console.log("AUTH HEADER:", req.headers.authorization || "NOT PROVIDED");
+
 
         // 1. Cookie Token
         if (req.cookies?.token) {

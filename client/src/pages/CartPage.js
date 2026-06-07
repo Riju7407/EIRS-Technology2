@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
-import CheckoutModal from '../components/CheckoutModal';
-import '../styles/CartPage.css';
+import React from "react";
+
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import "../styles/CartPage.css";
 
 const CartPage = () => {
-  const { cartItems, removeFromCart, updateQuantity, getTotalPrice, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getTotalPrice, clearCart } =
+    useCart();
   const { user } = useAuth();
-  const [showCheckout, setShowCheckout] = useState(false);
-  const totalAmount = getTotalPrice() * 1.18; // Include 18% tax
+  const navigate = useNavigate();
 
+  const totalAmount = getTotalPrice() * 1.18;
+
+  // =========================
+  // EMPTY CART
+  // =========================
   if (cartItems.length === 0) {
     return (
       <div className="cart-page">
@@ -25,6 +30,24 @@ const CartPage = () => {
       </div>
     );
   }
+
+  // =========================
+  // STOCK SAFE UPDATE FUNCTION
+  // =========================
+  const handleIncrease = (item) => {
+    const stock = item.stock || 0;
+
+    if (item.quantity >= stock) {
+      alert("⚠️ Only " + stock + " items available in stock");
+      return;
+    }
+
+    updateQuantity(item._id, item.quantity + 1);
+  };
+
+  const handleDecrease = (item) => {
+    updateQuantity(item._id, item.quantity - 1);
+  };
 
   return (
     <div className="cart-page">
@@ -42,62 +65,96 @@ const CartPage = () => {
               <span className="col-action">Action</span>
             </div>
 
-            {cartItems.map((item) => (
-              <div key={item._id} className="cart-row">
-                <div className="item-product">
-                  {item.image && (
-                    <img src={item.image} alt={item.name} className="item-image" />
-                  )}
-                  <div className="item-details">
-                    <h3>{item.name}</h3>
-                    <p className="item-category">{item.category}</p>
+            {cartItems.map((item) => {
+              const stock = item.stock || 0;
+              const isOutOfStock = stock === 0;
+              const isMaxReached = item.quantity >= stock;
+
+              return (
+                <div key={item._id} className="cart-row">
+                  {/* PRODUCT */}
+                  <div className="item-product">
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="item-image"
+                      />
+                    )}
+
+                    <div className="item-details">
+                      <h3>{item.productName || item.name}</h3>
+                      <p className="item-category">{item.category}</p>
+                    </div>
+                  </div>
+
+                  {/* PRICE */}
+                  <div className="item-price">
+                    ₹{parseFloat(item.price).toLocaleString()}
+                  </div>
+
+                  {/* STOCK */}
+                  <div className="item-stock">
+                    <span
+                      className={`stock-status ${
+                        stock > 0 ? "in-stock" : "out-of-stock"
+                      }`}
+                    >
+                      {stock > 0
+                        ? `${stock} Available`
+                        : "Out of Stock"}
+                    </span>
+                  </div>
+
+                  {/* QUANTITY */}
+                  <div className="item-quantity">
+                    <button
+                      className="qty-btn"
+                      onClick={() => handleDecrease(item)}
+                      disabled={item.quantity <= 1}
+                    >
+                      <FaMinus />
+                    </button>
+
+                    <span className="qty-value">{item.quantity}</span>
+
+                    <button
+                      className="qty-btn"
+                      onClick={() => handleIncrease(item)}
+                      disabled={isOutOfStock || isMaxReached}
+                      title={
+                        isOutOfStock
+                          ? "Out of Stock"
+                          : isMaxReached
+                          ? "Max stock reached"
+                          : ""
+                      }
+                    >
+                      <FaPlus />
+                    </button>
+                  </div>
+
+                  {/* SUBTOTAL */}
+                  <div className="item-subtotal">
+                    ₹
+                    {(parseFloat(item.price) * item.quantity).toLocaleString()}
+                  </div>
+
+                  {/* ACTION */}
+                  <div className="item-action">
+                    <button
+                      className="btn-delete"
+                      onClick={() => removeFromCart(item._id)}
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
-
-                <div className="item-price">
-                  ₹{parseFloat(item.price).toLocaleString()}
-                </div>
-
-                <div className="item-stock">
-                  <span className={`stock-status ${item.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-                    {item.stock > 0 ? `${item.stock} Available` : 'Out of Stock'}
-                  </span>
-                </div>
-
-                <div className="item-quantity">
-                  <button
-                    className="qty-btn"
-                    onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                  >
-                    <FaMinus />
-                  </button>
-                  <span className="qty-value">{item.quantity}</span>
-                  <button
-                    className="qty-btn"
-                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                  >
-                    <FaPlus />
-                  </button>
-                </div>
-
-                <div className="item-subtotal">
-                  ₹{(parseFloat(item.price) * item.quantity).toLocaleString()}
-                </div>
-
-                <div className="item-action">
-                  <button
-                    className="btn-delete"
-                    onClick={() => removeFromCart(item._id)}
-                    title="Remove from cart"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
+          {/* SUMMARY */}
           <div className="cart-summary">
             <div className="summary-card">
               <h2>Order Summary</h2>
@@ -123,48 +180,42 @@ const CartPage = () => {
               </div>
 
               {user ? (
-                <button 
+                <button
                   className="btn-checkout"
-                  onClick={() => setShowCheckout(true)}
+                  onClick={() =>
+                    navigate("/checkout", {
+                      state: {
+                        cartItems,
+                        totalAmount,
+                        userId: user.id || user._id,
+                        userName: user.name,
+                        userEmail: user.email,
+                      },
+                    })
+                  }
                 >
                   Proceed to Checkout
                 </button>
               ) : (
-                <Link to="/signin" className="btn-checkout" style={{ textAlign: 'center', textDecoration: 'none' }}>
+                <Link to="/signin" className="btn-checkout">
                   Login to Checkout
                 </Link>
               )}
 
               <button
                 className="btn-continue-shopping-secondary"
-                onClick={() => window.location.href = '/products'}
+                onClick={() => (window.location.href = "/products")}
               >
                 Continue Shopping
               </button>
 
-              <button
-                className="btn-clear-cart"
-                onClick={clearCart}
-              >
+              <button className="btn-clear-cart" onClick={clearCart}>
                 Clear Cart
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Checkout Modal */}
-      {user && (
-        <CheckoutModal 
-          isOpen={showCheckout}
-          onClose={() => setShowCheckout(false)}
-          cartItems={cartItems}
-          totalAmount={totalAmount}
-          userId={user.id || user._id}
-          userName={user.name}
-          userEmail={user.email}
-        />
-      )}
     </div>
   );
 };

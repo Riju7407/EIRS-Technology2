@@ -52,7 +52,7 @@ const userSchema = new Schema({
         type: String,
         trim: true,
         default: '',
-        match: [/^\d{0,6}$/, 'Pincode must contain only digits and be up to 6 characters']
+          match: [/^\d{6}$/, 'Pincode must be exactly 6 digits']
     },
     resetPasswordToken: {
         type: String,

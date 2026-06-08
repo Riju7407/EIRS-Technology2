@@ -7,8 +7,13 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/CartPage.css";
 
 const CartPage = () => {
-  const { cartItems, removeFromCart, updateQuantity, getTotalPrice, clearCart } =
-    useCart();
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    getTotalPrice,
+    clearCart,
+  } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -48,6 +53,7 @@ const CartPage = () => {
   const handleDecrease = (item) => {
     updateQuantity(item._id, item.quantity - 1);
   };
+  console.log("Cart Items => ", cartItems);
 
   return (
     <div className="cart-page">
@@ -84,7 +90,12 @@ const CartPage = () => {
 
                     <div className="item-details">
                       <h3>{item.productName || item.name}</h3>
-                      <p className="item-category">{item.category}</p>
+
+                      <p className="item-category">
+                        {typeof item.category === "object"
+                          ? item.category?.name
+                          : item.category}
+                      </p>
                     </div>
                   </div>
 
@@ -100,9 +111,7 @@ const CartPage = () => {
                         stock > 0 ? "in-stock" : "out-of-stock"
                       }`}
                     >
-                      {stock > 0
-                        ? `${stock} Available`
-                        : "Out of Stock"}
+                      {stock > 0 ? `${stock} Available` : "Out of Stock"}
                     </span>
                   </div>
 
@@ -126,8 +135,8 @@ const CartPage = () => {
                         isOutOfStock
                           ? "Out of Stock"
                           : isMaxReached
-                          ? "Max stock reached"
-                          : ""
+                            ? "Max stock reached"
+                            : ""
                       }
                     >
                       <FaPlus />
@@ -137,7 +146,10 @@ const CartPage = () => {
                   {/* SUBTOTAL */}
                   <div className="item-subtotal">
                     ₹
-                    {(parseFloat(item.price) * item.quantity).toLocaleString()}
+                    {(
+                      (item.price - (item.price * (item.discount || 0)) / 100) *
+                      (item.quantity || 1)
+                    ).toLocaleString()}
                   </div>
 
                   {/* ACTION */}

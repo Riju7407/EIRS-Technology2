@@ -64,6 +64,7 @@ const ProductDetailPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await productService.getProductById(id);
+        console.log("PRODUCT API RESPONSE:", response);
         const productData = response.data ? response.data : response;
         setProduct(productData);
         setError("");
@@ -136,34 +137,55 @@ const ProductDetailPage = () => {
     if (id) fetchReviews();
   }, [id, user]);
 
-  const handleAddToCart = () => {
-    if (product && product.stock > 0) {
-      const disc = product.discount > 0 ? product.discount : 0;
-      const sp =
-        disc > 0
-          ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100))
-          : parseFloat(product.price || 0);
-      addToCart({ ...product, price: sp }, quantity);
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2500);
-    }
+ const handleAddToCart = () => {
+  if (!product || product.stock <= 0) return;
+
+  const discount = product.discount || 0;
+
+  const cleanProduct = {
+    _id: product._id,
+    productName: product.productName || product.name,
+    price: product.price, // ORIGINAL PRICE
+    discount: discount,
+    hsn: product.hsn || "",
+    modelNo: product.modelNo || "",
+    image: product.image,
+    brand: product.brand,
+    stock: product.stock,
   };
 
+  addToCart(cleanProduct, quantity);
+
+  setAddedToCart(true);
+  setTimeout(() => setAddedToCart(false), 2500);
+};
+
   const handleBuyNow = () => {
-    if (!user) {
-      navigate("/signin");
-      return;
-    }
-    if (product && product.stock > 0) {
-      const disc = product.discount > 0 ? product.discount : 0;
-      const sp =
-        disc > 0
-          ? Math.round(parseFloat(product.price || 0) * (1 - disc / 100))
-          : parseFloat(product.price || 0);
-      addToCart({ ...product, price: sp }, quantity);
-      setShowCheckout(true);
-    }
+  if (!user) {
+    navigate("/signin");
+    return;
+  }
+
+  if (!product || product.stock <= 0) return;
+
+  const discount = product.discount || 0;
+
+  const cleanProduct = {
+    _id: product._id,
+    productName: product.productName || product.name,
+    price: product.price, // ORIGINAL PRICE
+    discount: discount,
+    hsn: product.hsn || "",
+    modelNo: product.modelNo || "",
+    image: product.image,
+    brand: product.brand,
+    stock: product.stock,
   };
+
+  addToCart(cleanProduct, quantity);
+
+  setShowCheckout(true);
+};
 
   const renderStars = (rating) => {
     const stars = [];
@@ -219,6 +241,8 @@ const ProductDetailPage = () => {
       : parseFloat(product.price || 0);
   const mrpPrice = discountPct > 0 ? parseFloat(product.price || 0) : null;
   const totalPrice = sellingPrice * quantity;
+
+  
 
   return (
     <div className="pdp-page">

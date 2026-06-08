@@ -103,7 +103,10 @@ const ProductCard = ({ product }) => {
         image: image,
         quantity: 1,
         stock: stockQuantity,
-        brand: brand
+        brand: brand,
+          discount: product.discount || 0,
+  hsn: product.hsn || "",
+  modelNo: product.modelNo || ""
       });
       // Then redirect to cart/checkout page
       navigate('/cart');
@@ -123,7 +126,10 @@ const ProductCard = ({ product }) => {
         image: image,
         quantity: 1,
         stock: stockQuantity,
-        brand: brand
+        brand: brand,
+          discount: product.discount || 0,
+  hsn: product.hsn || "",
+  modelNo: product.modelNo || ""
       });
       alert('Product added to cart!');
     }
@@ -149,6 +155,7 @@ const ProductCard = ({ product }) => {
       setIsWishlisted(true);
     }
   };
+  console.log(product);
 
   return (
     <div className="product-card">

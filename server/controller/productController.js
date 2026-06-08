@@ -1,34 +1,42 @@
 const Product = require('../model/productSchema.js');
+const Category = require('../model/categorySchema');
+const mongoose = require("mongoose");
 
 exports.createProduct = async (req, res) => {
-    try {
-        console.log('📦 Creating product with data:', JSON.stringify(req.body, null, 2));
-        console.log('📌 ModelNo value:', req.body.modelNo);
-        
-        const product = new Product(req.body);
-        
-        await product.save();
-        
-        console.log('✅ Product saved:', JSON.stringify(product, null, 2));
-        console.log('📌 Saved ModelNo:', product.modelNo);
-        
-        // Clear all caches when new product is added
-        productsCache.clear();
-        totalCountCache = null;
-        totalCountTimestamp = null;
-        
-        res.status(201).json({
-            success: true,
-            message: 'Product created successfully',
-            data: product
-        });
-    } catch (error) {
-        console.error('❌ Error creating product:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+  try {
+    console.log("📦 Creating product:", req.body);
+
+    const { category } = req.body;
+
+    // ❌ INVALID ID BLOCK
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category ID sent",
+        received: category,
+      });
     }
+
+    const product = new Product({
+      ...req.body,
+      category: new mongoose.Types.ObjectId(category),
+    });
+
+    await product.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      data: product,
+    });
+
+  } catch (error) {
+    console.error("❌ Error creating product:", error);
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 // Multi-level cache for products (refresh every 10 minutes)
@@ -38,77 +46,130 @@ let totalCountTimestamp = null;
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 const COUNT_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for count
 
+
+
 exports.getAllProducts = async (req, res) => {
-    try {
-        const now = Date.now();
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 50;
-        const skip = (page - 1) * limit;
-        const cacheKey = `${page}_${limit}`;
-        
-        // Check page-specific cache
-        const cachedPage = productsCache.get(cacheKey);
-        if (cachedPage && (now - cachedPage.timestamp) < CACHE_DURATION) {
-            console.log(`✅ Returning cached page ${page}`);
-            res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
-            res.set('X-Cache', 'HIT');
-            return res.json(cachedPage.data);
-        }
-        
-        // Use cached total count if available
-        let total;
-        if (totalCountCache !== null && totalCountTimestamp && (now - totalCountTimestamp) < COUNT_CACHE_DURATION) {
-            total = totalCountCache;
-        } else {
-            total = await Product.countDocuments();
-            totalCountCache = total;
-            totalCountTimestamp = now;
-        }
-        
-        // Fetch products with optimized fields - truncate description for list view
-        const products = await Product.find()
-            .select('_id productName category subcategory submenu channels brand price image stock modelNo hsn isFeatured discount')
-            .lean() // Returns plain JavaScript objects, not Mongoose documents
-            .limit(limit)
-            .skip(skip)
-            .sort({ createdAt: -1 }) // Most recent first
-            .exec();
-        
-        const response = {
-            data: products,
-            pagination: {
-                total,
-                page,
-                limit,
-                pages: Math.ceil(total / limit)
-            }
-        };
-        
-        // Cache this page
-        productsCache.set(cacheKey, {
-            data: response,
-            timestamp: now
-        });
-        
-        // Limit cache size to 10 pages
-        if (productsCache.size > 10) {
-            const firstKey = productsCache.keys().next().value;
-            productsCache.delete(firstKey);
-        }
-        
-        // Set cache headers for CDN/browser caching
-        res.set('Cache-Control', 'public, max-age=300'); // 5 minutes for browsers
-        res.set('X-Cache', 'MISS');
-        res.json(response);
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ message: error.message });
+  console.log("🔥 ===== API HIT =====");
+  console.log("🔥 REQUEST QUERY:", req.query);
+  console.log("🔥 REQUEST URL:", req.originalUrl);
+
+  try {
+    const now = Date.now();
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    console.log("📦 PAGE:", page, "LIMIT:", limit, "SKIP:", skip);
+
+    const cacheKey = `${page}_${limit}`;
+
+    // =========================
+    // CACHE CHECK
+    // =========================
+    const cachedPage = productsCache.get(cacheKey);
+    if (cachedPage && (now - cachedPage.timestamp) < CACHE_DURATION) {
+      console.log(`✅ CACHE HIT for page ${page}`);
+      res.set("Cache-Control", "public, max-age=300");
+      res.set("X-Cache", "HIT");
+      return res.json(cachedPage.data);
     }
+
+    // =========================
+    // TOTAL COUNT CACHE
+    // =========================
+    let total;
+    if (
+      totalCountCache !== null &&
+      totalCountTimestamp &&
+      (now - totalCountTimestamp) < COUNT_CACHE_DURATION
+    ) {
+      total = totalCountCache;
+      console.log("📊 Total Count from CACHE:", total);
+    } else {
+      total = await Product.countDocuments();
+      totalCountCache = total;
+      totalCountTimestamp = now;
+      console.log("📊 Total Count from DB:", total);
+    }
+
+    // =========================
+    // DEBUG FILTER (IMPORTANT)
+    // =========================
+    let filter = {};
+
+    if (req.query.category) {
+      console.log("⚠️ RAW CATEGORY VALUE:", req.query.category);
+
+      // SAFE CHECK (IMPORTANT)
+      if (mongoose.Types.ObjectId.isValid(req.query.category)) {
+        filter.category = req.query.category;
+        console.log("✅ VALID ObjectId category used");
+      } else {
+        console.warn("❌ INVALID category (IGNORED):", req.query.category);
+      }
+    }
+
+    console.log("🎯 FINAL FILTER:", filter);
+
+    // =========================
+    // DB QUERY
+    // =========================
+    const products = await Product.find(filter)
+      .populate("category", "name")
+      .select("_id productName category subcategory submenu channels brand price image stock modelNo hsn isFeatured discount")
+      .lean()
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: -1 })
+      .exec();
+
+    console.log("📦 PRODUCTS FOUND:", products.length);
+
+    const response = {
+      data: products,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    };
+
+    // =========================
+    // CACHE STORE
+    // =========================
+    productsCache.set(cacheKey, {
+      data: response,
+      timestamp: now,
+    });
+
+    if (productsCache.size > 10) {
+      const firstKey = productsCache.keys().next().value;
+      productsCache.delete(firstKey);
+      console.log("🧹 Old cache cleared:", firstKey);
+    }
+
+    res.set("Cache-Control", "public, max-age=300");
+    res.set("X-Cache", "MISS");
+
+    res.json(response);
+  } catch (error) {
+    console.error("❌ FULL ERROR:", error);
+    console.error("❌ ERROR NAME:", error.name);
+    console.error("❌ ERROR PATH:", error.path);
+    console.error("❌ ERROR VALUE:", error.value);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 exports.getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
+        .populate("category", "name") 
             .lean()
             .exec();
         if (!product) return res.status(404).json({ message: 'Product not found' });
@@ -119,31 +180,34 @@ exports.getProductById = async (req, res) => {
 };
 
 exports.updateProduct = async (req, res) => {
-    try {
-        console.log('📝 Updating product', req.params.id, 'with data:', JSON.stringify(req.body, null, 2));
-        
-        // Clear caches on update
-        productsCache.clear();
-        totalCountCache = null;
-        totalCountTimestamp = null;
-        console.log('📌 ModelNo value to update:', req.body.modelNo);
-        
-        const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        if (!product) return res.status(404).json({ message: 'Product not found' });
-        
-        // Clear cache when product is updated
-        productsCache = new Map();
-        totalCountCache = null;
-        totalCountTimestamp = null;
-        
-        console.log('✅ Product updated:', JSON.stringify(product, null, 2));
-        console.log('📌 Updated ModelNo:', product.modelNo);
-        
-        res.json(product);
-    } catch (error) {
-        console.error('❌ Error updating product:', error);
-        res.status(400).json({ message: error.message });
+  try {
+    let updateData = { ...req.body };
+
+    if (req.body.category) {
+      const categoryDoc = await Category.findById(req.body.category);
+      if (categoryDoc) {
+        if (req.body.category) {
+  updateData.category = req.body.category; // ALWAYS ObjectId
+}// ✅ convert ID to name
+      }
     }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    productsCache.clear();
+    totalCountCache = null;
+    totalCountTimestamp = null;
+
+    res.json(product);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
 exports.deleteProduct = async (req, res) => {
@@ -166,6 +230,7 @@ exports.deleteProduct = async (req, res) => {
 exports.getFeaturedProducts = async (req, res) => {
     try {
         const products = await Product.find({ isFeatured: true })
+        .populate("category", "name") 
             .select('_id productName category subcategory brand price image stock modelNo isFeatured discount')
             .lean()
             .sort({ updatedAt: -1 })

@@ -12,11 +12,11 @@ const productSchema = new Schema({
     trim: true,
     default: ""
 },
-    category: {
-        type: String,
-        required: [true, 'Product category is required'],
-        trim: true
-    },
+   category: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Category",
+  required: true
+},
     subcategory: {
         type: String,
         trim: true

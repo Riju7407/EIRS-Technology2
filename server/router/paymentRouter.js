@@ -7,10 +7,8 @@ const Service = require("../model/serviceSchema");
 const jwtAuth = require("../middleware/jwtAuth");
 const orderController = require("../controller/orderController");
 const { generateBill } = require("../services/billService");
-
+const Product = require("../model/productSchema");
 const router = express.Router();
-
-
 
 router.use((req, res, next) => {
   console.log("🔥 PAYMENT ROUTER HIT:", req.method, req.originalUrl);
@@ -20,7 +18,7 @@ router.use((req, res, next) => {
 router.get("/test-jwt", jwtAuth, (req, res) => {
   res.json({
     query: req.query,
-    user: req.user
+    user: req.user,
   });
 });
 
@@ -30,8 +28,7 @@ router.get("/test-jwt", jwtAuth, (req, res) => {
    
  */
 
-
-   const ensureInvoice = async (order) => {
+const ensureInvoice = async (order) => {
   if (!order.invoice) order.invoice = {};
 
   if (!order.invoice.invoiceNumber) {
@@ -47,7 +44,6 @@ router.get("/test-jwt", jwtAuth, (req, res) => {
 
   await order.save();
 };
-
 
 let razorpay = null;
 const getRazorpay = () => {
@@ -139,15 +135,29 @@ router.post("/orders", jwtAuth, async (req, res) => {
 
     const mappedItems = items.map((item, idx) => {
       const productId = item.productId || item._id || item.id;
-      if (!productId) throw new Error(`Item[${idx}] is missing a productId`);
+
+      if (!productId) {
+        throw new Error(`Item[${idx}] is missing a productId`);
+      }
+
       return {
         productId,
         productName: item.productName || item.name || "Product",
-        category: item.category || "",
+
+        category:
+          typeof item.category === "object"
+            ? item.category._id
+            : item.category || "",
+
         brand: item.brand || "",
         price: item.price || 0,
         quantity: item.quantity || 1,
         image: item.image || item.productImage || "",
+
+        // ADD THESE
+        hsn: item.hsn || "",
+        modelNo: item.modelNo || "",
+        discount: item.discount || 0,
       };
     });
 
@@ -224,7 +234,23 @@ router.post("/verify-payment", jwtAuth, async (req, res) => {
       order.paymentMethod = "CashOnDelivery";
       order.status = "Confirmed";
       order.razorpayPaymentId = "cod_" + orderId;
+      for (const item of order.items) {
+        const product = await Product.findById(item.productId);
+
+        if (!product) continue;
+
+        if (product.stock < item.quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `${product.productName} stock not available`,
+          });
+        }
+
+        product.stock -= item.quantity;
+        await product.save();
+      }
       await order.save();
+      await ensureInvoice(order);
       return res.json({
         success: true,
         message: "Order confirmed for Cash on Delivery",
@@ -252,20 +278,24 @@ router.post("/verify-payment", jwtAuth, async (req, res) => {
         .status(404)
         .json({ success: false, message: "Order not found" });
 
-   order.paymentStatus = "Completed";
-order.razorpayPaymentId = razorpay_payment_id;
-order.razorpaySignature = razorpay_signature;
-order.status = "Confirmed";
-order.paidAt = new Date();
+    order.paymentStatus = "Completed";
+    order.razorpayPaymentId = razorpay_payment_id;
+    order.razorpaySignature = razorpay_signature;
+    order.status = "Confirmed";
+    order.paidAt = new Date();
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: {
+          stock: -item.quantity,
+        },
+      });
+    }
 
-await ensureInvoice(order);
+    await order.save();
+    await ensureInvoice(order);
     // Generate invoice number if missing
-    
-
-    
 
     // generate pdf
-    
 
     console.log("Payment verified, order confirmed:", order._id);
     return res.json({
@@ -505,10 +535,10 @@ router.post("/webhook", async (req, res) => {
         order.status = "Confirmed";
         order.paidAt = new Date();
 
-        // invoice
-       await ensureInvoice(order);
-
         await order.save();
+
+        // invoice
+        await ensureInvoice(order);
 
         console.log(
           "Webhook: order confirmed via payment.captured:",
@@ -556,114 +586,86 @@ router.get("/payment-history", jwtAuth, async (req, res) => {
  */
 
 // DOWNLOAD BILL
-router.get(
-  "/orders/:orderId/bill/download",
-  jwtAuth,
-  async (req, res) => {
+router.get("/orders/:orderId/bill/download", jwtAuth, async (req, res) => {
+  console.log("=================================");
+  console.log("🔥 BILL DOWNLOAD ROUTE HIT");
+  console.log("ORDER ID:", req.params.orderId);
+  console.log("USER:", req.user);
+  console.log("QUERY:", req.query);
+  console.log("=================================");
 
-    console.log("=================================");
-    console.log("🔥 BILL DOWNLOAD ROUTE HIT");
-    console.log("ORDER ID:", req.params.orderId);
-    console.log("USER:", req.user);
-    console.log("QUERY:", req.query);
-    console.log("=================================");
+  try {
+    const path = require("path");
+    const fs = require("fs");
 
-    try {
-      const path = require("path");
-      const fs = require("fs");
+    // Find order
+    const order = await Order.findOne({
+      _id: req.params.orderId,
+      userId: req.user.id || req.user._id,
+    });
 
-      // Find order
-      const order = await Order.findOne({
-        _id: req.params.orderId,
-        userId: req.user.id || req.user._id,
+    console.log("📦 ORDER FOUND:", order?._id);
+
+    if (!order) {
+      console.log("❌ ORDER NOT FOUND");
+
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
       });
+    }
 
-      console.log("📦 ORDER FOUND:", order?._id);
+    const invoicesDir = path.join(process.cwd(), "invoices");
 
-      if (!order) {
-        console.log("❌ ORDER NOT FOUND");
+    const fileName = `invoice_${order._id}.pdf`;
+
+    const filePath = path.join(invoicesDir, fileName);
+
+    console.log("📄 FILE PATH:", filePath);
+
+    // Create invoice if missing
+    if (!fs.existsSync(filePath)) {
+      console.log("⚠️ Invoice file missing, generating again...");
+
+      await generateBill(order);
+
+      // Double check
+      if (!fs.existsSync(filePath)) {
+        console.log("❌ Invoice generation failed");
 
         return res.status(404).json({
           success: false,
-          message: "Order not found",
+          message: "Invoice file not found",
         });
       }
+    }
 
-      const invoicesDir = path.join(
-        process.cwd(),
-        "invoices"
-      );
+    console.log("✅ DOWNLOADING PDF");
 
-      const fileName = `invoice_${order._id}.pdf`;
+    return res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error("❌ DOWNLOAD ERROR:", err);
 
-      const filePath = path.join(
-        invoicesDir,
-        fileName
-      );
-
-      console.log("📄 FILE PATH:", filePath);
-
-      // Create invoice if missing
-      if (!fs.existsSync(filePath)) {
-
-        console.log(
-          "⚠️ Invoice file missing, generating again..."
-        );
-
-        await generateBill(order);
-
-        // Double check
-        if (!fs.existsSync(filePath)) {
-          console.log("❌ Invoice generation failed");
-
-          return res.status(404).json({
+        if (!res.headersSent) {
+          res.status(500).json({
             success: false,
-            message: "Invoice file not found",
+            message: "Failed to download invoice",
           });
         }
+      } else {
+        console.log("✅ PDF DOWNLOADED SUCCESSFULLY");
       }
+    });
+  } catch (error) {
+    console.error("❌ BILL DOWNLOAD ERROR:", error);
 
-      console.log("✅ DOWNLOADING PDF");
-
-      return res.download(
-        filePath,
-        fileName,
-        (err) => {
-          if (err) {
-            console.error(
-              "❌ DOWNLOAD ERROR:",
-              err
-            );
-
-            if (!res.headersSent) {
-              res.status(500).json({
-                success: false,
-                message: "Failed to download invoice",
-              });
-            }
-          } else {
-            console.log(
-              "✅ PDF DOWNLOADED SUCCESSFULLY"
-            );
-          }
-        }
-      );
-
-    } catch (error) {
-
-      console.error(
-        "❌ BILL DOWNLOAD ERROR:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message: "Failed to download invoice",
-        error: error.message,
-      });
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Failed to download invoice",
+      error: error.message,
+    });
   }
-);
+});
 
 router.get("/generate-invoice/:id", async (req, res) => {
   try {
@@ -682,7 +684,6 @@ router.get("/generate-invoice/:id", async (req, res) => {
       success: true,
       billUrl: order.invoice?.billUrl,
     });
-
   } catch (err) {
     return res.status(500).json({
       success: false,
@@ -696,7 +697,6 @@ router.get("/orders/:orderId/bill", jwtAuth, orderController.getBill);
 
 // GET ORDER
 router.get("/orders/:orderId", jwtAuth, async (req, res) => {
-   
   try {
     const order = await Order.findOne({
       _id: req.params.orderId,

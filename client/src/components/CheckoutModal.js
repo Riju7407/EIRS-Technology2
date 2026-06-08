@@ -259,6 +259,7 @@ const CheckoutModal = ({ onClose = () => {} }) => {
   };
 
   const handlePayment = async () => {
+      console.log("🔥 HANDLE PAYMENT CALLED");
     // Validate address first
     if (!validateAddress()) {
       setError("Please fill in all required address fields");
@@ -280,43 +281,61 @@ const CheckoutModal = ({ onClose = () => {} }) => {
       try {
         // Validate and prepare items with proper structure
         const items = cartItems.map((item, index) => {
-          // Ensure productId exists - use _id or id as fallback
-          const productId = item._id || item.id;
-          if (!productId) {
-            console.warn(`⚠️ Item ${index} missing productId:`, item);
-            throw new Error(
-              `Item ${index} (${item.name || item.productName}) is missing product ID`,
-            );
-          }
+  const productId = item._id || item.id;
 
-          return {
-            productId: productId,
-            productName: item.productName || item.name || "Product", // Use productName as primary
-            quantity: item.quantity || 1,
-            price: item.price || 0,
-            category: item.category || "",
-            brand: item.brand || "",
-            image: item.image || item.productImage || "",
-            hsn: item.hsn || "",
-            modelNo: item.modelNo || "",
-            discount: item.discount || 0,
-          };
-        });
+  if (!productId) {
+    throw new Error(
+      `Item ${index} missing productId`
+    );
+  }
+
+  const price = parseFloat(item.price || 0);
+  const discount = item.discount || 0;
+
+  return {
+    productId,
+    productName: item.productName || item.name || "Product",
+    quantity: item.quantity || 1,
+
+    // ORIGINAL + REQUIRED FIELDS 👇
+    price,
+    discount,
+
+    // NEW ADDITIONS 👇
+    hsn: item.hsn || "",
+    modelNo: item.modelNo || "",
+    brand: item.brand || "",
+    category: item.category || "",
+    image: item.image || item.productImage || ""
+  };
+});
 
         console.log("Cart items validation passed:", items);
 
-        const orderData = {
-          amount: Math.round(totalAmount * 100), // Razorpay expects amount in paise
-          currency: "INR",
-          items: items,
-          userId,
-          email: userEmail,
-          phone: shippingAddress.phone,
-          shippingAddress: shippingAddress,
-          paymentMethod: paymentMethod || "Card",
-          paymentSubMethod: paymentSubMethod,
-        };
+       const orderData = {
+  amount: Math.round(totalAmount * 100),
+  currency: "INR",
+  items,
+
+  userId,
+  customerEmail: userEmail,
+  customerPhone: shippingAddress.phone,
+
+  shippingAddress: {
+    fullName: shippingAddress.fullName,
+    email: shippingAddress.email,
+    phone: shippingAddress.phone,
+    address: shippingAddress.address,
+    city: shippingAddress.city,
+    state: shippingAddress.state,
+    zipCode: shippingAddress.zipCode,
+  },
+
+  paymentMethod,
+  paymentSubMethod,
+};
         console.log("Sending order data to backend:", orderData);
+        console.log("ORDER DATA FULL =>", JSON.stringify(orderData, null, 2));
         orderResponse = await paymentService.createOrder(orderData);
       } catch (orderError) {
         console.error("❌ Order creation error:", orderError);

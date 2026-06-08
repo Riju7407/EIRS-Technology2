@@ -202,10 +202,17 @@ const ProductsPage = () => {
         result = result.filter(
           (p) => p.category && selectedSidebarCategories.has(p.category),
         );
-      if (selectedCategory)
-        result = result.filter(
-          (p) => p.category && p.category.trim() === selectedCategory.trim(),
-        );
+      if (selectedCategory) {
+  result = result.filter((p) => {
+    if (!p.category) return false;
+
+    if (typeof p.category === "object") {
+      return p.category._id === selectedCategory;
+    }
+
+    return p.category === selectedCategory;
+  });
+}
       if (selectedSubcategory)
         result = result.filter(
           (p) =>
@@ -369,14 +376,19 @@ const ProductsPage = () => {
 
   const activeChips = useMemo(() => {
     const chips = [];
-    if (selectedCategory)
-      chips.push({
-        label: selectedCategory,
-        clear: () => {
-          setSelectedCategory("");
-          setSelectedSubcategory("");
-        },
-      });
+    if (selectedCategory) {
+  const catName =
+    categories.find((c) => c._id === selectedCategory)?.name ||
+    selectedCategory;
+
+  chips.push({
+    label: catName,
+    clear: () => {
+      setSelectedCategory("");
+      setSelectedSubcategory("");
+    },
+  });
+}
     if (selectedSubcategory)
       chips.push({
         label: selectedSubcategory,
@@ -464,15 +476,16 @@ const ProductsPage = () => {
 
               {/* Category */}
               <div className="pp-dropdown-wrap" onClick={stopPropagation}>
-                <button
-                  className={`pp-filter-btn ${selectedCategory ? "pp-filter-btn--active" : ""}`}
-                  onClick={() => toggleDropdown("category")}
-                >
-                  <FaTag /> {selectedCategory || "Category"}{" "}
-                  <FaChevronDown
-                    className={`pp-chevron ${openDropdown === "category" ? "pp-chevron--open" : ""}`}
-                  />
-                </button>
+               <button
+  className={`pp-filter-btn ${selectedCategory ? "pp-filter-btn--active" : ""}`}
+  onClick={() => toggleDropdown("category")}
+>
+  <FaTag />{" "}
+  {categories.find(c => c._id === selectedCategory)?.name || "Category"}
+  <FaChevronDown
+    className={`pp-chevron ${openDropdown === "category" ? "pp-chevron--open" : ""}`}
+  />
+</button>
                 {openDropdown === "category" && (
                   <div className="pp-dropdown-menu">
                     <div
@@ -490,7 +503,7 @@ const ProductsPage = () => {
                         key={cat.name}
                         className={`pp-dropdown-item ${selectedCategory === cat.name ? "pp-dropdown-item--active" : ""}`}
                         onClick={() => {
-                          setSelectedCategory(cat.name);
+                          setSelectedCategory(cat._id);
                           setSelectedSubcategory("");
                           setOpenDropdown(null);
                         }}

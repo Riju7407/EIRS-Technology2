@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaChevronRight } from 'react-icons/fa';
-import { useCategoryFilter } from '../context/CategoryFilterContext';
-import '../styles/CategorySidebar.css';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaChevronRight } from "react-icons/fa";
+import { useCategoryFilter } from "../context/CategoryFilterContext";
+import "../styles/CategorySidebar.css";
+import axios from "axios";
 
 const CategorySidebar = ({
   onCategorySelect = () => {},
-  onPriceRangeChange = () => {}
+  onPriceRangeChange = () => {},
 }) => {
   const navigate = useNavigate();
   const { closeSidebar } = useCategoryFilter();
@@ -19,9 +19,8 @@ const CategorySidebar = ({
   const [clickedSubcategory, setClickedSubcategory] = useState(null);
 
   const API_ROOT = (
-    process.env.REACT_APP_API_URL ||
-    'http://localhost:5000'
-  ).replace(/\/$/, '');
+    process.env.REACT_APP_API_URL || "http://localhost:5000"
+  ).replace(/\/$/, "");
 
   const API_BASE = `${API_ROOT}/api`;
 
@@ -33,11 +32,11 @@ const CategorySidebar = ({
     try {
       const [catRes, subRes] = await Promise.all([
         axios.get(`${API_BASE}/categories`),
-        axios.get(`${API_BASE}/subcategories`)
+        axios.get(`${API_BASE}/subcategories`),
       ]);
 
-      console.log('CATEGORY RESPONSE:', catRes.data);
-      console.log('SUBCATEGORY RESPONSE:', subRes.data);
+      console.log("CATEGORY RESPONSE:", catRes.data);
+      console.log("SUBCATEGORY RESPONSE:", subRes.data);
 
       const categories = Array.isArray(catRes.data)
         ? catRes.data
@@ -47,107 +46,97 @@ const CategorySidebar = ({
         ? subRes.data
         : subRes.data.data || [];
 
-      const formatted = categories.map(cat => ({
+      const formatted = categories.map((cat) => ({
         id: cat._id,
         name: cat.name,
         subcategories: subcategories
-          .filter(sub =>
-            String(
-              typeof sub.category === 'object'
-                ? sub.category?._id
-                : sub.category
-            ) === String(cat._id)
+          .filter(
+            (sub) =>
+              String(
+                typeof sub.category === "object"
+                  ? sub.category?._id
+                  : sub.category,
+              ) === String(cat._id),
           )
-          .map(sub => ({
+          .map((sub) => ({
             name: sub.name,
             actualSubcategory: sub.name,
-            redirect: true
-          }))
+            redirect: true,
+          })),
       }));
 
-      console.log('FORMATTED SIDEBAR:', formatted);
+      console.log("FORMATTED SIDEBAR:", formatted);
 
       setMainCategories(formatted);
-
     } catch (error) {
-      console.error('Sidebar Error:', error);
+      console.error("Sidebar Error:", error);
       setMainCategories([]);
     }
   };
 
   const handleCategoryClick = (categoryName) => {
-    console.log('🔗 Navigating to category:', categoryName);
-    navigate(`/products?category=${encodeURIComponent(categoryName)}&fromSidebar=true`);
+    console.log("🔗 Navigating to category:", categoryName);
+    navigate(
+      `/products?category=${encodeURIComponent(categoryName)}&fromSidebar=true`,
+    );
     closeSidebar();
   };
 
   const handleSubcategoryClick = (
     categoryName,
     subcategoryName,
-    actualSubcategory = null
+    actualSubcategory = null,
   ) => {
     const subcatToUse = actualSubcategory || subcategoryName;
 
-    console.log('🔗 Navigating to:', categoryName, '>', subcatToUse);
+    console.log("🔗 Navigating to:", categoryName, ">", subcatToUse);
 
     navigate(
       `/products?category=${encodeURIComponent(
-        categoryName
-      )}&subcategory=${encodeURIComponent(
-        subcatToUse
-      )}&fromSidebar=true`
+        categoryName,
+      )}&subcategory=${encodeURIComponent(subcatToUse)}&fromSidebar=true`,
     );
 
     closeSidebar();
   };
 
-  const handleLeafItemClick = (
-    categoryName,
-    subcategoryName,
-    itemName
-  ) => {
+  const handleLeafItemClick = (categoryName, subcategoryName, itemName) => {
     console.log(
-      '🔗 Navigating to:',
+      "🔗 Navigating to:",
       categoryName,
-      '>',
+      ">",
       subcategoryName,
-      '>',
-      itemName
+      ">",
+      itemName,
     );
 
     navigate(
       `/products?category=${encodeURIComponent(
-        categoryName
+        categoryName,
       )}&subcategory=${encodeURIComponent(
-        subcategoryName
-      )}&submenu=${encodeURIComponent(itemName)}`
+        subcategoryName,
+      )}&submenu=${encodeURIComponent(itemName)}`,
     );
 
     closeSidebar();
   };
 
-  const handleSubmenuClick = (
-    categoryName,
-    subcategoryName,
-    submenuName
-  ) => {
+  const handleSubmenuClick = (categoryName, subcategoryName, submenuName) => {
     console.log(
-      '🔗 Navigating to submenu:',
+      "🔗 Navigating to submenu:",
       categoryName,
-      '>',
+      ">",
       subcategoryName,
-      '>',
-      submenuName
+      ">",
+      submenuName,
     );
 
     navigate(
       `/products?category=${encodeURIComponent(
-        categoryName
+        categoryName,
       )}&subcategory=${encodeURIComponent(
-        subcategoryName
-      )}&submenu=${encodeURIComponent(
-        submenuName
-      )}&fromSidebar=true`
+        subcategoryName,
+      )}&submenu=${encodeURIComponent(submenuName)}&fromSidebar=true`,
     );
 
     closeSidebar();
@@ -162,7 +151,7 @@ const CategorySidebar = ({
           <div
             key={category.id}
             className={`menu-item-main ${
-              category.id === 'biometric' ? 'break-line' : ''
+              category.id === "biometric" ? "break-line" : ""
             }`}
             onMouseEnter={() => setHoveredCategory(category.id)}
             onMouseLeave={() => {
@@ -177,9 +166,7 @@ const CategorySidebar = ({
                   handleCategoryClick(category.name);
                 } else {
                   setClickedCategory(
-                    clickedCategory === category.id
-                      ? null
-                      : category.id
+                    clickedCategory === category.id ? null : category.id,
                   );
                 }
               }}
@@ -199,12 +186,8 @@ const CategorySidebar = ({
                     <div
                       key={`${category.id}-${sub.name}`}
                       className="menu-item-sub"
-                      onMouseEnter={() =>
-                        setHoveredSubcategory(sub.name)
-                      }
-                      onMouseLeave={() =>
-                        setHoveredSubcategory(null)
-                      }
+                      onMouseEnter={() => setHoveredSubcategory(sub.name)}
+                      onMouseLeave={() => setHoveredSubcategory(null)}
                     >
                       <div
                         className="menu-item-label"
@@ -213,14 +196,14 @@ const CategorySidebar = ({
                             handleSubcategoryClick(
                               category.name,
                               sub.name,
-                              sub.actualSubcategory
+                              sub.actualSubcategory,
                             );
                           } else {
                             setClickedSubcategory(
                               clickedSubcategory ===
                                 `${category.id}-${sub.name}`
                                 ? null
-                                : `${category.id}-${sub.name}`
+                                : `${category.id}-${sub.name}`,
                             );
                           }
                         }}
@@ -233,8 +216,7 @@ const CategorySidebar = ({
                       </div>
 
                       {(hoveredSubcategory === sub.name ||
-                        clickedSubcategory ===
-                          `${category.id}-${sub.name}`) &&
+                        clickedSubcategory === `${category.id}-${sub.name}`) &&
                         sub.submenus && (
                           <div className="submenu-level-2">
                             {sub.submenus.map((submenu) => (
@@ -248,10 +230,10 @@ const CategorySidebar = ({
                                     handleSubmenuClick(
                                       category.name,
                                       sub.name,
-                                      submenu.name
+                                      submenu.name,
                                     )
                                   }
-                                  style={{ cursor: 'pointer' }}
+                                  style={{ cursor: "pointer" }}
                                 >
                                   {submenu.name}
                                 </div>
@@ -266,7 +248,7 @@ const CategorySidebar = ({
                                           handleLeafItemClick(
                                             category.name,
                                             sub.name,
-                                            item
+                                            item,
                                           )
                                         }
                                       >

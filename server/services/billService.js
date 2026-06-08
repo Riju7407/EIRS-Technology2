@@ -85,8 +85,40 @@ const generateBill = async (order) => {
         .font("Helvetica")
         .text(date, 120, 160);
 
+      // ================= CUSTOMER DETAILS =================
+
+      const customer = order.shippingAddress || {};
+
+      doc
+        .roundedRect(40, 185, 515, 90, 5)
+        .fillAndStroke("#f8fafc", colors.border);
+
+      // Title
+      doc
+        .fillColor(colors.primary)
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .text("CUSTOMER DETAILS", 50, 195);
+
+      // Left side details
+      doc.fillColor(colors.text).fontSize(9).font("Helvetica");
+
+      doc.text(`Name: ${customer.fullName || "-"}`, 50, 215);
+      doc.text(`Phone: ${customer.phone || "-"}`, 50, 230);
+      doc.text(`Email: ${customer.email || "-"}`, 50, 245);
+
+      // Right side address
+      doc.text(`Address: ${customer.address || "-"}`, 300, 215, { width: 240 });
+
+      doc.text(
+        `${customer.city || ""}, ${customer.state || ""} - ${customer.zipCode || ""}`,
+        300,
+        240,
+        { width: 240 },
+      );
+
       // ================= TABLE HEADER =================
-      let y = 210;
+      let y = 290;
 
       doc
         .rect(40, y, 515, 25)
@@ -113,10 +145,7 @@ const generateBill = async (order) => {
         const discountedPrice = price - (price * discount) / 100;
         const total = discountedPrice * qty;
 
-        doc
-          .fillColor(colors.text)
-          .font("Helvetica")
-          .fontSize(9);
+        doc.fillColor(colors.text).font("Helvetica").fontSize(9);
 
         doc.text(item.productName || "-", 50, y, { width: 160 });
         doc.text(item.hsn || "N/A", 220, y);
@@ -140,13 +169,9 @@ const generateBill = async (order) => {
 
       y += 20;
 
-      doc
-        .rect(300, y, 255, 90)
-        .fill(colors.light);
+      doc.rect(300, y, 255, 90).fill(colors.light);
 
-      doc
-        .fillColor(colors.text)
-        .fontSize(10);
+      doc.fillColor(colors.text).fontSize(10);
 
       doc.text("Taxable Value:", 320, y + 15);
       doc.text(money(subtotal - gst), 470, y + 15);

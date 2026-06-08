@@ -115,8 +115,18 @@
 /* ================================================================
    INFO STRIP
    ================================================================ */
-.cp-info-strip { padding: 56px 0; background: var(--cp-gray); }
-.cp-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.cp-info-strip {
+  padding: 60px 0;
+  background: var(--cp-gray);
+  position: relative;
+  z-index: 2;
+}
+.cp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  justify-content: center;
+  gap: 20px;
+}
 .cp-info-card {
   background: #fff;
   border-radius: var(--cp-radius);
@@ -143,7 +153,12 @@
 /* ================================================================
    MAIN SECTION
    ================================================================ */
-.cp-main-section { padding: 80px 0; background: #fff; }
+.cp-main-section {
+  padding: 100px 0;
+  margin-top: 40px;   /* 👈 ADD THIS */
+  position: relative;
+  z-index: 1;
+}
 
 /*  Auth Wall  */
 .cp-auth-wall {

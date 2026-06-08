@@ -479,7 +479,7 @@ const CheckoutModal = ({ onClose = () => {} }) => {
                 );
               }
             }
-            setError("Payment fail hua hai, dubara try karo ya COD use karo");
+            setError("Payment is failed , Please try again ");
             setLoading(false);
           },
         },

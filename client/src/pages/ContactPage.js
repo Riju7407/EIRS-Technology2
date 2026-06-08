@@ -34,13 +34,7 @@ const INFO_CARDS = [
     sub: 'India – 226001',
     color: '#f093fb',
   },
-  {
-    icon: <FaClock />,
-    label: 'Working Hours',
-    value: 'Mon – Sat: 9am – 7pm',
-    sub: 'Sunday: Closed',
-    color: '#f6d365',
-  },
+  
 ];
 
 const ContactPage = () => {

@@ -247,6 +247,7 @@
 
 .ap-table tbody tr:last-child td {
   border-bottom: none;
+  background-color: #fff;
 }
 
 .ap-table tbody tr:hover td {

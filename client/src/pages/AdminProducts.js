@@ -148,25 +148,24 @@ const AdminProducts = () => {
 
   const fetchSubcategoriesByCategory = async (categoryId) => {
     try {
-setSubLoading(true);      
+      setSubLoading(true);
 
       const response = await axios.get(`${API_BASE}/subcategories`);
 
       console.log("SUBCATEGORY RESPONSE:", response.data);
 
-     const allSubcategories =
-  response.data?.data ||
-  response.data?.subcategories ||
-  response.data ||
-  [];
+      const allSubcategories =
+        response.data?.data ||
+        response.data?.subcategories ||
+        response.data ||
+        [];
 
       console.log("SUB API FULL:", response.data);
 
       const filtered = allSubcategories.filter((sub) => {
-        const subCategoryId =
-  sub.category?._id || sub.category || "";
+        const subCategoryId = sub.category?._id || sub.category || "";
 
-return subCategoryId?.toString() === categoryId?.toString();
+        return subCategoryId?.toString() === categoryId?.toString();
 
         return String(subCategoryId) === String(categoryId);
       });
@@ -247,7 +246,6 @@ return subCategoryId?.toString() === categoryId?.toString();
   const [uploadingIndex, setUploadingIndex] = useState(null);
   const [editLoadingId, setEditLoadingId] = useState(null);
   // Ref to block useEffects from resetting form fields while edit data is loading
-  
 
   const handleImageUpload = async (e, index) => {
     const file = e.target.files[0];
@@ -388,7 +386,7 @@ return subCategoryId?.toString() === categoryId?.toString();
       // Set ALL form fields in one atomic update
       setFormData({
         productName: p.productName || "",
-          hsn: p.hsn || "", 
+        hsn: p.hsn || "",
 
         category:
           typeof p.category === "object"
@@ -562,15 +560,15 @@ return subCategoryId?.toString() === categoryId?.toString();
                   />
                 </div>
                 <div className="ap-form-group">
-  <label>HSN Code</label>
-  <input
-    type="text"
-    name="hsn"
-    value={formData.hsn}
-    onChange={handleInputChange}
-    placeholder="e.g. 85258020"
-  />
-</div>
+                  <label>HSN Code</label>
+                  <input
+                    type="text"
+                    name="hsn"
+                    value={formData.hsn}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 85258020"
+                  />
+                </div>
                 <div className="ap-form-group">
                   <label>Category *</label>
                   <select
@@ -602,19 +600,15 @@ return subCategoryId?.toString() === categoryId?.toString();
                   >
                     <option value="">Select subcategory</option>
                     {subcategories.map((subcat, idx) => (
- <option
-  key={subcat._id || idx}
-  value={
-    typeof subcat === "string"
-      ? subcat
-      : subcat.name
-  }
->
-  {typeof subcat === "string"
-    ? subcat
-    : subcat.name}
-</option>
-))}
+                      <option
+                        key={subcat._id || idx}
+                        value={
+                          typeof subcat === "string" ? subcat : subcat.name
+                        }
+                      >
+                        {typeof subcat === "string" ? subcat : subcat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 {submenus.length > 0 ? (
@@ -947,11 +941,11 @@ return subCategoryId?.toString() === categoryId?.toString();
                           </span>
                           {product.subcategory && (
                             <span className="ap-product-cat">
-                             {typeof product.subcategory === "object"
-  ? product.subcategory?.name
-  : subcategories.find(
-      (s) => s._id === product.subcategory
-    )?.name || "—"}
+                              {typeof product.subcategory === "object"
+                                ? product.subcategory?.name
+                                : subcategories.find(
+                                    (s) => s._id === product.subcategory,
+                                  )?.name || "—"}
                             </span>
                           )}
                         </div>

@@ -236,10 +236,11 @@ const AdminProducts = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`✏️ Field changed: ${name} = ${value}`);
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]:
+        name === "discount" ? Math.min(100, Math.max(0, Number(value))) : value,
     }));
   };
 
@@ -614,18 +615,20 @@ const AdminProducts = () => {
                 {submenus.length > 0 ? (
                   <div className="ap-form-group">
                     <label>Submenu (Type)</label>
-                    <select
+                    <input
+                      type="text"
                       name="submenu"
                       value={formData.submenu}
                       onChange={handleInputChange}
-                    >
-                      <option value="">Select submenu</option>
+                      placeholder="e.g. 2MP, 4MP, Dome, Bullet, PTZ"
+                      list="submenu-options"
+                    />
+
+                    <datalist id="submenu-options">
                       {submenus.map((sm, idx) => (
-                        <option key={idx} value={sm}>
-                          {sm}
-                        </option>
+                        <option key={idx} value={sm} />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
                 ) : channels.length > 0 ? (
                   <div className="ap-form-group">
@@ -719,25 +722,24 @@ const AdminProducts = () => {
               <div className="ap-form-row">
                 <div className="ap-form-group">
                   <label>Discount %</label>
-                  <select
+
+                  <input
+                    type="number"
                     name="discount"
                     value={formData.discount}
                     onChange={handleInputChange}
-                  >
-                    <option value={0}>No Discount</option>
-                    {[
-                      5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75,
-                      80,
-                    ].map((d) => (
-                      <option key={d} value={d}>
-                        {d}% OFF
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Enter discount %"
+                    min="0"
+                    max="100"
+                  />
+
                   <small className="ap-form-hint">
                     {formData.discount > 0 && formData.price > 0
-                      ? `Selling price: ₹${Math.round(formData.price * (1 - formData.discount / 100)).toLocaleString("en-IN")}`
-                      : "Select a discount to apply"}
+                      ? `Selling price: ₹${Math.round(
+                          Number(formData.price) *
+                            (1 - Number(formData.discount) / 100),
+                        ).toLocaleString("en-IN")}`
+                      : "Enter discount percentage"}
                   </small>
                 </div>
                 <div className="ap-form-group" />

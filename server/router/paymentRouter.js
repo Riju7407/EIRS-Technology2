@@ -10,17 +10,9 @@ const { generateBill } = require("../services/billService");
 const Product = require("../model/productSchema");
 const router = express.Router();
 
-router.use((req, res, next) => {
-  console.log("🔥 PAYMENT ROUTER HIT:", req.method, req.originalUrl);
-  next();
-});
 
-router.get("/test-jwt", jwtAuth, (req, res) => {
-  res.json({
-    query: req.query,
-    user: req.user,
-  });
-});
+
+
 
 /* 
    Razorpay singleton initialisation (live keys)
@@ -59,6 +51,20 @@ const getRazorpay = () => {
     console.log("Razorpay initialised with key:", keyId);
   }
   return razorpay;
+};
+
+const calculateEstimatedDelivery = () => {
+  const now = new Date();
+  const hour = now.getHours();
+
+  const deliveryDate = new Date();
+
+  // 10 PM ke baad next day
+  if (hour >= 22) {
+    deliveryDate.setDate(deliveryDate.getDate() + 1);
+  }
+
+  return deliveryDate;
 };
 
 /* 
@@ -185,10 +191,11 @@ router.post("/orders", jwtAuth, async (req, res) => {
       customerPhone: phone || shippingAddress.phone,
       status: "Pending",
       orderDate: new Date(),
-      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      estimatedDelivery: calculateEstimatedDelivery(),
     });
 
     await order.save();
+
     console.log("Order saved:", order._id);
 
     return res.json({
@@ -768,7 +775,7 @@ router.post("/buy-now", jwtAuth, async (req, res) => {
       razorpayOrderId: rzpOrder.id,
       status: "Pending",
       orderDate: new Date(),
-      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      estimatedDelivery: calculateEstimatedDelivery(),
     });
 
     await order.save();

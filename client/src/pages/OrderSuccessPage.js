@@ -58,9 +58,6 @@ const downloadBill = async () => {
       localStorage.getItem("token") ||
       sessionStorage.getItem("token");
 
-    console.log("🔥 DOWNLOAD BILL CLICKED");
-    console.log("ORDER ID:", order._id);
-    console.log("TOKEN FOUND:", !!token);
 
     if (!token) {
       alert("Login token not found. Please login again.");

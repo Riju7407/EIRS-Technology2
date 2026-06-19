@@ -43,26 +43,47 @@ const generateBill = async (order) => {
       };
 
       // ================= HEADER =================
+
+      const logoPath = path.join(process.cwd(), "public", "EIRSLogo.png");
+
+      // LOGO
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, {
+          width: 55,
+          height: 55,
+        });
+      }
+
+      // COMPANY NAME
       doc
         .fillColor(colors.primary)
         .fontSize(20)
         .font("Helvetica-Bold")
-        .text("EIRS TECHNOLOGY", 40, 40);
+        .text("EIRS TECHNOLOGY", 110, 40);
 
+      // EMAIL
       doc
         .fontSize(9)
         .fillColor(colors.muted)
-        .text("www.eirstechnology.com", 40, 65)
-        .text("support@eirstechnology.com", 40, 78);
+        .text("info@eirstechnology.com", 110, 65);
 
+      // TITLE
       doc
         .fontSize(18)
         .fillColor(colors.secondary)
         .text("TAX INVOICE", 400, 40, { align: "right" });
 
-      doc.moveTo(40, 105).lineTo(555, 105).strokeColor(colors.border).stroke();
+      // LINE
+      doc
+        .moveTo(40, 100)
+        .lineTo(555, 100)
+        .strokeColor(colors.border)
+        .stroke();
 
-      const invoiceNumber = order.invoice?.invoiceNumber || `INV-${Date.now()}`;
+      // ================= INVOICE INFO =================
+
+      const invoiceNumber =
+        order.invoice?.invoiceNumber || `INV-${Date.now()}`;
       const date = new Date().toLocaleDateString("en-IN");
 
       doc
@@ -93,31 +114,33 @@ const generateBill = async (order) => {
         .roundedRect(40, 185, 515, 90, 5)
         .fillAndStroke("#f8fafc", colors.border);
 
-      // Title
       doc
         .fillColor(colors.primary)
         .fontSize(11)
         .font("Helvetica-Bold")
         .text("CUSTOMER DETAILS", 50, 195);
 
-      // Left side details
       doc.fillColor(colors.text).fontSize(9).font("Helvetica");
 
       doc.text(`Name: ${customer.fullName || "-"}`, 50, 215);
       doc.text(`Phone: ${customer.phone || "-"}`, 50, 230);
       doc.text(`Email: ${customer.email || "-"}`, 50, 245);
 
-      // Right side address
-      doc.text(`Address: ${customer.address || "-"}`, 300, 215, { width: 240 });
+      doc.text(`Address: ${customer.address || "-"}`, 300, 215, {
+        width: 240,
+      });
 
       doc.text(
-        `${customer.city || ""}, ${customer.state || ""} - ${customer.zipCode || ""}`,
+        `${customer.city || ""}, ${customer.state || ""} - ${
+          customer.zipCode || ""
+        }`,
         300,
         240,
-        { width: 240 },
+        { width: 240 }
       );
 
       // ================= TABLE HEADER =================
+
       let y = 290;
 
       doc
@@ -137,6 +160,7 @@ const generateBill = async (order) => {
       y += 35;
 
       // ================= PRODUCTS =================
+
       for (const item of order.items) {
         const qty = Number(item.quantity || 1);
         const price = Number(item.price || 0);
@@ -164,6 +188,7 @@ const generateBill = async (order) => {
       }
 
       // ================= TOTAL =================
+
       const subtotal = Number(order.totalPrice || 0);
       const gst = subtotal - subtotal / 1.18;
 
